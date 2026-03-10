@@ -1,0 +1,95 @@
+/* Cairo Font Global Styles */
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@200;300;400;500;600;700;800;900&display=swap');
+
+/* Global font family override */
+* {
+    font-family: 'Cairo', 'Arial', sans-serif !important;
+}
+
+/* Specific element overrides */
+body, html {
+    font-family: 'Cairo', 'Arial', sans-serif !important;
+}
+
+/* Bootstrap overrides */
+.btn, .form-control, .navbar, .panel, .table, .alert {
+    font-family: 'Cairo', 'Arial', sans-serif !important;
+}
+
+/* Arabic text specific styling */
+.rtl, [dir="rtl"] {
+    font-family: 'Cairo', 'Arial', sans-serif !important;
+    font-weight: 400;
+}
+
+/* Headings */
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Cairo', 'Arial', sans-serif !important;
+    font-weight: 600;
+}
+
+/* Sidebar specific styling */
+.sidebar, .sidebar * {
+    font-family: 'Cairo', 'Arial', sans-serif !important;
+}
+
+.sidebar-brand {
+    font-weight: 700 !important;
+}
+
+.nav-link {
+    font-weight: 500 !important;
+}
+
+/* Tables */
+.table th, .table td {
+    font-family: 'Cairo', 'Arial', sans-serif !important;
+}
+
+/* Forms */
+input, textarea, select {
+    font-family: 'Cairo', 'Arial', sans-serif !important;
+}
+
+/* Buttons */
+button, .btn {
+    font-family: 'Cairo', 'Arial', sans-serif !important;
+}
+
+/* Cards */
+.card, .card-header, .card-body {
+    font-family: 'Cairo', 'Arial', sans-serif !important;
+}
+
+/* Alerts */
+.alert {
+    font-family: 'Cairo', 'Arial', sans-serif !important;
+}
+
+/* Ensure proper font rendering */
+body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+}
+
+/* Business theme specific font weights */
+.sidebar-brand {
+    font-weight: 700;
+}
+
+.nav-link {
+    font-weight: 500;
+}
+
+.content-header h1 {
+    font-weight: 600;
+}
+
+.card-header {
+    font-weight: 600;
+}
+
+.btn {
+    font-weight: 500;
+}

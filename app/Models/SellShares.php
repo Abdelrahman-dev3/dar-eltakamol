@@ -1,0 +1,75 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
+class SellShares extends Model
+{
+    use HasFactory;
+
+    protected $fillable = [
+        'count',
+        'amount_per_share',
+        'end_date',
+        'notes',
+        'insert_date',
+        'ad_status',
+        'user_id',
+    ];
+
+    protected $casts = [
+        'end_date' => 'datetime',
+        'insert_date' => 'datetime',
+        'count' => 'float',
+        'amount_per_share' => 'float',
+        'ad_status' => 'integer',
+    ];
+
+    // Ad Status Constants
+    const AD_STATUS_INITIAL = 0;
+    const AD_STATUS_ACTIVE = 1;
+    const AD_STATUS_COMPLETED = 2;
+    const AD_STATUS_CANCELLED = 3;
+
+    /**
+     * Get the seller (contributor) that owns the sell share.
+     */
+    public function seller(): BelongsTo
+    {
+        return $this->belongsTo(Contributor::class, 'user_id');
+    }
+
+    /**
+     * Get the shares purchase orders for the sell share.
+     */
+    public function sharesPOs(): HasMany
+    {
+        return $this->hasMany(SharesPO::class, 'sale_number');
+    }
+
+    /**
+     * Get the ad status text.
+     */
+    public function getAdStatusText(): string
+    {
+        return match($this->ad_status) {
+            self::AD_STATUS_INITIAL => 'مبدئي',
+            self::AD_STATUS_ACTIVE => 'نشط',
+            self::AD_STATUS_COMPLETED => 'مكتمل',
+            self::AD_STATUS_CANCELLED => 'ملغي',
+            default => 'غير محدد',
+        };
+    }
+
+    /**
+     * Get the total amount.
+     */
+    public function getTotalAmountAttribute(): float
+    {
+        return $this->count * $this->amount_per_share;
+    }
+}
