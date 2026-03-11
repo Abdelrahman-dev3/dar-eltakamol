@@ -15,28 +15,12 @@
 
                         <div class="form-group {{ $errors->has('name') ? 'has-error' : '' }}">
                             <label for="name">اسم الصلاحية <span class="text-danger">*</span></label>
-                            <input type="text" 
-                                   name="name" 
-                                   id="name" 
-                                   class="form-control" 
-                                   value="{{ old('name', $permission->name) }}" 
-                                   required>
-                            @if ($errors->has('name'))
-                                <span class="help-block">{{ $errors->first('name') }}</span>
-                            @endif
+                            <input type="text" name="name" id="name" class="form-control" value="{{ old('name', $permission->name) }}" required>
                         </div>
 
                         <div class="form-group {{ $errors->has('slug') ? 'has-error' : '' }}">
                             <label for="slug">المعرّف (Slug) <span class="text-danger">*</span></label>
-                            <input type="text" 
-                                   name="slug" 
-                                   id="slug" 
-                                   class="form-control" 
-                                   value="{{ old('slug', $permission->slug) }}" 
-                                   required>
-                            @if ($errors->has('slug'))
-                                <span class="help-block">{{ $errors->first('slug') }}</span>
-                            @endif
+                            <input type="text" name="slug" id="slug" class="form-control" value="{{ old('slug', $permission->slug) }}" required>
                         </div>
 
                         <div class="form-group {{ $errors->has('module') ? 'has-error' : '' }}">
@@ -44,48 +28,29 @@
                             <select name="module" id="module" class="form-control">
                                 <option value="">-- اختر الوحدة --</option>
                                 @foreach($modules as $key => $value)
-                                    <option value="{{ $key }}" {{ old('module', $permission->module) == $key ? 'selected' : '' }}>
-                                        {{ $value }}
-                                    </option>
+                                    <option value="{{ $key }}" {{ old('module', $permission->module) == $key ? 'selected' : '' }}>{{ $value }}</option>
                                 @endforeach
                             </select>
-                            @if ($errors->has('module'))
-                                <span class="help-block">{{ $errors->first('module') }}</span>
-                            @endif
                         </div>
 
                         <div class="form-group {{ $errors->has('description') ? 'has-error' : '' }}">
                             <label for="description">الوصف</label>
-                            <textarea name="description" 
-                                      id="description" 
-                                      class="form-control" 
-                                      rows="3">{{ old('description', $permission->description) }}</textarea>
-                            @if ($errors->has('description'))
-                                <span class="help-block">{{ $errors->first('description') }}</span>
-                            @endif
+                            <textarea name="description" id="description" class="form-control" rows="3">{{ old('description', $permission->description) }}</textarea>
                         </div>
 
-                        <div class="form-group {{ $errors->has('category_ids') ? 'has-error' : '' }}">
-                            <label for="category_ids">التصنيفات المسموح لها بهذه الصلاحية</label>
-                            <select name="category_ids[]" 
-                                    id="category_ids" 
-                                    class="form-control" 
-                                    multiple 
-                                    size="8">
-                                @foreach($categories as $category)
-                                    <option value="{{ $category->id }}" 
-                                        {{ in_array($category->id, old('category_ids', $permission->categories->pluck('id')->toArray())) ? 'selected' : '' }}>
-                                        {{ $category->full_name }}
+                        <div class="form-group {{ $errors->has('department_ids') ? 'has-error' : '' }}">
+                            <label for="department_ids">الإدارات المرتبطة بهذه الصلاحية</label>
+                            <select name="department_ids[]" id="department_ids" class="form-control" multiple size="8">
+                                @foreach($departments as $department)
+                                    <option value="{{ $department->id }}"
+                                        {{ in_array($department->id, old('department_ids', $permission->departments->pluck('id')->toArray())) ? 'selected' : '' }}>
+                                        {{ $department->full_name }}
                                     </option>
                                 @endforeach
                             </select>
-                            @if ($errors->has('category_ids'))
-                                <span class="help-block">{{ $errors->first('category_ids') }}</span>
+                            @if ($errors->has('department_ids'))
+                                <span class="help-block">{{ $errors->first('department_ids') }}</span>
                             @endif
-                            <span class="help-block">
-                                <i class="fa fa-info-circle"></i>
-                                اضغط مع الاستمرار على Ctrl (Windows) أو Command (Mac) لتحديد عدة تصنيفات
-                            </span>
                         </div>
 
                         <div class="form-group">
@@ -103,5 +68,3 @@
     </div>
 </div>
 @endsection
-
-

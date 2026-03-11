@@ -4,7 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Category extends Model
 {
@@ -36,7 +38,7 @@ class Category extends Model
     /**
      * Get the parent category.
      */
-    public function parent()
+    public function parent(): BelongsTo
     {
         return $this->belongsTo(Category::class, 'parent_id');
     }
@@ -44,7 +46,7 @@ class Category extends Model
     /**
      * Get the child categories.
      */
-    public function children()
+    public function children(): HasMany
     {
         return $this->hasMany(Category::class, 'parent_id');
     }
@@ -58,23 +60,52 @@ class Category extends Model
     }
 
     /**
-     * Check if this is a parent category (has no parent).
+     * Scope companies (top-level memberships).
      */
-    public function isParent(): bool
+    public function scopeCompanies($query)
+    {
+        return $query->whereNull('parent_id');
+    }
+
+    /**
+     * Scope departments (memberships under a company).
+     */
+    public function scopeDepartments($query)
+    {
+        return $query->whereNotNull('parent_id');
+    }
+
+    /**
+     * Check if this membership is a company.
+     */
+    public function isCompany(): bool
     {
         return $this->parent_id === null;
     }
 
     /**
-     * Check if this is a child category (has a parent).
+     * Check if this membership is a department.
      */
-    public function isChild(): bool
+    public function isDepartment(): bool
     {
         return $this->parent_id !== null;
     }
 
     /**
-     * Get the full category path (Parent > Child).
+     * Backward-compatible helpers for older code paths.
+     */
+    public function isParent(): bool
+    {
+        return $this->isCompany();
+    }
+
+    public function isChild(): bool
+    {
+        return $this->isDepartment();
+    }
+
+    /**
+     * Get the full membership path (Company > Department).
      */
     public function getFullNameAttribute(): string
     {
@@ -98,6 +129,14 @@ class Category extends Model
     public function getUsersCountAttribute(): int
     {
         return $this->users()->count();
+    }
+
+    /**
+     * Get a readable label for the membership level.
+     */
+    public function getLevelLabelAttribute(): string
+    {
+        return $this->isCompany() ? 'الشركة' : 'الإدارة';
     }
 }
 

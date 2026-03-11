@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Permission;
 use App\Models\Category;
-use Illuminate\Http\Request;
-use Illuminate\View\View;
+use App\Models\Permission;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
+use Illuminate\View\View;
 
 class PermissionsController extends Controller
 {
@@ -15,7 +16,7 @@ class PermissionsController extends Controller
      */
     public function index(): View
     {
-        $permissions = Permission::with('categories')->orderBy('module')->orderBy('name')->paginate(20);
+        $permissions = Permission::with(['departments.parent'])->orderBy('name')->paginate(20);
 
         return view('permissions.index', compact('permissions'));
     }
@@ -26,9 +27,9 @@ class PermissionsController extends Controller
     public function create(): View
     {
         $modules = $this->getAvailableModules();
-        $categories = Category::orderBy('name')->get();
+        $departments = Category::departments()->with('parent')->orderBy('name')->get();
 
-        return view('permissions.create', compact('modules', 'categories'));
+        return view('permissions.create', compact('modules', 'departments'));
     }
 
     /**
@@ -41,9 +42,11 @@ class PermissionsController extends Controller
             'slug' => 'required|string|max:255|unique:permissions',
             'description' => 'nullable|string|max:500',
             'module' => 'nullable|string|max:100',
-            'category_ids' => 'nullable|array',
-            'category_ids.*' => 'exists:categories,id',
+            'department_ids' => 'nullable|array',
+            'department_ids.*' => 'exists:categories,id',
         ]);
+
+        $departmentIds = $this->validateDepartmentIds($validated['department_ids'] ?? []);
 
         $permission = Permission::create([
             'name' => $validated['name'],
@@ -52,14 +55,13 @@ class PermissionsController extends Controller
             'module' => $validated['module'] ?? null,
         ]);
 
-        // Attach categories if provided
-        if (!empty($validated['category_ids'])) {
-            $permission->categories()->attach($validated['category_ids']);
+        if (!empty($departmentIds)) {
+            $permission->categories()->attach($departmentIds);
         }
 
         return redirect()
             ->route('permissions.index')
-            ->with('success', __('تم إنشاء الصلاحية بنجاح'));
+            ->with('success', 'تم إنشاء الصلاحية بنجاح.');
     }
 
     /**
@@ -67,7 +69,7 @@ class PermissionsController extends Controller
      */
     public function show(Permission $permission): View
     {
-        $permission->load('categories.users');
+        $permission->load('departments.parent', 'departments.users');
 
         return view('permissions.show', compact('permission'));
     }
@@ -77,11 +79,11 @@ class PermissionsController extends Controller
      */
     public function edit(Permission $permission): View
     {
-        $permission->load('categories');
+        $permission->load('departments.parent');
         $modules = $this->getAvailableModules();
-        $categories = Category::orderBy('name')->get();
+        $departments = Category::departments()->with('parent')->orderBy('name')->get();
 
-        return view('permissions.edit', compact('permission', 'modules', 'categories'));
+        return view('permissions.edit', compact('permission', 'modules', 'departments'));
     }
 
     /**
@@ -94,9 +96,11 @@ class PermissionsController extends Controller
             'slug' => 'required|string|max:255|unique:permissions,slug,' . $permission->id,
             'description' => 'nullable|string|max:500',
             'module' => 'nullable|string|max:100',
-            'category_ids' => 'nullable|array',
-            'category_ids.*' => 'exists:categories,id',
+            'department_ids' => 'nullable|array',
+            'department_ids.*' => 'exists:categories,id',
         ]);
+
+        $departmentIds = $this->validateDepartmentIds($validated['department_ids'] ?? []);
 
         $permission->update([
             'name' => $validated['name'],
@@ -105,12 +109,11 @@ class PermissionsController extends Controller
             'module' => $validated['module'] ?? null,
         ]);
 
-        // Sync categories
-        $permission->categories()->sync($validated['category_ids'] ?? []);
+        $permission->categories()->sync($departmentIds);
 
         return redirect()
             ->route('permissions.index')
-            ->with('success', __('تم تحديث الصلاحية بنجاح'));
+            ->with('success', 'تم تحديث الصلاحية بنجاح.');
     }
 
     /**
@@ -122,7 +125,7 @@ class PermissionsController extends Controller
 
         return redirect()
             ->route('permissions.index')
-            ->with('success', __('تم حذف الصلاحية بنجاح'));
+            ->with('success', 'تم حذف الصلاحية بنجاح.');
     }
 
     /**
@@ -140,12 +143,29 @@ class PermissionsController extends Controller
             'documents' => 'الملفات',
             'regulations' => 'اللوائح',
             'circulars' => 'التعاميم',
-            'categories' => 'التصنيفات',
+            'categories' => 'العضوية',
             'settings' => 'الإعدادات',
             'bookings' => 'الحجوزات',
             'services' => 'الخدمات',
         ];
     }
+
+    private function validateDepartmentIds(array $departmentIds): array
+    {
+        if (empty($departmentIds)) {
+            return [];
+        }
+
+        $validDepartmentsCount = Category::departments()
+            ->whereIn('id', $departmentIds)
+            ->count();
+
+        if ($validDepartmentsCount !== count($departmentIds)) {
+            throw ValidationException::withMessages([
+                'department_ids' => 'يمكن ربط الصلاحية بإدارات فقط وليس بالشركة مباشرة.',
+            ]);
+        }
+
+        return $departmentIds;
+    }
 }
-
-

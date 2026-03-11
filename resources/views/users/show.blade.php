@@ -9,55 +9,46 @@
                     <h3 class="panel-title">تفاصيل المستخدم</h3>
                 </div>
                 <div class="panel-body">
-                    <div class="row">
-                        <div class="col-md-12">
-                            <table class="table table-bordered">
-                                <tbody>
-                                    <tr>
-                                        <th width="30%">الاسم</th>
-                                        <td>{{ $user->name }}</td>
-                                    </tr>
-                                    <tr>
-                                        <th>البريد الإلكتروني</th>
-                                        <td>{{ $user->email }}</td>
-                                    </tr>
-                                    <tr>
-                                        <th>رقم الهاتف</th>
-                                        <td>{{ $user->phone ?? 'غير محدد' }}</td>
-                                    </tr>
-                                    <tr>
-                                        <th>رقم الهوية</th>
-                                        <td>{{ $user->id_number ?? 'غير محدد' }}</td>
-                                    </tr>
-                                    <tr>
-                                        <th>التصنيفات</th>
-                                        <td>
-                                            @if($user->categories->isNotEmpty())
-                                                @foreach($user->categories as $category)
-                                                    <span class="label label-info" style="margin: 2px;">
-                                                        {{ $category->name }}
-                                                        @if($category->parent)
-                                                            <small>({{ $category->parent->name }})</small>
-                                                        @endif
-                                                    </span>
-                                                @endforeach
-                                            @else
-                                                <span class="text-muted">بدون تصنيف</span>
-                                            @endif
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <th>تاريخ الإنشاء</th>
-                                        <td>{{ $user->created_at->format('Y-m-d H:i:s') }}</td>
-                                    </tr>
-                                    <tr>
-                                        <th>آخر تحديث</th>
-                                        <td>{{ $user->updated_at->format('Y-m-d H:i:s') }}</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+                    <table class="table table-bordered">
+                        <tbody>
+                            <tr>
+                                <th width="30%">الاسم</th>
+                                <td>{{ $user->name }}</td>
+                            </tr>
+                            <tr>
+                                <th>البريد الإلكتروني</th>
+                                <td>{{ $user->email }}</td>
+                            </tr>
+                            <tr>
+                                <th>رقم الهاتف</th>
+                                <td>{{ $user->phone ?? 'غير محدد' }}</td>
+                            </tr>
+                            <tr>
+                                <th>رقم الهوية</th>
+                                <td>{{ $user->id_number ?? 'غير محدد' }}</td>
+                            </tr>
+                            <tr>
+                                <th>الإدارة</th>
+                                <td>{{ optional($user->department)->name ?? 'بدون إدارة' }}</td>
+                            </tr>
+                            <tr>
+                                <th>الشركة</th>
+                                <td>{{ optional(optional($user->department)->parent)->name ?? '-' }}</td>
+                            </tr>
+                            <tr>
+                                <th>المساهم المرتبط</th>
+                                <td>{{ optional($user->contributor)->name ?? 'غير مرتبط' }}</td>
+                            </tr>
+                            <tr>
+                                <th>تاريخ الإنشاء</th>
+                                <td>{{ $user->created_at->format('Y-m-d H:i:s') }}</td>
+                            </tr>
+                            <tr>
+                                <th>آخر تحديث</th>
+                                <td>{{ $user->updated_at->format('Y-m-d H:i:s') }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
 
                     <div class="row" style="margin-top: 20px;">
                         <div class="col-md-12">
@@ -84,5 +75,3 @@
     </div>
 </div>
 @endsection
-
-

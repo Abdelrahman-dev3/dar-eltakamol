@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
 use App\Models\Category;
-use Illuminate\Http\Request;
-use Illuminate\View\View;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rules\Password;
+use Illuminate\Validation\ValidationException;
+use Illuminate\View\View;
 
 class UsersController extends Controller
 {
@@ -17,7 +17,7 @@ class UsersController extends Controller
      */
     public function index(): View
     {
-        $users = User::with('categories')->orderBy('created_at', 'desc')->paginate(15);
+        $users = User::with(['departments.parent'])->orderBy('created_at', 'desc')->paginate(15);
 
         return view('users.index', compact('users'));
     }
@@ -27,9 +27,9 @@ class UsersController extends Controller
      */
     public function create(): View
     {
-        $categories = Category::orderBy('name')->get();
+        $departments = Category::departments()->with('parent')->orderBy('name')->get();
 
-        return view('users.create', compact('categories'));
+        return view('users.create', compact('departments'));
     }
 
     /**
@@ -43,9 +43,10 @@ class UsersController extends Controller
             'password' => ['required', 'string', 'min:8', 'confirmed'],
             'phone' => 'nullable|string|max:15',
             'id_number' => 'nullable|string|max:20',
-            'category_ids' => 'nullable|array',
-            'category_ids.*' => 'exists:categories,id',
+            'department_id' => 'nullable|exists:categories,id',
         ]);
+
+        $departmentId = $this->validateDepartmentSelection($validated['department_id'] ?? null);
 
         $user = User::create([
             'name' => $validated['name'],
@@ -55,14 +56,13 @@ class UsersController extends Controller
             'id_number' => $validated['id_number'] ?? null,
         ]);
 
-        // Attach categories if provided
-        if (!empty($validated['category_ids'])) {
-            $user->categories()->attach($validated['category_ids']);
+        if ($departmentId) {
+            $user->categories()->sync([$departmentId]);
         }
 
         return redirect()
             ->route('users.index')
-            ->with('success', __('تم إنشاء المستخدم بنجاح'));
+            ->with('success', 'تم إنشاء المستخدم وربطه بالإدارة بنجاح.');
     }
 
     /**
@@ -70,7 +70,7 @@ class UsersController extends Controller
      */
     public function show(User $user): View
     {
-        $user->load('categories', 'contributor');
+        $user->load('departments.parent', 'contributor');
 
         return view('users.show', compact('user'));
     }
@@ -80,10 +80,10 @@ class UsersController extends Controller
      */
     public function edit(User $user): View
     {
-        $user->load('categories');
-        $categories = Category::orderBy('name')->get();
+        $user->load('departments.parent');
+        $departments = Category::departments()->with('parent')->orderBy('name')->get();
 
-        return view('users.edit', compact('user', 'categories'));
+        return view('users.edit', compact('user', 'departments'));
     }
 
     /**
@@ -97,9 +97,10 @@ class UsersController extends Controller
             'password' => ['nullable', 'string', 'min:8', 'confirmed'],
             'phone' => 'nullable|string|max:15',
             'id_number' => 'nullable|string|max:20',
-            'category_ids' => 'nullable|array',
-            'category_ids.*' => 'exists:categories,id',
+            'department_id' => 'nullable|exists:categories,id',
         ]);
+
+        $departmentId = $this->validateDepartmentSelection($validated['department_id'] ?? null);
 
         $updateData = [
             'name' => $validated['name'],
@@ -108,19 +109,16 @@ class UsersController extends Controller
             'id_number' => $validated['id_number'] ?? null,
         ];
 
-        // Update password only if provided
         if (!empty($validated['password'])) {
             $updateData['password'] = Hash::make($validated['password']);
         }
 
         $user->update($updateData);
-
-        // Sync categories
-        $user->categories()->sync($validated['category_ids'] ?? []);
+        $user->categories()->sync($departmentId ? [$departmentId] : []);
 
         return redirect()
             ->route('users.index')
-            ->with('success', __('تم تحديث المستخدم بنجاح'));
+            ->with('success', 'تم تحديث المستخدم وربطه الإداري بنجاح.');
     }
 
     /**
@@ -128,19 +126,33 @@ class UsersController extends Controller
      */
     public function destroy(User $user): RedirectResponse
     {
-        // Prevent deleting current logged-in user
         if ($user->id === auth()->id()) {
             return redirect()
                 ->route('users.index')
-                ->with('error', __('لا يمكنك حذف حسابك الخاص'));
+                ->with('error', 'لا يمكنك حذف حسابك الخاص.');
         }
 
         $user->delete();
 
         return redirect()
             ->route('users.index')
-            ->with('success', __('تم حذف المستخدم بنجاح'));
+            ->with('success', 'تم حذف المستخدم بنجاح.');
+    }
+
+    private function validateDepartmentSelection(?int $departmentId): ?int
+    {
+        if (!$departmentId) {
+            return null;
+        }
+
+        $department = Category::findOrFail($departmentId);
+
+        if (!$department->isDepartment()) {
+            throw ValidationException::withMessages([
+                'department_id' => 'يمكن ربط المستخدم بإدارة فقط وليس بالشركة مباشرة.',
+            ]);
+        }
+
+        return $departmentId;
     }
 }
-
-

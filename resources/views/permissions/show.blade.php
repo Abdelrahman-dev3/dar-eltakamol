@@ -21,13 +21,7 @@
                             </tr>
                             <tr>
                                 <th>الوحدة</th>
-                                <td>
-                                    @if($permission->module)
-                                        <span class="label label-primary">{{ $permission->module }}</span>
-                                    @else
-                                        <span class="text-muted">عام</span>
-                                    @endif
-                                </td>
+                                <td>{{ $permission->module ?? 'عام' }}</td>
                             </tr>
                             <tr>
                                 <th>الوصف</th>
@@ -40,37 +34,25 @@
                         </tbody>
                     </table>
 
-                    @if($permission->categories->isNotEmpty())
-                        <h4 style="margin-top: 30px;">التصنيفات المرتبطة 
-                            <span class="badge">{{ $permission->categories->count() }}</span>
-                        </h4>
+                    @if($permission->departments->isNotEmpty())
+                        <h4 style="margin-top: 30px;">الإدارات المرتبطة</h4>
                         <div class="table-responsive">
                             <table class="table table-striped table-bordered">
                                 <thead>
                                     <tr>
-                                        <th>اسم التصنيف</th>
-                                        <th>التصنيف الرئيسي</th>
-                                        <th>عدد المستخدمين</th>
+                                        <th>اسم الإدارة</th>
+                                        <th>الشركة</th>
+                                        <th>عدد الأعضاء</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach($permission->categories as $category)
+                                    @foreach($permission->departments as $department)
                                         <tr>
                                             <td>
-                                                <a href="{{ route('categories.show', $category) }}">
-                                                    {{ $category->name }}
-                                                </a>
+                                                <a href="{{ route('categories.show', $department) }}">{{ $department->name }}</a>
                                             </td>
-                                            <td>
-                                                @if($category->parent)
-                                                    <span class="label label-info">{{ $category->parent->name }}</span>
-                                                @else
-                                                    <span class="text-muted">تصنيف رئيسي</span>
-                                                @endif
-                                            </td>
-                                            <td>
-                                                <span class="badge">{{ $category->users->count() }}</span> مستخدم
-                                            </td>
+                                            <td>{{ $department->parent?->name ?? '-' }}</td>
+                                            <td>{{ $department->users->count() }}</td>
                                         </tr>
                                     @endforeach
                                 </tbody>
@@ -79,7 +61,7 @@
                     @else
                         <div class="alert alert-info" style="margin-top: 20px;">
                             <i class="fa fa-info-circle"></i>
-                            لا توجد تصنيفات مرتبطة بهذه الصلاحية
+                            لا توجد إدارات مرتبطة بهذه الصلاحية
                         </div>
                     @endif
 
@@ -106,5 +88,3 @@
     </div>
 </div>
 @endsection
-
-

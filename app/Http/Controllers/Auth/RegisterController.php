@@ -3,11 +3,12 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
 use App\Models\Category;
+use App\Models\User;
 use Illuminate\Foundation\Auth\RegistersUsers;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
 
 class RegisterController extends Controller
 {
@@ -33,8 +34,6 @@ class RegisterController extends Controller
 
     /**
      * Create a new controller instance.
-     *
-     * @return void
      */
     public function __construct()
     {
@@ -53,8 +52,7 @@ class RegisterController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
-            'category_ids' => ['nullable', 'array'],
-            'category_ids.*' => ['exists:categories,id'],
+            'department_id' => ['nullable', 'exists:categories,id'],
         ]);
     }
 
@@ -72,9 +70,16 @@ class RegisterController extends Controller
             'password' => Hash::make($data['password']),
         ]);
 
-        // Attach categories if provided
-        if (!empty($data['category_ids'])) {
-            $user->categories()->attach($data['category_ids']);
+        if (!empty($data['department_id'])) {
+            $department = Category::findOrFail($data['department_id']);
+
+            if (!$department->isDepartment()) {
+                throw ValidationException::withMessages([
+                    'department_id' => 'يمكن التسجيل داخل إدارة فقط.',
+                ]);
+            }
+
+            $user->categories()->sync([$department->id]);
         }
 
         return $user;

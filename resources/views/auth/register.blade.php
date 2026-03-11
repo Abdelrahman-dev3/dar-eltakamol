@@ -6,7 +6,7 @@
 <div class="auth-container">
     <div class="auth-header">
         <div class="auth-logo">
-            <img src="{{ asset('images/logos/لوجو دار التكامل ذهبي.png') }}" alt="Logo" style="width: 185px; height: auto; object-fit: contain;">
+            <img src="{{ asset('images/logos/Ù„ÙˆØ¬Ùˆ Ø¯Ø§Ø± Ø§Ù„ØªÙƒØ§Ù…Ù„ Ø°Ù‡Ø¨ÙŠ.png') }}" alt="Logo" style="width: 185px; height: auto; object-fit: contain;">
         </div>
         <h1 class="auth-title">{{ __('إنشاء حساب جديد') }}</h1>
         <p class="auth-subtitle">{{ __('انضم إلى نظام إدارة دار التكامل') }}</p>
@@ -14,16 +14,12 @@
 
     <form method="POST" action="{{ route('register') }}" id="registerForm">
         @csrf
-        
+
         <div class="form-group">
-            <label for="name" class="form-label">
-                <i class="fa fa-user" style="margin-left: 8px;"></i>
-                {{ __('الاسم الكامل') }}
-            </label>
+            <label for="name" class="form-label">{{ __('الاسم الكامل') }}</label>
             <div class="input-group">
-                <input id="name" type="text" class="form-control @error('name') is-invalid @enderror" 
-                       name="name" value="{{ old('name') }}" required autocomplete="name" autofocus
-                       placeholder="{{ __('أدخل اسمك الكامل') }}">
+                <input id="name" type="text" class="form-control @error('name') is-invalid @enderror"
+                       name="name" value="{{ old('name') }}" required autocomplete="name" autofocus>
             </div>
             @error('name')
                 <span class="invalid-feedback">{{ $message }}</span>
@@ -31,14 +27,10 @@
         </div>
 
         <div class="form-group">
-            <label for="email" class="form-label">
-                <i class="fa fa-envelope" style="margin-left: 8px;"></i>
-                {{ __('البريد الإلكتروني') }}
-            </label>
+            <label for="email" class="form-label">{{ __('البريد الإلكتروني') }}</label>
             <div class="input-group">
-                <input id="email" type="email" class="form-control @error('email') is-invalid @enderror" 
-                       name="email" value="{{ old('email') }}" required autocomplete="email"
-                       placeholder="{{ __('أدخل بريدك الإلكتروني') }}">
+                <input id="email" type="email" class="form-control @error('email') is-invalid @enderror"
+                       name="email" value="{{ old('email') }}" required autocomplete="email">
             </div>
             @error('email')
                 <span class="invalid-feedback">{{ $message }}</span>
@@ -46,14 +38,10 @@
         </div>
 
         <div class="form-group">
-            <label for="password" class="form-label">
-                <i class="fa fa-lock" style="margin-left: 8px;"></i>
-                {{ __('كلمة المرور') }}
-            </label>
+            <label for="password" class="form-label">{{ __('كلمة المرور') }}</label>
             <div class="input-group">
-                <input id="password" type="password" class="form-control @error('password') is-invalid @enderror" 
-                       name="password" required autocomplete="new-password"
-                       placeholder="{{ __('أدخل كلمة المرور') }}">
+                <input id="password" type="password" class="form-control @error('password') is-invalid @enderror"
+                       name="password" required autocomplete="new-password">
             </div>
             @error('password')
                 <span class="invalid-feedback">{{ $message }}</span>
@@ -61,39 +49,29 @@
         </div>
 
         <div class="form-group">
-            <label for="password-confirm" class="form-label">
-                <i class="fa fa-lock" style="margin-left: 8px;"></i>
-                {{ __('تأكيد كلمة المرور') }}
-            </label>
+            <label for="password-confirm" class="form-label">{{ __('تأكيد كلمة المرور') }}</label>
             <div class="input-group">
                 <input id="password-confirm" type="password" class="form-control"
-                       name="password_confirmation" required autocomplete="new-password"
-                       placeholder="{{ __('أعد إدخال كلمة المرور') }}">
+                       name="password_confirmation" required autocomplete="new-password">
             </div>
         </div>
 
         <div class="form-group">
-            <label for="categories" class="form-label">
-                <i class="fa fa-tags" style="margin-left: 8px;"></i>
-                {{ __('التصنيفات (اختياري)') }}
-            </label>
-            <select name="category_ids[]" id="categories" class="form-control" multiple size="4">
-                @foreach(\App\Models\Category::orderBy('name')->get() as $category)
-                    <option value="{{ $category->id }}" {{ in_array($category->id, old('category_ids', [])) ? 'selected' : '' }}>
-                        {{ $category->name }}
+            <label for="department_id" class="form-label">{{ __('الإدارة (اختياري)') }}</label>
+            <select name="department_id" id="department_id" class="form-control">
+                <option value="">{{ __('-- اختر الإدارة --') }}</option>
+                @foreach(\App\Models\Category::departments()->with('parent')->orderBy('name')->get() as $department)
+                    <option value="{{ $department->id }}" {{ old('department_id') == $department->id ? 'selected' : '' }}>
+                        {{ $department->name }}{{ $department->parent ? ' - ' . $department->parent->name : '' }}
                     </option>
                 @endforeach
             </select>
-            <small class="text-muted" style="color: #64748b; font-size: 1.2rem;">
-                {{ __('اضغط مع Ctrl (أو Cmd في Mac) لاختيار تصنيفات متعددة') }}
-            </small>
-            @error('category_ids')
+            @error('department_id')
                 <span class="invalid-feedback" style="display: block;">{{ $message }}</span>
             @enderror
         </div>
 
         <button type="submit" class="btn-modern btn-primary-modern" id="registerBtn">
-            <i class="fa fa-user-plus" style="margin-right: 8px;"></i>
             {{ __('إنشاء الحساب') }}
         </button>
     </form>
@@ -114,11 +92,10 @@ document.getElementById('registerForm').addEventListener('submit', function() {
     btn.disabled = true;
 });
 
-// Password confirmation validation
 document.getElementById('password-confirm').addEventListener('input', function() {
     const password = document.getElementById('password').value;
     const confirmPassword = this.value;
-    
+
     if (confirmPassword && password !== confirmPassword) {
         this.setCustomValidity('كلمة المرور غير متطابقة');
     } else {

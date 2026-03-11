@@ -14,15 +14,11 @@
                 </div>
                 <div class="panel-body">
                     @if (session('success'))
-                        <div class="alert alert-success">
-                            {{ session('success') }}
-                        </div>
+                        <div class="alert alert-success">{{ session('success') }}</div>
                     @endif
 
                     @if($permissions->isEmpty())
-                        <div class="alert alert-info">
-                            لا توجد صلاحيات في النظام حالياً.
-                        </div>
+                        <div class="alert alert-info">لا توجد صلاحيات في النظام حالياً.</div>
                     @else
                         <div class="table-responsive">
                             <table class="table table-striped table-bordered">
@@ -32,7 +28,7 @@
                                         <th>اسم الصلاحية</th>
                                         <th>المعرّف</th>
                                         <th>الوحدة</th>
-                                        <th>التصنيفات المرتبطة</th>
+                                        <th>الإدارات المرتبطة</th>
                                         <th>الإجراءات</th>
                                     </tr>
                                 </thead>
@@ -42,24 +38,17 @@
                                             <td>{{ $permission->id }}</td>
                                             <td>{{ $permission->name }}</td>
                                             <td><code>{{ $permission->slug }}</code></td>
+                                            <td>{{ $permission->module ?? 'عام' }}</td>
                                             <td>
-                                                @if($permission->module)
-                                                    <span class="label label-primary">{{ $permission->module }}</span>
-                                                @else
-                                                    <span class="text-muted">عام</span>
-                                                @endif
-                                            </td>
-                                            <td>
-                                                @if($permission->categories->isNotEmpty())
-                                                    <span class="badge">{{ $permission->categories->count() }}</span>
-                                                    @foreach($permission->categories->take(3) as $category)
-                                                        <span class="label label-info" style="margin: 2px;">{{ $category->name }}</span>
+                                                @if($permission->departments->isNotEmpty())
+                                                    @foreach($permission->departments->take(3) as $department)
+                                                        <span class="label label-info" style="margin: 2px;">{{ $department->full_name }}</span>
                                                     @endforeach
-                                                    @if($permission->categories->count() > 3)
-                                                        <span class="text-muted">+{{ $permission->categories->count() - 3 }}</span>
+                                                    @if($permission->departments->count() > 3)
+                                                        <span class="text-muted">+{{ $permission->departments->count() - 3 }}</span>
                                                     @endif
                                                 @else
-                                                    <span class="text-muted">بدون تصنيفات</span>
+                                                    <span class="text-muted">بدون إدارات</span>
                                                 @endif
                                             </td>
                                             <td>
@@ -93,5 +82,3 @@
     </div>
 </div>
 @endsection
-
-

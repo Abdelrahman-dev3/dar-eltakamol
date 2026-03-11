@@ -2,251 +2,158 @@
 
 @section('title', __('تعديل بيانات المساهم'))
 
+@include('contributors.partials.form-styles')
+
 @section('content')
-<div class="container">
-    <div class="row">
-        <div class="col-md-8 col-md-offset-2">
-            <div class="panel panel-default">
-                <div class="panel-heading">
-                    <h3 class="panel-title">
+<div class="container-fluid contributor-form-page">
+    <div class="contributor-form-shell">
+        <section class="contributor-form-hero">
+            <div class="contributor-form-hero-inner">
+                <div>
+                    <span class="contributor-form-badge">
+                        <i class="bi bi-pencil-fill"></i>
                         {{ __('تعديل بيانات المساهم') }} #{{ $contributor->id }}
-                        <div class="pull-left">
-                            <a href="{{ route('contributors.show', $contributor->id) }}" class="btn btn-info btn-sm">
-                                <span class="glyphicon glyphicon-eye-open"></span> {{ __('عرض') }}
-                            </a>
-                            <a href="{{ route('contributors.index') }}" class="btn btn-default btn-sm">
-                                <span class="glyphicon glyphicon-arrow-right"></span> {{ __('رجوع') }}
-                            </a>
-                        </div>
-                    </h3>
+                    </span>
+                    <h1 class="contributor-form-title">{{ __('مراجعة دقيقة للبيانات قبل اعتماد التحديث') }}</h1>
+                    <p class="contributor-form-subtitle">
+                        {{ __('حدّث بيانات المساهم مع توثيق سبب التعديل ورفع الملفات الجديدة من نفس الشاشة، مع إبراز المعلومات الحالية بشكل أوضح وأسهل للمراجعة.') }}
+                    </p>
                 </div>
-                <div class="panel-body">
-                    <form action="{{ route('contributors.update', $contributor->id) }}" method="POST" enctype="multipart/form-data">
-                        @csrf
-                        @method('PUT')
 
-                        <div class="form-group @error('name') has-error @enderror">
-                            <label for="name">{{ __('الاسم') }} <span class="text-danger">*</span></label>
-                            <input type="text" name="name" id="name" class="form-control" 
-                                   value="{{ old('name', $contributor->name) }}" required maxlength="100"
-                                   placeholder="{{ __('أدخل اسم المساهم') }}">
-                            @error('name')
-                                <span class="help-block">{{ $message }}</span>
-                            @enderror
-                        </div>
-
-                        <div class="form-group @error('id_number') has-error @enderror">
-                            <label for="id_number">{{ __('رقم الهوية') }} <span class="text-danger">*</span></label>
-                            <input type="text" name="id_number" id="id_number" class="form-control" 
-                                   value="{{ old('id_number', $contributor->id_number) }}" required maxlength="10"
-                                   placeholder="{{ __('أدخل رقم الهوية') }}">
-                            @error('id_number')
-                                <span class="help-block">{{ $message }}</span>
-                            @enderror
-                        </div>
-
-                        <div class="form-group @error('phone_num') has-error @enderror">
-                            <label for="phone_num">{{ __('رقم الهاتف') }}</label>
-                            <input type="text" name="phone_num" id="phone_num" class="form-control" 
-                                   value="{{ old('phone_num', $contributor->phone_num) }}" maxlength="15"
-                                   placeholder="{{ __('أدخل رقم الهاتف') }}">
-                            @error('phone_num')
-                                <span class="help-block">{{ $message }}</span>
-                            @enderror
-                        </div>
-
-                        <div class="form-group @error('temp_password') has-error @enderror">
-                            <label for="temp_password">{{ __('كلمة المرور المؤقتة') }}</label>
-                            <input type="text" name="temp_password" id="temp_password" class="form-control" 
-                                   value="{{ old('temp_password', $contributor->temp_password) }}" maxlength="10"
-                                   placeholder="{{ __('أدخل كلمة مرور مؤقتة') }}">
-                            <small class="text-muted">{{ __('يمكن للمساهم تغييرها لاحقاً') }}</small>
-                            @error('temp_password')
-                                <span class="help-block">{{ $message }}</span>
-                            @enderror
-                        </div>
-
-
-                        <div class="form-group @error('iban') has-error @enderror">
-                            <label for="iban">{{ __('رقم الحساب البنكي (IBAN)') }}</label>
-                            <input type="text" name="iban" id="iban" class="form-control" 
-                                   value="{{ old('iban', $contributor->iban) }}" maxlength="24"
-                                   placeholder="{{ __('أدخل رقم الحساب البنكي') }}">
-                            @error('iban')
-                                <span class="help-block">{{ $message }}</span>
-                            @enderror
-                        </div>
-
-                        <div class="form-group @error('bank_name') has-error @enderror">
-                            <label for="bank_name">{{ __('اسم البنك') }}</label>
-                            <input type="text" name="bank_name" id="bank_name" class="form-control" 
-                                   value="{{ old('bank_name', $contributor->bank_name) }}" maxlength="15"
-                                   placeholder="{{ __('أدخل اسم البنك') }}">
-                            @error('bank_name')
-                                <span class="help-block">{{ $message }}</span>
-                            @enderror
-                        </div>
-
-                        <div class="form-group @error('position') has-error @enderror">
-                            <label for="position">{{ __('المنصب') }}</label>
-                            <input type="text" name="position" id="position" class="form-control" 
-                                   value="{{ old('position', $contributor->position) }}" maxlength="100"
-                                   placeholder="{{ __('أدخل المنصب') }}">
-                            @error('position')
-                                <span class="help-block">{{ $message }}</span>
-                            @enderror
-                        </div>
-
-                        <div class="form-group @error('profile_picture') has-error @enderror">
-                            <label for="profile_picture">{{ __('الصورة الشخصية (اختياري)') }}</label>
-                            @if($contributor->profile_picture)
-                                <div style="margin-bottom: 10px;">
-                                    <img src="{{ $contributor->profile_picture_url }}" alt="{{ $contributor->name }}" 
-                                         style="max-width: 150px; max-height: 150px; border-radius: 8px; border: 2px solid #ddd;">
-                                    <p class="text-muted"><small>{{ __('الصورة الحالية') }}</small></p>
-                                </div>
-                            @endif
-                            <input type="file" name="profile_picture" id="profile_picture" class="form-control" accept="image/*">
-                            @error('profile_picture')
-                                <span class="help-block">{{ $message }}</span>
-                            @enderror
-                            <small class="text-muted">{{ __('الصيغ المقبولة: JPG, PNG, GIF. الحد الأقصى: 2MB') }}</small>
-                        </div>
-
-                        <div class="form-group @error('share_count_cr') has-error @enderror">
-                            <label for="share_count_cr">{{ __('عدد الأسهم') }}</label>
-                            <input type="number" name="share_count_cr" id="share_count_cr" class="form-control" 
-                                   value="{{ old('share_count_cr', $contributor->share_count_cr) }}" min="0" step="0.01"
-                                   placeholder="{{ __('أدخل عدد الأسهم') }}">
-                            @error('share_count_cr')
-                                <span class="help-block">{{ $message }}</span>
-                            @enderror
-                        </div>
-
-                        <div class="form-group">
-                            <div class="checkbox">
-                                <label>
-                                    <input type="checkbox" name="is_board_member" value="1" 
-                                           {{ old('is_board_member', $contributor->is_board_member) ? 'checked' : '' }}>
-                                    {{ __('عضو مجلس إدارة') }}
-                                </label>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <div class="checkbox">
-                                <label for="line_notes">{{ __('* اسباب التعديل') }}</label>
-                                <textarea name="line_notes" class="form-control" style="width: 680px; height: 136px;"  placeholder="{{ __('اكتب سبب التعديل الذي قمت به') }}"></textarea>
-                            </div>
-                            <label for="documents">{{ __('إضافة وثائق وملفات جديدة') }} <small class="text-muted">({{ __('اختياري') }})</small></label>
-                            <input type="file" name="documents[]" id="documents" class="form-control" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx">
-                            <small class="text-muted">{{ __('يمكنك رفع عدة ملفات (صور، PDF، Word، Excel). الحد الأقصى 10MB لكل ملف. (اختياري)') }}</small>
-                            @error('documents.*')
-                                <span class="help-block text-danger">{{ $message }}</span>
-                            @enderror
-                            <div id="file-list" class="mt-2"></div>
-                        </div>
-
-                        <div class="form-group">
-                            <button type="submit" class="btn btn-primary">
-                                <span class="glyphicon glyphicon-floppy-disk"></span> {{ __('حفظ التغييرات') }}
-                            </button>
-                            <a href="{{ route('contributors.show', $contributor->id) }}" class="btn btn-info">
-                                <span class="glyphicon glyphicon-eye-open"></span> {{ __('عرض') }}
-                            </a>
-                            <a href="{{ route('contributors.index') }}" class="btn btn-default">
-                                <span class="glyphicon glyphicon-arrow-right"></span> {{ __('إلغاء') }}
-                            </a>
-                        </div>
-                    </form>
+                <div class="contributor-form-actions">
+                    <a href="{{ route('contributors.show', $contributor->id) }}" class="contributor-form-btn">
+                        <i class="bi bi-eye"></i>
+                        {{ __('عرض الملف') }}
+                    </a>
+                    <a href="{{ route('contributors.index') }}" class="contributor-form-btn-muted">
+                        <i class="bi bi-arrow-right-circle"></i>
+                        {{ __('العودة للمساهمين') }}
+                    </a>
                 </div>
             </div>
+        </section>
 
-            <!-- Current Information Panel -->
-            <div class="row">
-                <div class="col-md-12">
-                    <div class="panel panel-info">
-                        <div class="panel-heading">
-                            <h4 class="panel-title">{{ __('المعلومات الحالية') }}</h4>
-                        </div>
-                        <div class="panel-body">
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <strong>{{ __('تاريخ الإنشاء') }}:</strong> {{ $contributor->created_at->format('Y-m-d H:i') }}<br>
-                                    <strong>{{ __('آخر تحديث') }}:</strong> {{ $contributor->updated_at->format('Y-m-d H:i') }}<br>
-                                    <strong>{{ __('المدة منذ الإنشاء') }}:</strong> {{ $contributor->created_at->diffForHumans() }}
-                                </div>
-                                <div class="col-md-6">
-                                    @if($contributor->user)
-                                        <strong>{{ __('حساب المستخدم المرتبط') }}:</strong> {{ $contributor->user->name }}<br>
-                                        <strong>{{ __('البريد الإلكتروني') }}:</strong> {{ $contributor->user->email }}<br>
-                                        <strong>{{ __('تاريخ إنشاء الحساب') }}:</strong> {{ $contributor->user->created_at->format('Y-m-d H:i') }}
-                                    @else
-                                        <strong>{{ __('حساب المستخدم المرتبط') }}:</strong> {{ __('غير مرتبط') }}
-                                    @endif
-                                </div>
-                            </div>
+        <div class="contributor-form-grid">
+            <section class="contributor-panel">
+                <div class="contributor-panel-header">
+                    <div class="contributor-panel-title-wrap">
+                        <span class="contributor-panel-icon"><i class="bi bi-sliders2"></i></span>
+                        <div>
+                            <h2 class="contributor-panel-title">{{ __('تحديث بيانات الملف') }}</h2>
+                            <p class="contributor-panel-subtitle">{{ __('النموذج الحالي يعرض نفس حقول الإدخال مع تحسين المعاينة والتنبيه لسبب التعديل.') }}</p>
                         </div>
                     </div>
                 </div>
-            </div>
+
+                <form action="{{ route('contributors.update', $contributor->id) }}" method="POST" enctype="multipart/form-data"
+                    data-contributor-form
+                    data-confirm-message="{{ __('هل أنت متأكد من حفظ التغييرات؟') }}"
+                    data-name-label="{{ __('الاسم') }}"
+                    data-id-label="{{ __('رقم الهوية') }}"
+                    data-empty-name="{{ __('يرجى إدخال اسم المساهم') }}"
+                    data-empty-id="{{ __('يرجى إدخال رقم الهوية') }}">
+                    @csrf
+                    @method('PUT')
+
+                    @include('contributors.partials.form-fields', ['isEdit' => true, 'contributor' => $contributor])
+
+                    <div class="contributor-form-footer">
+                        <p class="contributor-form-footer-note">
+                            {{ __('سيتم تسجيل التعديل مع السبب الذي تدخله هنا، لذلك احرص على كتابة وصف واضح يسهل الرجوع إليه لاحقًا.') }}
+                        </p>
+
+                        <div class="contributor-form-footer-actions">
+                            <button type="submit" class="contributor-form-btn">
+                                <i class="bi bi-save2"></i>
+                                {{ __('حفظ التغييرات') }}
+                            </button>
+                            <a href="{{ route('contributors.show', $contributor->id) }}" class="contributor-form-btn-muted">
+                                <i class="bi bi-eye"></i>
+                                {{ __('عرض') }}
+                            </a>
+                            <a href="{{ route('contributors.index') }}" class="contributor-form-btn-muted">
+                                <i class="bi bi-x-circle"></i>
+                                {{ __('إلغاء') }}
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </section>
+
+            <aside class="contributor-side-stack">
+                <section class="contributor-mini-card">
+                    <h3 class="contributor-mini-title">
+                        <i class="bi bi-person-badge"></i>
+                        {{ __('ملخص سريع') }}
+                    </h3>
+                    <div class="contributor-stat-grid">
+                        <div class="contributor-stat-box">
+                            <strong>#{{ $contributor->id }}</strong>
+                            <span>{{ __('رقم المساهم في النظام') }}</span>
+                        </div>
+                        <div class="contributor-stat-box">
+                            <strong>{{ number_format($contributor->share_count_cr ?? 0, 0) }}</strong>
+                            <span>{{ __('إجمالي الأسهم الحالية') }}</span>
+                        </div>
+                        <div class="contributor-stat-box">
+                            <strong>{{ $contributor->documents()->count() }}</strong>
+                            <span>{{ __('عدد الوثائق المرفوعة') }}</span>
+                        </div>
+                        <div class="contributor-stat-box">
+                            <strong>{{ $contributor->is_board_member ? __('نعم') : __('لا') }}</strong>
+                            <span>{{ __('حالة مجلس الإدارة') }}</span>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="contributor-mini-card">
+                    <h3 class="contributor-mini-title">
+                        <i class="bi bi-clock-history"></i>
+                        {{ __('الحالة الحالية') }}
+                    </h3>
+                    <div class="contributor-meta-list">
+                        <div class="contributor-meta-item">
+                            <i class="bi bi-calendar-plus"></i>
+                            <div>{{ __('أنشئ في') }}: {{ $contributor->created_at->format('Y-m-d H:i') }}</div>
+                        </div>
+                        <div class="contributor-meta-item">
+                            <i class="bi bi-arrow-repeat"></i>
+                            <div>{{ __('آخر تحديث') }}: {{ $contributor->updated_at->format('Y-m-d H:i') }}</div>
+                        </div>
+                        <div class="contributor-meta-item">
+                            <i class="bi bi-hourglass-split"></i>
+                            <div>{{ __('منذ الإنشاء') }}: {{ $contributor->created_at->diffForHumans() }}</div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="contributor-mini-card">
+                    <h3 class="contributor-mini-title">
+                        <i class="bi bi-link-45deg"></i>
+                        {{ __('الارتباطات') }}
+                    </h3>
+                    <div class="contributor-meta-list">
+                        @if ($contributor->user)
+                            <div class="contributor-meta-item">
+                                <i class="bi bi-person-check"></i>
+                                <div>{{ __('الحساب المرتبط') }}: {{ $contributor->user->name }}</div>
+                            </div>
+                            <div class="contributor-meta-item">
+                                <i class="bi bi-envelope"></i>
+                                <div>{{ __('البريد الإلكتروني') }}: {{ $contributor->user->email }}</div>
+                            </div>
+                        @else
+                            <div class="contributor-meta-item">
+                                <i class="bi bi-person-x"></i>
+                                <div>{{ __('لا يوجد حساب مستخدم مرتبط بهذا المساهم حتى الآن.') }}</div>
+                            </div>
+                        @endif
+                    </div>
+                </section>
+            </aside>
         </div>
     </div>
 </div>
 @endsection
 
-@push('scripts')
-<script>
-$(document).ready(function() {
-    // Form validation
-    $('form').on('submit', function(e) {
-        const name = $('#name').val().trim();
-        const idNumber = $('#id_number').val().trim();
-        
-        if (!name) {
-            alert('{{ __("يرجى إدخال اسم المساهم") }}');
-            e.preventDefault();
-            return false;
-        }
-        
-        if (!idNumber) {
-            alert('{{ __("يرجى إدخال رقم الهوية") }}');
-            e.preventDefault();
-            return false;
-        }
-        
-        // Confirm before submitting
-        if (!confirm('{{ __("هل أنت متأكد من حفظ التغييرات؟") }}\n\n{{ __("الاسم") }}: ' + name + '\n{{ __("رقم الهوية") }}: ' + idNumber)) {
-            e.preventDefault();
-            return false;
-        }
-    });
-
-    // Auto-generate temp password
-    $('#temp_password').on('focus', function() {
-        if (!$(this).val()) {
-            const randomPassword = Math.random().toString(36).substring(2, 8);
-            $(this).val(randomPassword);
-        }
-    });
-
-    // Display selected files
-    $('#documents').on('change', function() {
-        const files = this.files;
-        const fileList = $('#file-list');
-        fileList.empty();
-        
-        if (files.length > 0) {
-            let html = '<ul class="list-unstyled">';
-            for (let i = 0; i < files.length; i++) {
-                const file = files[i];
-                const fileSize = (file.size / 1024 / 1024).toFixed(2);
-                html += '<li><span class="glyphicon glyphicon-file"></span> ' + file.name + ' <small class="text-muted">(' + fileSize + ' MB)</small></li>';
-            }
-            html += '</ul>';
-            fileList.html(html);
-        }
-    });
-});
-</script>
-@endpush
+@include('contributors.partials.form-scripts')

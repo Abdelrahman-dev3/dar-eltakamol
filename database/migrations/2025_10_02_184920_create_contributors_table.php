@@ -20,7 +20,7 @@ return new class extends Migration
             $table->string('user_id', 128)->nullable();
             $table->string('iban', 24)->nullable();
             $table->string('bank_name', 15)->nullable();
-            $table->string('job_name', 100)->nullable();
+            $table->string('position', 100)->nullable();
             $table->float('share_count_cr')->nullable();
             $table->boolean('is_board_member')->default(false);
             $table->timestamps();

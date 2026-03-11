@@ -1,140 +1,170 @@
 @extends('layouts.app')
 
-@section('title', __('عرض تفاصيل التصنيف'))
+@section('title', $category->isCompany() ? __('تفاصيل الشركة') : __('تفاصيل الإدارة'))
 
 @section('content')
-<div class="container">
-    <div class="row">
-        <div class="col-md-8 col-md-offset-2">
-            <div class="panel panel-default">
-                <div class="panel-heading">
-                    <h3 class="panel-title">
-                        {{ __('عرض تفاصيل التصنيف') }} #{{ $category->id }}
-                        <div class="pull-left">
-                            <a href="{{ route('categories.edit', $category->id) }}" class="btn btn-warning btn-sm">
-                                <span class="glyphicon glyphicon-edit"></span> {{ __('تعديل') }}
-                            </a>
-                            <a href="{{ route('categories.index') }}" class="btn btn-default btn-sm">
-                                <span class="glyphicon glyphicon-arrow-right"></span> {{ __('رجوع') }}
-                            </a>
-                        </div>
-                    </h3>
+@include('categories.partials.theme')
+
+<div class="membership-page">
+    <div class="container membership-shell">
+        <section class="membership-hero">
+            <span class="membership-kicker">
+                <i class="fa {{ $category->isCompany() ? 'fa-building-o' : 'fa-briefcase' }}"></i>
+                {{ $category->level_label }}
+            </span>
+            <h1 class="membership-title">{{ $category->name }}</h1>
+            <p class="membership-subtitle">
+                {{ $category->isCompany() ? 'هذه هي القمة التنظيمية للعضوية. من هنا يمكنك متابعة الإدارات التابعة وعدد أعضائها وصلاحياتها.' : 'هذه الإدارة مرتبطة مباشرة بالشركة، وتعرض هنا الصلاحيات المفعلة والأعضاء المرتبطين بها.' }}
+            </p>
+            <div class="membership-actions">
+                <a href="{{ route('categories.edit', $category) }}" class="membership-btn">
+                    <i class="fa fa-pencil"></i>
+                    تعديل
+                </a>
+                <a href="{{ route('categories.index') }}" class="membership-btn-secondary">
+                    <i class="fa fa-arrow-right"></i>
+                    رجوع
+                </a>
+            </div>
+        </section>
+
+        <section class="membership-stats">
+            <article class="membership-stat">
+                <div class="membership-stat-label">المستوى</div>
+                <div class="membership-stat-value" style="font-size: 24px;">{{ $category->level_label }}</div>
+            </article>
+            <article class="membership-stat">
+                <div class="membership-stat-label">الأعضاء</div>
+                <div class="membership-stat-value">{{ $category->users->count() }}</div>
+            </article>
+            <article class="membership-stat">
+                <div class="membership-stat-label">الصلاحيات</div>
+                <div class="membership-stat-value">{{ $category->permissions->count() }}</div>
+            </article>
+            <article class="membership-stat">
+                <div class="membership-stat-label">{{ $category->isCompany() ? 'الإدارات التابعة' : 'الشركة الأم' }}</div>
+                <div class="membership-stat-value" style="font-size: 24px;">
+                    {{ $category->isCompany() ? $category->children->count() : ($category->parent?->name ?? '-') }}
                 </div>
-                <div class="panel-body">
-                    <div class="panel panel-info">
-                        <div class="panel-heading">
-                            <h4 class="panel-title">{{ __('معلومات التصنيف') }}</h4>
-                        </div>
-                        <div class="panel-body">
-                            <div class="row">
-                                <div class="col-md-4">
-                                    <strong>{{ __('رقم التصنيف') }}:</strong>
-                                </div>
-                                <div class="col-md-8">
-                                    {{ $category->id }}
-                                </div>
-                            </div>
-                            <hr>
+            </article>
+        </section>
 
-                            <div class="row">
-                                <div class="col-md-4">
-                                    <strong>{{ __('اسم التصنيف') }}:</strong>
-                                </div>
-                                <div class="col-md-8">
-                                    {{ $category->name }}
-                                </div>
-                            </div>
-                            <hr>
-
-                            <div class="row">
-                                <div class="col-md-4">
-                                    <strong>{{ __('عدد المستخدمين') }}:</strong>
-                                </div>
-                                <div class="col-md-8">
-                                    <span class="badge badge-info">
-                                        <i class="fa fa-users"></i> {{ $category->users_count }}
-                                    </span>
-                                </div>
-                            </div>
-                            <hr>
-
-                            <div class="row">
-                                <div class="col-md-4">
-                                    <strong>{{ __('تاريخ الإضافة') }}:</strong>
-                                </div>
-                                <div class="col-md-8">
-                                    {{ $category->created_at->format('Y-m-d H:i:s') }}
-                                </div>
-                            </div>
-                            <hr>
-
-                            <div class="row">
-                                <div class="col-md-4">
-                                    <strong>{{ __('آخر تحديث') }}:</strong>
-                                </div>
-                                <div class="col-md-8">
-                                    {{ $category->updated_at->format('Y-m-d H:i:s') }}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    @if($category->users->count() > 0)
-                    <div class="panel panel-success">
-                        <div class="panel-heading">
-                            <h4 class="panel-title">
-                                <i class="fa fa-users"></i> {{ __('المستخدمين في هذا التصنيف') }}
-                                <span class="badge">{{ $category->users->count() }}</span>
-                            </h4>
-                        </div>
-                        <div class="panel-body">
-                            <div class="table-responsive">
-                                <table class="table table-bordered table-striped">
-                                    <thead>
-                                        <tr>
-                                            <th>{{ __('الاسم') }}</th>
-                                            <th>{{ __('البريد الإلكتروني') }}</th>
-                                            <th>{{ __('رقم الهاتف') }}</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach($category->users as $user)
-                                            <tr>
-                                                <td>{{ $user->name }}</td>
-                                                <td>{{ $user->email }}</td>
-                                                <td>{{ $user->phone ?? __('غير محدد') }}</td>
-                                            </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                    @else
-                    <div class="alert alert-info">
-                        <i class="fa fa-info-circle"></i> {{ __('لا يوجد مستخدمين في هذا التصنيف') }}
-                    </div>
-                    @endif
-
-                    <div class="panel-footer">
-                        <a href="{{ route('categories.edit', $category->id) }}" class="btn btn-warning">
-                            <i class="fa fa-edit"></i> {{ __('تعديل') }}
-                        </a>
-                        <a href="{{ route('categories.index') }}" class="btn btn-default">
-                            <i class="fa fa-arrow-right"></i> {{ __('رجوع') }}
-                        </a>
-                        <form action="{{ route('categories.destroy', $category) }}" method="POST" style="display: inline-block;" onsubmit="return confirm('{{ __('هل أنت متأكد من حذف هذا التصنيف؟') }}');">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="btn btn-danger">
-                                <i class="fa fa-trash"></i> {{ __('حذف') }}
-                            </button>
-                        </form>
-                    </div>
+        <section class="membership-section" style="padding: 24px;">
+            <div class="membership-section-head">
+                <div>
+                    <h2 class="membership-section-title">بطاقة المعلومات</h2>
+                    <div class="membership-card-subtitle">تفاصيل مختصرة تساعد على قراءة الحالة التنظيمية بسرعة.</div>
                 </div>
             </div>
-        </div>
+
+            <div class="membership-details">
+                <div class="membership-detail">
+                    <div class="membership-detail-label">الاسم</div>
+                    <div class="membership-detail-value">{{ $category->name }}</div>
+                </div>
+                <div class="membership-detail">
+                    <div class="membership-detail-label">تابع لـ</div>
+                    <div class="membership-detail-value">{{ $category->parent?->name ?? 'السجل الرئيسي' }}</div>
+                </div>
+                <div class="membership-detail">
+                    <div class="membership-detail-label">تاريخ الإنشاء</div>
+                    <div class="membership-detail-value">{{ $category->created_at->format('Y-m-d') }}</div>
+                </div>
+                <div class="membership-detail">
+                    <div class="membership-detail-label">آخر تحديث</div>
+                    <div class="membership-detail-value">{{ $category->updated_at->format('Y-m-d') }}</div>
+                </div>
+            </div>
+        </section>
+
+        @if($category->isCompany())
+            <section class="membership-section" style="padding: 24px; margin-top: 18px;">
+                <div class="membership-section-head">
+                    <div>
+                        <h2 class="membership-section-title">الإدارات التابعة</h2>
+                        <div class="membership-card-subtitle">كل إدارة هنا تمثل مستوى مستقل في الصلاحيات وربط الأعضاء.</div>
+                    </div>
+                </div>
+
+                @if($category->children->isNotEmpty())
+                    <div class="membership-list">
+                        @foreach($category->children as $department)
+                            <article class="membership-list-item" style="animation-delay: {{ 0.08 + ($loop->index * 0.05) }}s;">
+                                <div class="membership-list-top">
+                                    <div>
+                                        <h3 class="membership-list-name">{{ $department->name }}</h3>
+                                        <div class="membership-list-sub">إدارة تابعة للشركة ويمكن ربط الأعضاء والصلاحيات بها مباشرة.</div>
+                                    </div>
+                                    <a href="{{ route('categories.show', $department) }}" class="membership-btn-muted">
+                                        <i class="fa fa-arrow-left"></i>
+                                        فتح الإدارة
+                                    </a>
+                                </div>
+                                <div class="membership-chip-row">
+                                    <span class="membership-chip"><i class="fa fa-users"></i> {{ $department->users->count() }} عضو</span>
+                                    <span class="membership-chip"><i class="fa fa-key"></i> {{ $department->permissions->count() }} صلاحية</span>
+                                </div>
+                            </article>
+                        @endforeach
+                    </div>
+                @else
+                    <div class="membership-empty">لا توجد إدارات تابعة لهذه الشركة حتى الآن.</div>
+                @endif
+            </section>
+        @else
+            <div class="membership-columns">
+                <section class="membership-section" style="padding: 24px;">
+                    <div class="membership-section-head">
+                        <div>
+                            <h2 class="membership-section-title">الصلاحيات المرتبطة</h2>
+                            <div class="membership-card-subtitle">الصلاحيات المفعلة لهذه الإدارة حالياً.</div>
+                        </div>
+                    </div>
+
+                    @if($category->permissions->isNotEmpty())
+                        <div class="membership-list">
+                            @foreach($category->permissions as $permission)
+                                <article class="membership-list-item" style="animation-delay: {{ 0.08 + ($loop->index * 0.05) }}s;">
+                                    <div class="membership-list-name">{{ $permission->name }}</div>
+                                    <div class="membership-list-sub"><code>{{ $permission->slug }}</code></div>
+                                    <div class="membership-chip-row">
+                                        <span class="membership-chip"><i class="fa fa-cube"></i> {{ $permission->module ?? 'عام' }}</span>
+                                    </div>
+                                </article>
+                            @endforeach
+                        </div>
+                    @else
+                        <div class="membership-empty">لا توجد صلاحيات مرتبطة بهذه الإدارة.</div>
+                    @endif
+                </section>
+
+                <section class="membership-section" style="padding: 24px;">
+                    <div class="membership-section-head">
+                        <div>
+                            <h2 class="membership-section-title">أعضاء الإدارة</h2>
+                            <div class="membership-card-subtitle">المستخدمون المرتبطون بهذه الإدارة والمساهم المرتبط بكل مستخدم إن وجد.</div>
+                        </div>
+                    </div>
+
+                    @if($category->users->isNotEmpty())
+                        <div class="membership-list">
+                            @foreach($category->users as $user)
+                                <article class="membership-list-item" style="animation-delay: {{ 0.08 + ($loop->index * 0.05) }}s;">
+                                    <div class="membership-list-name">{{ $user->name }}</div>
+                                    <div class="membership-list-sub">{{ $user->email }}</div>
+                                    <div class="membership-chip-row">
+                                        <span class="membership-chip"><i class="fa fa-phone"></i> {{ $user->phone ?? 'غير محدد' }}</span>
+                                        <span class="membership-chip"><i class="fa fa-user-circle-o"></i> {{ optional($user->contributor)->name ?? 'غير مرتبط بمساهم' }}</span>
+                                    </div>
+                                </article>
+                            @endforeach
+                        </div>
+                    @else
+                        <div class="membership-empty">لا يوجد أعضاء مربوطون بهذه الإدارة.</div>
+                    @endif
+                </section>
+            </div>
+        @endif
     </div>
 </div>
 @endsection
-

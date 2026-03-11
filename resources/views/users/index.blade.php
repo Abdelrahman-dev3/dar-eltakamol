@@ -14,21 +14,15 @@
                 </div>
                 <div class="panel-body">
                     @if (session('success'))
-                        <div class="alert alert-success">
-                            {{ session('success') }}
-                        </div>
+                        <div class="alert alert-success">{{ session('success') }}</div>
                     @endif
 
                     @if (session('error'))
-                        <div class="alert alert-danger">
-                            {{ session('error') }}
-                        </div>
+                        <div class="alert alert-danger">{{ session('error') }}</div>
                     @endif
 
                     @if($users->isEmpty())
-                        <div class="alert alert-info">
-                            لا توجد مستخدمين في النظام حالياً.
-                        </div>
+                        <div class="alert alert-info">لا توجد مستخدمين في النظام حالياً.</div>
                     @else
                         <div class="table-responsive">
                             <table class="table table-striped table-bordered">
@@ -38,7 +32,8 @@
                                         <th>الاسم</th>
                                         <th>البريد الإلكتروني</th>
                                         <th>رقم الهاتف</th>
-                                        <th>التصنيفات</th>
+                                        <th>الإدارة</th>
+                                        <th>الشركة</th>
                                         <th>تاريخ الإنشاء</th>
                                         <th>الإجراءات</th>
                                     </tr>
@@ -50,15 +45,8 @@
                                             <td>{{ $user->name }}</td>
                                             <td>{{ $user->email }}</td>
                                             <td>{{ $user->phone ?? 'غير محدد' }}</td>
-                                            <td>
-                                                @if($user->categories->isNotEmpty())
-                                                    @foreach($user->categories as $category)
-                                                        <span class="label label-info">{{ $category->name }}</span>
-                                                    @endforeach
-                                                @else
-                                                    <span class="text-muted">بدون تصنيف</span>
-                                                @endif
-                                            </td>
+                                            <td>{{ optional($user->department)->name ?? 'بدون إدارة' }}</td>
+                                            <td>{{ optional(optional($user->department)->parent)->name ?? '-' }}</td>
                                             <td>{{ $user->created_at->format('Y-m-d') }}</td>
                                             <td>
                                                 <a href="{{ route('users.show', $user) }}" class="btn btn-info btn-xs" title="عرض">
@@ -93,5 +81,3 @@
     </div>
 </div>
 @endsection
-
-

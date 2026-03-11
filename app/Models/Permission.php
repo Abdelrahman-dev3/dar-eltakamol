@@ -25,6 +25,14 @@ class Permission extends Model
         return $this->belongsToMany(Category::class, 'category_permission')
                     ->withTimestamps();
     }
+
+    /**
+     * Get the departments that have this permission.
+     */
+    public function departments(): BelongsToMany
+    {
+        return $this->categories()->whereNotNull('categories.parent_id');
+    }
 }
 
 

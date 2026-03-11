@@ -75,4 +75,24 @@ class User extends Authenticatable
         return $this->belongsToMany(Category::class, 'user_category')
                     ->withTimestamps();
     }
+
+    /**
+     * Get the departments for the user.
+     */
+    public function departments(): BelongsToMany
+    {
+        return $this->categories()->whereNotNull('categories.parent_id');
+    }
+
+    /**
+     * Get the assigned department for the user.
+     */
+    public function getDepartmentAttribute(): ?Category
+    {
+        if ($this->relationLoaded('departments')) {
+            return $this->departments->first();
+        }
+
+        return $this->departments()->with('parent')->first();
+    }
 }

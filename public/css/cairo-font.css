@@ -1,36 +1,41 @@
-/* Cairo Font Global Styles */
-@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@200;300;400;500;600;700;800;900&display=swap');
+/* App Font Global Styles */
+@import url('https://fonts.googleapis.com/css2?family=Zain:wght@200;300;400;700;800;900&display=swap');
+
+/* Change the app font from one place */
+:root {
+    --app-font-family: 'Zain', sans-serif;
+}
 
 /* Global font family override */
 * {
-    font-family: 'Cairo', 'Arial', sans-serif !important;
+    font-family: var(--app-font-family) !important;
 }
 
 /* Specific element overrides */
 body, html {
-    font-family: 'Cairo', 'Arial', sans-serif !important;
+    font-family: var(--app-font-family) !important;
 }
 
 /* Bootstrap overrides */
 .btn, .form-control, .navbar, .panel, .table, .alert {
-    font-family: 'Cairo', 'Arial', sans-serif !important;
+    font-family: var(--app-font-family) !important;
 }
 
 /* Arabic text specific styling */
 .rtl, [dir="rtl"] {
-    font-family: 'Cairo', 'Arial', sans-serif !important;
+    font-family: var(--app-font-family) !important;
     font-weight: 400;
 }
 
 /* Headings */
 h1, h2, h3, h4, h5, h6 {
-    font-family: 'Cairo', 'Arial', sans-serif !important;
+    font-family: var(--app-font-family) !important;
     font-weight: 600;
 }
 
 /* Sidebar specific styling */
 .sidebar, .sidebar * {
-    font-family: 'Cairo', 'Arial', sans-serif !important;
+    font-family: var(--app-font-family) !important;
 }
 
 .sidebar-brand {
@@ -43,27 +48,27 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Tables */
 .table th, .table td {
-    font-family: 'Cairo', 'Arial', sans-serif !important;
+    font-family: var(--app-font-family) !important;
 }
 
 /* Forms */
 input, textarea, select {
-    font-family: 'Cairo', 'Arial', sans-serif !important;
+    font-family: var(--app-font-family) !important;
 }
 
 /* Buttons */
 button, .btn {
-    font-family: 'Cairo', 'Arial', sans-serif !important;
+    font-family: var(--app-font-family) !important;
 }
 
 /* Cards */
 .card, .card-header, .card-body {
-    font-family: 'Cairo', 'Arial', sans-serif !important;
+    font-family: var(--app-font-family) !important;
 }
 
 /* Alerts */
 .alert {
-    font-family: 'Cairo', 'Arial', sans-serif !important;
+    font-family: var(--app-font-family) !important;
 }
 
 /* Ensure proper font rendering */
