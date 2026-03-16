@@ -1,8 +1,12 @@
 @php
     $isEdit = $isEdit ?? false;
     $contributor = $contributor ?? null;
+    $companies = $companies ?? collect();
+    $departments = $departments ?? collect();
     $currentProfilePicture = $contributor && $contributor->profile_picture ? $contributor->profile_picture_url : null;
     $currentInitials = $contributor ? $contributor->initials : 'م';
+    $selectedDepartmentIds = old('department_ids', $contributor?->departments?->pluck('id')->toArray() ?? []);
+    $selectedCompanyId = old('company_id', $contributor?->primary_company?->id);
 @endphp
 
 <div class="contributor-section">
@@ -51,6 +55,53 @@
                     value="{{ old('position', $contributor->position ?? '') }}" maxlength="100"
                     placeholder="{{ __('أدخل المنصب أو الصفة') }}">
                 @error('position')
+                    <span class="help-block">{{ $message }}</span>
+                @enderror
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="contributor-section">
+    <h3 class="contributor-section-title">
+        <i class="bi bi-diagram-3"></i>
+        {{ __('الهيكل التنظيمي') }}
+    </h3>
+    <div class="row">
+        <div class="col-md-6">
+            <div class="form-group contributor-field @error('company_id') has-error @enderror">
+                <label for="company_id">{{ __('الشركة') }}</label>
+                <select name="company_id" id="company_id" class="form-control contributor-input" data-company-select>
+                    <option value="">{{ __('-- اختر الشركة --') }}</option>
+                    @foreach($companies as $company)
+                        <option value="{{ $company->id }}" {{ (string) $selectedCompanyId === (string) $company->id ? 'selected' : '' }}>
+                            {{ $company->name }}
+                        </option>
+                    @endforeach
+                </select>
+                <p class="contributor-inline-note">{{ __('اختر الشركة أولًا لتصفية الإدارات التابعة لها، ثم يمكنك ربط المساهم بإدارة واحدة أو أكثر.') }}</p>
+                @error('company_id')
+                    <span class="help-block">{{ $message }}</span>
+                @enderror
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="form-group contributor-field @error('department_ids') has-error @enderror">
+                <label for="department_ids">{{ __('الإدارات') }}</label>
+                <select name="department_ids[]" id="department_ids" class="form-control contributor-input" multiple size="6" data-departments-select>
+                    @foreach($departments as $department)
+                        <option value="{{ $department->id }}"
+                            data-company-id="{{ $department->parent_id }}"
+                            {{ in_array($department->id, $selectedDepartmentIds) ? 'selected' : '' }}>
+                            {{ $department->name }}{{ $department->parent ? ' - ' . $department->parent->name : '' }}
+                        </option>
+                    @endforeach
+                </select>
+                <p class="contributor-inline-note">{{ __('يمكن اختيار أكثر من إدارة للمساهم الواحد بشرط أن تكون كلها تحت نفس الشركة.') }}</p>
+                @error('department_ids')
+                    <span class="help-block">{{ $message }}</span>
+                @enderror
+                @error('department_ids.*')
                     <span class="help-block">{{ $message }}</span>
                 @enderror
             </div>

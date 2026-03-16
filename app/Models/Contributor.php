@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Contributor extends Model
@@ -79,6 +80,15 @@ class Contributor extends Model
     }
 
     /**
+     * Get the departments the contributor belongs to.
+     */
+    public function departments(): BelongsToMany
+    {
+        return $this->belongsToMany(Category::class, 'category_contributor')
+            ->withTimestamps();
+    }
+
+    /**
      * Get the share count attribute.
      */
     public function getShareCountAttribute(): float
@@ -109,5 +119,29 @@ class Contributor extends Model
             return mb_substr($words[0], 0, 1) . mb_substr($words[1], 0, 1);
         }
         return mb_substr($this->name, 0, 2);
+    }
+
+    /**
+     * Get the companies related through departments.
+     */
+    public function getCompaniesAttribute()
+    {
+        $departments = $this->relationLoaded('departments')
+            ? $this->departments
+            : $this->departments()->with('parent')->get();
+
+        return $departments
+            ->pluck('parent')
+            ->filter()
+            ->unique('id')
+            ->values();
+    }
+
+    /**
+     * Get the first related company.
+     */
+    public function getPrimaryCompanyAttribute(): ?Category
+    {
+        return $this->companies->first();
     }
 }

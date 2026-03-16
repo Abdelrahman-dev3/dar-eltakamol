@@ -4,10 +4,11 @@
 
 @section('content')
 @php
-    $companiesCount = $categories->getCollection()->whereNull('parent_id')->count();
-    $departmentsCount = $categories->getCollection()->whereNotNull('parent_id')->count();
-    $membersCount = $categories->getCollection()->sum('users_count');
-    $permissionsCount = $categories->getCollection()->sum('permissions_count');
+    $collection = $categories->getCollection();
+    $companiesCount = $collection->count();
+    $departmentsCount = $collection->sum('children_count');
+    $contributorsCount = $collection->sum(fn ($company) => $company->children->sum('contributors_count'));
+    $permissionsCount = $collection->sum(fn ($company) => $company->children->sum('permissions_count'));
 @endphp
 
 @include('categories.partials.theme')
@@ -16,14 +17,14 @@
     <div class="container-fluid membership-shell">
         <section class="membership-hero">
             <span class="membership-kicker">
-                <i class="fa fa-sitemap"></i>
+                <i class="bi bi-diagram-3-fill"></i>
                 هيكلة العضوية
             </span>
-            <h1 class="membership-title">الشركة، الإدارات، ثم الأعضاء</h1>
+            <h1 class="membership-title">الشركات</h1>
             <div class="membership-actions">
                 <a href="{{ route('categories.create') }}" class="membership-btn">
-                    <i class="fa fa-plus"></i>
-                    إضافة شركة أو إدارة
+                    <i class="bi bi-plus-circle-fill"></i>
+                    إضافة شركة
                 </a>
             </div>
         </section>
@@ -46,8 +47,8 @@
                 <div class="membership-stat-value">{{ number_format($departmentsCount) }}</div>
             </article>
             <article class="membership-stat" style="animation-delay: 0.19s;">
-                <div class="membership-stat-label">الأعضاء المرتبطون</div>
-                <div class="membership-stat-value">{{ number_format($membersCount) }}</div>
+                <div class="membership-stat-label">المساهمون المرتبطون</div>
+                <div class="membership-stat-value">{{ number_format($contributorsCount) }}</div>
             </article>
             <article class="membership-stat" style="animation-delay: 0.26s;">
                 <div class="membership-stat-label">إجمالي الصلاحيات المربوطة</div>
@@ -57,35 +58,43 @@
 
         @if($categories->isEmpty())
             <div class="membership-empty">
-                لا توجد بيانات عضوية حالياً. ابدأ بإنشاء الشركة، ثم أضف الإدارات داخلها.
+                لا توجد شركات حالياً. ابدأ بإضافة شركة جديدة، ثم أضف الإدارات التابعة لها من داخل صفحة عرض الشركة نفسها.
             </div>
         @else
             <section class="membership-grid">
-                @foreach($categories as $category)
+                @foreach($categories as $company)
+                    @php
+                        $contributorCount = $company->children->sum('contributors_count');
+                        $companyPermissionsCount = $company->children->sum('permissions_count');
+                    @endphp
+
                     <article class="membership-card" style="animation-delay: {{ 0.06 + ($loop->index * 0.05) }}s;">
                         <div class="membership-card-head">
                             <div>
-                                <span class="membership-badge {{ $category->isCompany() ? 'company' : 'department' }}">
-                                    <i class="fa {{ $category->isCompany() ? 'fa-building-o' : 'fa-briefcase' }}"></i>
-                                    {{ $category->level_label }}
+                                <span class="membership-badge company">
+                                    <i class="bi bi-buildings-fill"></i>
+                                    شركة
                                 </span>
-                                <h3 class="membership-card-title">{{ $category->name }}</h3>
-                                <div class="membership-card-subtitle">
-                                    {{ $category->parent?->name ?? 'السجل الرئيسي في الهيكل' }}
+                                <h3 class="membership-card-title">{{ $company->name }}</h3>
+                                <span class="membership-chip">
+                                    <i class="bi bi-clock-history"></i>
+                                    {{ $company->created_at->format('Y-m-d') }}
+                                </span>
+                                <div class="membership-chip-row">
                                 </div>
                             </div>
                             <div class="membership-card-actions">
-                                <a href="{{ route('categories.show', $category) }}" class="membership-icon-btn" title="عرض">
-                                    <i class="fa fa-eye"></i>
+                                <a href="{{ route('categories.show', $company) }}" class="membership-icon-btn" title="عرض">
+                                    <i class="bi bi-eye-fill"></i>
                                 </a>
-                                <a href="{{ route('categories.edit', $category) }}" class="membership-icon-btn" title="تعديل">
-                                    <i class="fa fa-pencil"></i>
+                                <a href="{{ route('categories.edit', $company) }}" class="membership-icon-btn" title="تعديل">
+                                    <i class="bi bi-pencil-square"></i>
                                 </a>
-                                <form action="{{ route('categories.destroy', $category) }}" method="POST" onsubmit="return confirm('هل أنت متأكد من الحذف؟');">
+                                <form action="{{ route('categories.destroy', $company) }}" method="POST" onsubmit="return confirm('هل أنت متأكد من الحذف؟');">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="membership-icon-btn danger" title="حذف">
-                                        <i class="fa fa-trash"></i>
+                                        <i class="bi bi-trash3-fill"></i>
                                     </button>
                                 </form>
                             </div>
@@ -93,28 +102,17 @@
 
                         <div class="membership-meta">
                             <div class="membership-meta-item">
-                                <strong>{{ $category->isCompany() ? $category->children_count : 0 }}</strong>
+                                <strong>{{ $company->children_count }}</strong>
                                 <span>إدارات</span>
                             </div>
                             <div class="membership-meta-item">
-                                <strong>{{ $category->users_count }}</strong>
-                                <span>أعضاء</span>
+                                <strong>{{ $contributorCount }}</strong>
+                                <span>مساهمون</span>
                             </div>
                             <div class="membership-meta-item">
-                                <strong>{{ $category->permissions_count }}</strong>
+                                <strong>{{ $companyPermissionsCount }}</strong>
                                 <span>صلاحيات</span>
                             </div>
-                        </div>
-
-                        <div class="membership-chip-row">
-                            <span class="membership-chip">
-                                <i class="fa fa-link"></i>
-                                {{ $category->isCompany() ? 'يمكن إضافة إدارات تابعة لها' : 'ترتبط بصلاحيات وأعضاء' }}
-                            </span>
-                            <span class="membership-chip">
-                                <i class="fa fa-clock-o"></i>
-                                {{ $category->created_at->format('Y-m-d') }}
-                            </span>
                         </div>
                     </article>
                 @endforeach

@@ -95,4 +95,32 @@ class User extends Authenticatable
 
         return $this->departments()->with('parent')->first();
     }
+
+    /**
+     * Get all department names as a readable string.
+     */
+    public function getDepartmentNamesAttribute(): string
+    {
+        $departments = $this->relationLoaded('departments')
+            ? $this->departments
+            : $this->departments()->with('parent')->get();
+
+        return $departments->pluck('name')->filter()->implode('، ');
+    }
+
+    /**
+     * Get all company names as a readable string.
+     */
+    public function getCompanyNamesAttribute(): string
+    {
+        $departments = $this->relationLoaded('departments')
+            ? $this->departments
+            : $this->departments()->with('parent')->get();
+
+        return $departments
+            ->pluck('parent.name')
+            ->filter()
+            ->unique()
+            ->implode('، ');
+    }
 }

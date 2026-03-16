@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\SellShares;
+use App\Models\Contributor;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -17,7 +18,9 @@ class SellSharesController extends Controller
      */
     public function index(): View
     {
-        $sellShares = SellShares::with('seller')->paginate(12);
+        $sellShares = SellShares::with(['seller.user', 'sharesPOs'])
+            ->latest('insert_date')
+            ->paginate(12);
         $canCreate = $this->canCreateSellShare();
         $SOTY = Setting::getValue('SOTY', 0);
 
@@ -29,7 +32,11 @@ class SellSharesController extends Controller
      */
     public function create(): View
     {
-        return view('sell-shares.create');
+        $contributors = Contributor::with('user')
+            ->orderBy('name')
+            ->get();
+
+        return view('sell-shares.create', compact('contributors'));
     }
 
     /**
@@ -62,7 +69,7 @@ class SellSharesController extends Controller
      */
     public function show(SellShares $sellShare): View
     {
-        $sellShare->load(['seller', 'sharesPOs']);
+        $sellShare->load(['seller.user', 'sharesPOs.contributor']);
         
         return view('sell-shares.show', compact('sellShare'));
     }
@@ -72,6 +79,7 @@ class SellSharesController extends Controller
      */
     public function edit(SellShares $sellShare): View
     {
+        $sellShare->load('seller.user');
         return view('sell-shares.edit', compact('sellShare'));
     }
 
@@ -117,7 +125,7 @@ class SellSharesController extends Controller
      */
     public function print(SellShares $sellShare): View
     {
-        $sellShare->load('seller');
+        $sellShare->load(['seller.user', 'sharesPOs.contributor']);
         
         return view('sell-shares.print', compact('sellShare'));
     }

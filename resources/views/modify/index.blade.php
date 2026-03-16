@@ -2,149 +2,285 @@
 
 @section('title', __('ملاحظات التعديل'))
 
-@section('content')
-<style>
-    .container {
-        max-width: 1200px;
-        margin: 40px auto;
-        background: var(--card-bg);
-        border-radius: 12px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-        padding: 20px 30px;
-        direction: rtl;
-        font-size: 17px;
-    }
+@include('shares-trans.partials.styles')
 
-    .search-bar {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 20px;
-        gap: 10px;
-        flex-wrap: wrap;
-    }
+@php
+    $editsCollection = $edits->getCollection();
+    $pageEditsCount = $editsCollection->count();
+    $uniqueEditorsCount = $editsCollection->pluck('modified_by')->filter()->unique()->count();
+    $notesCount = $editsCollection->filter(fn ($edit) => filled($edit->note))->count();
+    $latestEdit = $editsCollection->first();
+@endphp
 
-    .search-bar input {
-        flex: 1;
-        border: 1px solid var(--border-color);
-        border-radius: 8px;
-        padding: 10px 12px;
-        font-size: 1rem;
-        outline: none;
-    }
-
-    .search-bar input:focus {
-        border-color: var(--primary-color);
-        box-shadow: 0 0 4px var(--accent-color);
-    }
-
-    .search-bar button {
-        background-color: var(--primary-color);
-        color: var(--text-white);
-        border: none;
-        border-radius: 8px;
-        padding: 10px 18px;
-        font-size: 0.95rem;
-        cursor: pointer;
-        transition: 0.3s;
-    }
-
-    .search-bar button:hover {
-        background-color: var(--primary-hover);
-    }
-
-    table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 10px;
-    }
-
-    thead {
-        background: var(--primary-color);
-        color: var(--text-white);
-    }
-
-    th, td {
-        padding: 12px 16px;
-        text-align: right;
-        border-bottom: 1px solid var(--border-color);
-    }
-
-    th{
-        white-space: nowrap;
-    }
-
-    tbody tr:hover {
-        background-color: #fff9f0;
-    }
-
-    td a {
-        color: var(--primary-color);
-        text-decoration: none;
-        transition: color 0.3s;
-    }
-
-    td a:hover {
-        color: var(--primary-hover);
-        text-decoration: underline;
-    }
-
-    .no-data {
-        text-align: center;
-        color: var(--text-secondary);
-        padding: 20px;
-    }
-
-    @media (max-width: 768px) {
-        th, td {
-            font-size: 0.85rem;
-            padding: 8px;
+@push('styles')
+    <style>
+        .modify-page .st-list-head,
+        .modify-page .st-row {
+            grid-template-columns: minmax(14rem, 1.6fr) minmax(18rem, 2fr) minmax(10rem, 1fr) minmax(8rem, 0.9fr) minmax(10rem, 1fr);
         }
-    }
-</style>
 
-<div class="container">
-    <div class="search-bar">
-        <input type="text" id="search" placeholder="ابحث عن الصفحة أو من قام بالتعديل...">
+        .modify-link {
+            color: var(--primary-color);
+            text-decoration: none !important;
+            font-weight: 800;
+            transition: color 0.22s ease;
+            word-break: break-word;
+        }
+
+        .modify-link:hover {
+            color: var(--primary-hover);
+        }
+
+        .modify-note {
+            margin-top: 0.35rem;
+            color: var(--text-secondary);
+            font-size: 0.94rem;
+            line-height: 1.8;
+        }
+
+        .modify-table-wrap {
+            margin-top: 1rem;
+        }
+
+        @media (max-width: 1199px) {
+            .modify-page .st-list-head {
+                display: none;
+            }
+
+            .modify-page .st-row {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 767px) {
+            .modify-page .st-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+@endpush
+
+@section('content')
+    <div class="st-page modify-page">
+        <div class="st-shell">
+            <section class="st-hero">
+                <div class="st-hero-inner">
+                    <div>
+                        <span class="st-hero-badge">
+                            <i class="bi bi-clock-history"></i>
+                            {{ __('سجل التعديلات') }}
+                        </span>
+                        <h1 class="st-hero-title">{{ __('ملاحظات التعديل') }}</h1>
+                        <p class="st-hero-subtitle">
+                            {{ __('واجهة حديثة لمراجعة كل عمليات التعديل داخل النظام، مع توضيح الصفحة المعدلة وسبب التغيير واسم المستخدم وتوقيت التنفيذ بشكل واضح ومتجاوب.') }}
+                        </p>
+                    </div>
+
+                    <div class="st-hero-actions">
+                        <a href="{{ route('dashboard') }}" class="st-btn st-btn-secondary">
+                            <i class="bi bi-grid-1x2-fill"></i>
+                            {{ __('العودة للوحة التحكم') }}
+                        </a>
+                    </div>
+                </div>
+            </section>
+
+            <section class="st-stat-grid">
+                <article class="st-stat-card" style="animation-delay: 0.05s;">
+                    <div class="st-stat-icon">
+                        <i class="bi bi-journal-text"></i>
+                    </div>
+                    <p class="st-stat-value">{{ number_format($edits->total()) }}</p>
+                    <p class="st-stat-label">{{ __('إجمالي سجلات التعديل') }}</p>
+                </article>
+
+                <article class="st-stat-card" style="animation-delay: 0.12s;">
+                    <div class="st-stat-icon">
+                        <i class="bi bi-collection-fill"></i>
+                    </div>
+                    <p class="st-stat-value">{{ number_format($pageEditsCount) }}</p>
+                    <p class="st-stat-label">{{ __('السجلات الظاهرة في الصفحة الحالية') }}</p>
+                </article>
+
+                <article class="st-stat-card" style="animation-delay: 0.19s;">
+                    <div class="st-stat-icon">
+                        <i class="bi bi-people-fill"></i>
+                    </div>
+                    <p class="st-stat-value">{{ number_format($uniqueEditorsCount) }}</p>
+                    <p class="st-stat-label">{{ __('عدد المستخدمين الظاهرين') }}</p>
+                </article>
+
+                <article class="st-stat-card" style="animation-delay: 0.26s;">
+                    <div class="st-stat-icon">
+                        <i class="bi bi-chat-left-text-fill"></i>
+                    </div>
+                    <p class="st-stat-value">{{ number_format($notesCount) }}</p>
+                    <p class="st-stat-label">{{ __('السجلات التي تحتوي ملاحظات') }}</p>
+                </article>
+            </section>
+
+            <section class="st-toolbar">
+                <div class="st-search">
+                    <i class="bi bi-search"></i>
+                    <input
+                        type="search"
+                        id="modificationsSearch"
+                        placeholder="{{ __('ابحث عن الصفحة أو الملاحظة أو اسم من قام بالتعديل...') }}"
+                        autocomplete="off"
+                    >
+                </div>
+
+                <div class="st-chip-row">
+                    <span class="st-chip">
+                        <i class="bi bi-eye-fill"></i>
+                        <span id="visibleModificationsCount">{{ $pageEditsCount }}</span>
+                        {{ __('نتيجة ظاهرة') }}
+                    </span>
+                    <span class="st-chip">
+                        <i class="bi bi-clock-fill"></i>
+                        {{ $latestEdit ? $latestEdit->created_at->diffForHumans() : __('لا توجد بيانات') }}
+                    </span>
+                </div>
+            </section>
+
+            <section class="st-list-card">
+                @if($pageEditsCount > 0)
+                    <div class="st-list-head">
+                        <div>{{ __('الصفحة المعدلة') }}</div>
+                        <div>{{ __('سبب التعديل') }}</div>
+                        <div>{{ __('من قام بالتعديل') }}</div>
+                        <div>{{ __('منذ') }}</div>
+                        <div>{{ __('التاريخ') }}</div>
+                    </div>
+
+                    <div class="st-list-body" id="modificationsList">
+                        @foreach($edits as $edit)
+                            @php
+                                $searchableText = implode(' ', [
+                                    $edit->page_name,
+                                    $edit->note,
+                                    $edit->user->name ?? '',
+                                    $edit->created_at?->format('Y-m-d H:i'),
+                                ]);
+                            @endphp
+
+                            <article
+                                class="st-row modification-search-item"
+                                data-search="{{ mb_strtolower($searchableText) }}"
+                                style="animation-delay: {{ 0.05 + ($loop->index * 0.04) }}s;"
+                            >
+                                <div class="st-row-main">
+                                    <div class="st-row-avatar">
+                                        <i class="bi bi-link-45deg"></i>
+                                    </div>
+
+                                    <div style="min-width: 0;">
+                                        <h3 class="st-row-title">
+                                            <a href="{{ $edit->page_name }}" class="modify-link">{{ __('عرض الصفحة') }}</a>
+                                        </h3>
+                                        <div class="modify-note">
+                                            {{ \Illuminate\Support\Str::limit($edit->page_name, 90) }}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="st-field">
+                                    <span class="st-field-label">{{ __('سبب التعديل') }}</span>
+                                    <span class="st-field-value {{ filled($edit->note) ? '' : 'muted' }}">
+                                        {{ $edit->note ?: __('لم يتم إدخال ملاحظة لهذا التعديل.') }}
+                                    </span>
+                                </div>
+
+                                <div class="st-field">
+                                    <span class="st-field-label">{{ __('من قام بالتعديل') }}</span>
+                                    <span class="st-field-value">{{ $edit->user->name ?? __('غير معروف') }}</span>
+                                </div>
+
+                                <div class="st-field">
+                                    <span class="st-field-label">{{ __('منذ') }}</span>
+                                    <span class="st-field-value">{{ $edit->created_at->diffForHumans() }}</span>
+                                </div>
+
+                                <div class="st-field">
+                                    <span class="st-field-label">{{ __('التاريخ') }}</span>
+                                    <span class="st-field-value">{{ $edit->created_at->format('Y-m-d H:i') }}</span>
+                                </div>
+                            </article>
+                        @endforeach
+                    </div>
+
+                    <div class="st-empty" id="modificationsEmptyState">
+                        <div class="st-empty-icon">
+                            <i class="bi bi-search-heart"></i>
+                        </div>
+                        <h3>{{ __('لا توجد نتائج مطابقة') }}</h3>
+                        <p>{{ __('جرّب كتابة جزء من رابط الصفحة أو اسم المستخدم أو ملاحظة التعديل للوصول إلى السجل المطلوب.') }}</p>
+                    </div>
+
+                    <div class="st-pagination" id="modificationsPagination">
+                        {{ $edits->links() }}
+                    </div>
+                @else
+                    <div class="st-empty show">
+                        <div class="st-empty-icon">
+                            <i class="bi bi-journal-x"></i>
+                        </div>
+                        <h3>{{ __('لا توجد ملاحظات تعديل حاليًا') }}</h3>
+                        <p>{{ __('بمجرد إجراء تعديلات موثقة داخل النظام ستظهر هنا بشكل مرتب وسهل المراجعة.') }}</p>
+                    </div>
+                @endif
+            </section>
+        </div>
     </div>
-
-    <table id="editTable">
-        <thead>
-            <tr>
-                <th>#</th>
-                <th>{{ __('الصفحة المعدلة') }}</th>
-                <th>{{ __('سبب التعديل') }}</th>
-                <th>{{ __('من قام بالتعديل') }}</th>
-                <th>{{ __('منذ') }}</th>
-                <th>{{ __('التاريخ') }}</th>
-            </tr>
-        </thead>
-        <tbody>
-            @forelse ($edits as $edit)
-                <tr>
-                    <td>{{ $loop->iteration }}</td>
-                    <td><a href="{{ $edit->page_name }}">{{ __('عرض الصفحة') }}</a></td>
-                    <td>{{ $edit->note }}</td>
-                    <td>{{ $edit->user->name }}</td>
-                    <td style="white-space: nowrap;">{{ $edit->created_at->diffForHumans() }}</td>
-                    <td style="white-space: nowrap;">{{ $edit->created_at }}</td>
-                </tr>
-            @empty
-                <tr><td colspan="6" class="no-data">لا توجد ملاحظات تعديل حالياً</td></tr>
-            @endforelse
-        </tbody>
-    </table>
-</div>
-
-<script>
-    const searchInput = document.getElementById('search');
-    searchInput.addEventListener('keyup', function() {
-        const searchText = this.value.toLowerCase();
-        const rows = document.querySelectorAll('#editTable tbody tr');
-        rows.forEach(row => {
-            const rowText = row.innerText.toLowerCase();
-            row.style.display = rowText.includes(searchText) ? '' : 'none';
-        });
-    });
-</script>
-
 @endsection
+
+@push('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const searchInput = document.getElementById('modificationsSearch');
+            const rows = Array.from(document.querySelectorAll('.modification-search-item'));
+            const visibleCount = document.getElementById('visibleModificationsCount');
+            const emptyState = document.getElementById('modificationsEmptyState');
+            const pagination = document.getElementById('modificationsPagination');
+
+            if (!searchInput || rows.length === 0) {
+                return;
+            }
+
+            function normalize(value) {
+                return (value || '').toString().toLowerCase().trim();
+            }
+
+            function filterRows() {
+                const query = normalize(searchInput.value);
+                let shown = 0;
+
+                rows.forEach(function (row) {
+                    const haystack = normalize(row.getAttribute('data-search'));
+                    const match = query === '' || haystack.indexOf(query) !== -1;
+
+                    row.classList.toggle('is-hidden', !match);
+
+                    if (match) {
+                        shown += 1;
+                    }
+                });
+
+                if (visibleCount) {
+                    visibleCount.textContent = shown;
+                }
+
+                if (emptyState) {
+                    emptyState.classList.toggle('show', shown === 0);
+                }
+
+                if (pagination) {
+                    pagination.style.display = shown === 0 ? 'none' : '';
+                }
+            }
+
+            searchInput.addEventListener('input', filterRows);
+            filterRows();
+        });
+    </script>
+@endpush

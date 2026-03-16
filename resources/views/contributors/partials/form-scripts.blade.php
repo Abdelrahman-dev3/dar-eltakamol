@@ -12,6 +12,8 @@
         const profileInput = document.getElementById('profile_picture');
         const profilePreview = document.querySelector('[data-profile-preview]');
         const profileFallback = document.querySelector('[data-profile-fallback]');
+        const companySelect = document.querySelector('[data-company-select]');
+        const departmentsSelect = document.querySelector('[data-departments-select]');
 
         if (tempPasswordInput) {
             tempPasswordInput.addEventListener('focus', function () {
@@ -64,6 +66,31 @@
 
                 reader.readAsDataURL(file);
             });
+        }
+
+        if (companySelect && departmentsSelect) {
+            const departmentOptions = Array.from(departmentsSelect.options);
+
+            function syncDepartments() {
+                const companyId = companySelect.value;
+                const selectedValues = new Set(
+                    Array.from(departmentsSelect.selectedOptions).map(function (option) {
+                        return option.value;
+                    })
+                );
+
+                departmentOptions.forEach(function (option) {
+                    const shouldShow = !companyId || option.dataset.companyId === companyId;
+                    option.hidden = !shouldShow;
+
+                    if (!shouldShow && selectedValues.has(option.value)) {
+                        option.selected = false;
+                    }
+                });
+            }
+
+            companySelect.addEventListener('change', syncDepartments);
+            syncDepartments();
         }
 
         form.addEventListener('submit', function (event) {

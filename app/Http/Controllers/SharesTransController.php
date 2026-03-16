@@ -109,13 +109,15 @@ class SharesTransController extends Controller
     /**
      * Post the transaction.
      */
-    public function post(SharesTrans $sharesTrans)
+    public function post(Request $request, SharesTrans $sharesTrans)
     {
         $sharesTrans->update(['posted' => true]);
-
-        return response()->json([
-            'success' => true,
-            'posted' => $sharesTrans->posted
-        ]);
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'posted' => $sharesTrans->posted,
+            ]);
+        }
+        return redirect()->back()->with('success', 'تم اعتماد معاملة الأسهم بنجاح');
     }
 }

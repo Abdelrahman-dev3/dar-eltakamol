@@ -2,240 +2,232 @@
 
 @section('title', __('عرض تفصيل معاملة الأسهم'))
 
+@include('shares-trans.partials.styles')
+
+@php
+    $transaction = $shareTransLine->sharesTrans;
+    $contributor = $shareTransLine->contributor;
+    $effectiveShares = max((float) $shareTransLine->count_debit, (float) $shareTransLine->count_credit);
+    $totalAmount = $effectiveShares * (float) $shareTransLine->amount_per_share;
+    $direction = (float) $shareTransLine->count_debit > 0 ? __('خصم') : ((float) $shareTransLine->count_credit > 0 ? __('دائن') : __('غير محدد'));
+@endphp
+
 @section('content')
-<div resource
-<div class="row">
-    <div class="col-md-8 col-md-offset-2">
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                <h3 class="panel-title">
-                    {{ __('عرض تفصيل معاملة الأسهم') }}
-                    <div class="pull-left">
-                        <a href="{{ route('share-trans-lines.edit', $shareTransLine) }}" class="btn btn-warning btn-sm">
-                            <span class="glyphicon glyphicon-edit"></span> {{ __('تعديل') }}
-                        </a>
-                        <a href="{{ route('share-trans-lines.index') }}" class="btn btn-default btn-sm">
-                            <span class="glyphicon glyphicon-arrow-right"></span> {{ __('العودة') }}
-                        </a>
-                    </div>
-                </h3>
-            </div>
-            <div class="panel-body">
-                <div class="row">
-                    <div class="col-md-6">
-                        <strong>{{ __('اسم المساهم') }}:</strong>
-                    </div>
-                    <div class="col-md-6">
-                        @if($shareTransLine->contributor)
-                            <span class="label label-primary" style="font-size: 1.1em;">
-                                {{ $shareTransLine->contributor->name }}
+    <div class="st-page">
+        <div class="st-shell">
+            <section class="st-hero">
+                <div class="st-hero-inner">
+                    <div>
+                        <span class="st-hero-badge">
+                            <i class="bi bi-file-earmark-text-fill"></i>
+                            {{ __('عرض السطر') }} #{{ $shareTransLine->id }}
+                        </span>
+                        <h1 class="st-hero-title">{{ __('تفاصيل سطر معاملة الأسهم') }}</h1>
+                        <p class="st-hero-subtitle">
+                            {{ __('صفحة عرض حديثة وواضحة تبين المساهم والمعاملة المرتبطة واتجاه الحركة وقيمة السطر وحالته، مع وصول مباشر لإجراءات التعديل وتغيير الاعتماد.') }}
+                        </p>
+
+                        <div class="st-chip-row" style="margin-top: 1rem;">
+                            @include('shares-trans.partials.status-badge', ['posted' => $shareTransLine->posted])
+                            <span class="st-chip">
+                                <i class="bi bi-arrow-repeat"></i>
+                                {{ $direction }}
                             </span>
-                        @else
-                            <span class="text-danger">{{ __('غير محدد') }}</span>
+                            @if($contributor)
+                                <span class="st-chip">
+                                    <i class="bi bi-person-fill"></i>
+                                    {{ $contributor->name }}
+                                </span>
+                            @endif
+                        </div>
+                    </div>
+
+                    <div class="st-hero-actions">
+                        <a href="{{ route('share-trans-lines.edit', $shareTransLine) }}" class="st-btn st-btn-warning">
+                            <i class="bi bi-pencil-square"></i>
+                            {{ __('تعديل') }}
+                        </a>
+                        @if($transaction)
+                            <a href="{{ route('shares-trans.show', $transaction) }}" class="st-btn st-btn-info">
+                                <i class="bi bi-eye-fill"></i>
+                                {{ __('عرض المعاملة') }}
+                            </a>
                         @endif
+                        <a href="{{ route('share-trans-lines.index') }}" class="st-btn st-btn-secondary">
+                            <i class="bi bi-arrow-right-circle"></i>
+                            {{ __('العودة للتفاصيل') }}
+                        </a>
                     </div>
                 </div>
-                <hr>
+            </section>
 
-                <div class="row">
-                    <div class="col-md-6">
-                        <strong>{{ __('المعاملة الأساسية') }}:</strong>
-                    </div>
-                    <div class="col-md-6">
-                        {{ $shareTransLine->sharesTrans->shares_count ?? __('غير محدد') }} {{ __('سهم') }}
-                        @if($shareTransLine->sharesTrans)
-                            <br><small>{{ $shareTransLine->sharesTrans->created_at->format('Y-m-d H:i') }}</small>
-                        @endif
-                    </div>
-                </div>
-                <hr>
+            <section class="st-summary-grid">
+                <article class="st-summary-card" style="animation-delay: 0.05s;">
+                    <div class="st-summary-icon"><i class="bi bi-person-fill"></i></div>
+                    <p class="st-summary-value">{{ $contributor->name ?? __('غير محدد') }}</p>
+                    <p class="st-summary-label">{{ __('المساهم') }}</p>
+                </article>
+                <article class="st-summary-card" style="animation-delay: 0.12s;">
+                    <div class="st-summary-icon"><i class="bi bi-list-ol"></i></div>
+                    <p class="st-summary-value">{{ number_format($effectiveShares, 2) }}</p>
+                    <p class="st-summary-label">{{ __('عدد الأسهم الفعلي') }}</p>
+                </article>
+                <article class="st-summary-card" style="animation-delay: 0.19s;">
+                    <div class="st-summary-icon"><i class="bi bi-cash-stack"></i></div>
+                    <p class="st-summary-value">{{ number_format($totalAmount, 2) }}</p>
+                    <p class="st-summary-label">{{ __('المبلغ الإجمالي') }} {{ __('ريال') }}</p>
+                </article>
+                <article class="st-summary-card" style="animation-delay: 0.26s;">
+                    <div class="st-summary-icon"><i class="bi bi-arrow-left-right"></i></div>
+                    <p class="st-summary-value">{{ $direction }}</p>
+                    <p class="st-summary-label">{{ __('اتجاه الحركة') }}</p>
+                </article>
+            </section>
 
-                <div class="row">
-                    <div class="col-md-6">
-                        <strong>{{ __('الخصم') }}:</strong>
-                    </div>
-                    <div class="col-md-6">
-                        {{ number_format($shareTransLine->count_debit, 2) }} {{ __('سهم') }}
-                    </div>
-                </div>
-                <hr>
-
-                <div class="row">
-                    <div class="col-md-6">
-                        <strong>{{ __('الدائن') }}:</strong>
-                    </div>
-                    <div class="col-md-6">
-                        {{ number_format($shareTransLine->count_credit, 2) }} {{ __('سهم') }}
-                    </div>
-                </div>
-                <hr>
-
-                <div class="row">
-                    <div class="col-md-6">
-                        <strong>{{ __('سعر السهم') }}:</strong>
-                    </div>
-                    <div class="col-md-6">
-                        {{ number_format($shareTransLine->amount_per_share, 2) }} {{ __('ريال') }}
-                    </div>
-                </div>
-                <hr>
-
-                <div class="row">
-                    <div class="col-md-6">
-                        <strong>{{ __('الحالة') }}:</strong>
-                    </div>
-                    <div class="col-md-6">
-                        @if($shareTransLine->posted)
-                            <span class="label label-success">{{ __('معتمد') }}</span>
-                        @else
-                            <span class="label label-warning">{{ __('غير معتمد') }}</span>
-                        @endif
-                    </div>
-                </div>
-                <hr>
-
-                @if($shareTransLine->line_notes)
-                <div class="row">
-                    <div class="col-md-6">
-                        <strong>{{ __('ملاحظات السطر') }}:</strong>
-                    </div>
-                    <div class="col-md-6">
-                        {{ $shareTransLine->line_notes }}
-                    </div>
-                </div>
-                <hr>
-                @endif
-
-                <div class="row">
-                    <div class="col-md-6">
-                        <strong>{{ __('تاريخ الإنشاء') }}:</strong>
-                    </div>
-                    <div class="col-md-6">
-                        {{ $shareTransLine->created_at->format('Y-m-d H:i') }}
-                    </div>
-                </div>
-                <hr>
-
-                <div class="row">
-                    <div class="col-md-6">
-                        <strong>{{ __('تاريخ آخر تحديث') }}:</strong>
-                    </div>
-                    <div class="col-md-6">
-                        {{ $shareTransLine->updated_at->format('Y-m-d H:i') }}
-                    </div>
-                </div>
-
-                <!-- Summary Card -->
-                <div class="row mt-4">
-                    <div class="col-md-12">
-                        <div class="panel panel-info">
-                            <div class="panel-heading">
-                                <h4 class="panel-title">{{ __('ملخص المعاملة') }}</h4>
-                            </div>
-                            <div class="panel-body">
-                                <div class="row">
-                                    <div class="col-md-4 text-center">
-                                        <h4>{{ number_format(max($shareTransLine->count_debit, $shareTransLine->count_credit), 2) }}</h4>
-                                        <p>{{ __('عدد الأسهم') }}</p>
-                                    </div>
-                                    <div class="col-md-4 text-center">
-                                        <h4>{{ number_format($shareTransLine->amount_per_share, 2) }}</h4>
-                                        <p>{{ __('سعر السهم') }}</p>
-                                    </div>
-                                    <div class="col-md-4 text-center">
-                                        <h4 class="text-success">{{ number_format(max($shareTransLine->count_debit, $shareTransLine->count_credit) * $shareTransLine->amount_per_share, 2) }}</h4>
-                                        <p>{{ __('المبلغ الإجمالي') }}</p>
-                                    </div>
+            <div class="st-grid-two">
+                <div class="st-shell">
+                    <section class="st-card">
+                        <div class="st-card-header">
+                            <div class="st-card-title-wrap">
+                                <span class="st-card-icon"><i class="bi bi-info-circle-fill"></i></span>
+                                <div>
+                                    <h2 class="st-card-title">{{ __('المعلومات الأساسية') }}</h2>
+                                    <p class="st-card-subtitle">{{ __('بيانات السطر وعلاقته بالمعاملة الأم والمساهم المرتبط به.') }}</p>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-#endif
 
-<!-- Action Buttons -->
-<div class="row">
-    <div class="col-md-8 col-md-offset-2">
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                <h4 class="panel-title">{{ __('الإجراءات') }}</h4>
-            </div>
-            <div class="panel-body text-center">
-                <div class="btn-group">
-                    <a href="{{ route('share-trans-lines.edit', $shareTransLine) }}" class="btn btn-warning">
-                        <span class="glyphicon glyphicon-edit"></span> {{ __('تعديل') }}
-                    </a>
-                    
-                    @if(!$shareTransLine->posted)
-                        <button type="button" class="btn btn-success" id="approveBtn">
-                            <span class="glyphicon glyphicon-ok"></span> {{ __('اعتماد') }}
-                        </button>
-                    @else
-                        <button type="button" class="btn btn-danger" id="disapproveBtn">
-                            <span class="glyphicon glyphicon-ban"></span> {{ __('إلغاء الاعتماد') }}
-                        </button>
+                        <div class="st-info-list">
+                            <div class="st-info-item">
+                                <span class="st-info-label">{{ __('رقم السطر') }}</span>
+                                <div class="st-info-value">#{{ $shareTransLine->id }}</div>
+                            </div>
+                            <div class="st-info-item">
+                                <span class="st-info-label">{{ __('المساهم') }}</span>
+                                <div class="st-info-value">{{ $contributor->name ?? __('غير محدد') }}</div>
+                            </div>
+                            <div class="st-info-item">
+                                <span class="st-info-label">{{ __('المعاملة الأساسية') }}</span>
+                                <div class="st-info-value">
+                                    @if($transaction)
+                                        #{{ $transaction->id }} - {{ $transaction->date?->format('Y-m-d') }} - {{ $transaction->getTransTypeText() }}
+                                    @else
+                                        {{ __('غير محدد') }}
+                                    @endif
+                                </div>
+                            </div>
+                            <div class="st-info-item">
+                                <span class="st-info-label">{{ __('الخصم') }}</span>
+                                <div class="st-info-value">{{ number_format($shareTransLine->count_debit, 2) }} {{ __('سهم') }}</div>
+                            </div>
+                            <div class="st-info-item">
+                                <span class="st-info-label">{{ __('الدائن') }}</span>
+                                <div class="st-info-value">{{ number_format($shareTransLine->count_credit, 2) }} {{ __('سهم') }}</div>
+                            </div>
+                            <div class="st-info-item">
+                                <span class="st-info-label">{{ __('سعر السهم') }}</span>
+                                <div class="st-info-value">{{ number_format($shareTransLine->amount_per_share, 2) }} {{ __('ريال') }}</div>
+                            </div>
+                        </div>
+                    </section>
+
+                    @if($shareTransLine->line_notes)
+                        <section class="st-card">
+                            <div class="st-card-header">
+                                <div class="st-card-title-wrap">
+                                    <span class="st-card-icon"><i class="bi bi-chat-left-text-fill"></i></span>
+                                    <div>
+                                        <h2 class="st-card-title">{{ __('ملاحظات السطر') }}</h2>
+                                        <p class="st-card-subtitle">{{ __('أي توضيح مضاف لهذا السطر يظهر هنا.') }}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="st-note-box">
+                                <i class="bi bi-quote"></i>
+                                <div>{{ $shareTransLine->line_notes }}</div>
+                            </div>
+                        </section>
                     @endif
-                    
-                    <a href="{{ route('share-trans-lines.index') }}" class="btn btn-default">
-                        <span class="glyphicon glyphicon-list"></span> {{ __('قائمة التفاصيل') }}
-                    </a>
+                </div>
+
+                <div class="st-shell">
+                    <section class="st-card">
+                        <div class="st-card-header">
+                            <div class="st-card-title-wrap">
+                                <span class="st-card-icon"><i class="bi bi-clock-history"></i></span>
+                                <div>
+                                    <h2 class="st-card-title">{{ __('معلومات زمنية') }}</h2>
+                                    <p class="st-card-subtitle">{{ __('تواريخ الإنشاء والتحديث الحالية لهذا السطر.') }}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="st-info-list">
+                            <div class="st-info-item">
+                                <span class="st-info-label">{{ __('تاريخ الإنشاء') }}</span>
+                                <div class="st-info-value">{{ $shareTransLine->created_at->format('Y-m-d H:i') }}</div>
+                            </div>
+                            <div class="st-info-item">
+                                <span class="st-info-label">{{ __('آخر تحديث') }}</span>
+                                <div class="st-info-value">{{ $shareTransLine->updated_at->format('Y-m-d H:i') }}</div>
+                            </div>
+                            <div class="st-info-item">
+                                <span class="st-info-label">{{ __('الحالة') }}</span>
+                                <div class="st-info-value">@include('shares-trans.partials.status-badge', ['posted' => $shareTransLine->posted])</div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="st-card">
+                        <div class="st-card-header">
+                            <div class="st-card-title-wrap">
+                                <span class="st-card-icon"><i class="bi bi-lightning-charge-fill"></i></span>
+                                <div>
+                                    <h2 class="st-card-title">{{ __('إجراءات السطر') }}</h2>
+                                    <p class="st-card-subtitle">{{ __('الوصول السريع إلى التعديل أو تبديل حالة الاعتماد أو الرجوع للقائمة.') }}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="st-inline-actions" style="width: 100%;">
+                            <a href="{{ route('share-trans-lines.edit', $shareTransLine) }}" class="st-btn st-btn-warning">
+                                <i class="bi bi-pencil-square"></i>
+                                {{ __('تعديل') }}
+                            </a>
+
+                            <form action="{{ route('share-trans-lines.toggle-posted', $shareTransLine) }}" method="POST" style="width: 100%;">
+                                @csrf
+                                <button type="submit" class="st-btn {{ $shareTransLine->posted ? 'st-btn-danger' : 'st-btn-success' }}" style="width: 100%;" data-confirm="{{ $shareTransLine->posted ? __('هل أنت متأكد من إلغاء اعتماد هذا السطر؟') : __('هل أنت متأكد من اعتماد هذا السطر؟') }}">
+                                    <i class="bi {{ $shareTransLine->posted ? 'bi-ban-fill' : 'bi-patch-check-fill' }}"></i>
+                                    {{ $shareTransLine->posted ? __('إلغاء الاعتماد') : __('اعتماد السطر') }}
+                                </button>
+                            </form>
+
+                            <a href="{{ route('share-trans-lines.index') }}" class="st-btn st-btn-secondary">
+                                <i class="bi bi-list-ul"></i>
+                                {{ __('قائمة التفاصيل') }}
+                            </a>
+                        </div>
+                    </section>
                 </div>
             </div>
         </div>
     </div>
-</div>
 @endsection
 
 @push('scripts')
-<script>
-$(document).ready(function() {
-    // Approve transaction line
-    $('#approveBtn').click(function() {
-        if (confirm('{{ __("هل أنت متأكد من اعتماد هذا السطر؟") }}')) {
-            $.ajaxSetup({
-                headers: {
-                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                }
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('[data-confirm]').forEach(function (button) {
+                button.addEventListener('click', function (event) {
+                    const message = this.getAttribute('data-confirm');
+
+                    if (message && !window.confirm(message)) {
+                        event.preventDefault();
+                    }
+                });
             });
-            
-            $.ajax({
-                url: '/share-trans-lines/' + {{ $shareTransLine->id }} + '/toggle-posted',
-                type: 'POST',
-                success: function(response) {
-                    location.reload();
-                },
-                error: function(xhr) {
-                    alert('{{ __("حدث خطأ أثناء اعتماد السطر.") }}');
-                }
-            });
-        }
-    });
-    
-    // Disapprove transaction line
-    $('#disapproveBtn').click(function() {
-        if (confirm('{{ __("هل أنت متأكد من إلغاء اعتماد هذا السطر؟") }}')) {
-            $.ajaxSetup({
-                headers: {
-                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                }
-            });
-            
-            $.ajax({
-                url: '/share-trans-lines/' + {{ $shareTransLine->id }} + '/toggle-posted',
-                type: 'POST',
-                success: function(response) {
-                    location.reload();
-                },
-                error: function(xhr) {
-                    alert('{{ __("حدث خطأ أثناء إلغاء اعتماد السطر.") }}');
-                }
-            });
-        }
-    });
-});
-</script>
+        });
+    </script>
 @endpush

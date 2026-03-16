@@ -8,16 +8,36 @@ use Illuminate\Http\Request;
 
 class PaymentsController extends Controller
 {
+    protected function buildStats(): array
+    {
+        $confirmedAmount = (float) Payment::where('confirmed', true)->sum('amount');
+        $pendingAmount = (float) Payment::where('confirmed', false)->sum('amount');
+
+        return [
+            'total_count' => Payment::count(),
+            'confirmed_count' => Payment::where('confirmed', true)->count(),
+            'pending_count' => Payment::where('confirmed', false)->count(),
+            'confirmed_amount' => $confirmedAmount,
+            'pending_amount' => $pendingAmount,
+            'total_amount' => $confirmedAmount + $pendingAmount,
+            'average_amount' => (float) Payment::avg('amount'),
+            'max_amount' => (float) Payment::max('amount'),
+        ];
+    }
+
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        $payments = Payment::with(['sharesPO'])
-                          ->orderBy('date', 'desc')
-                          ->paginate(15);
+        $payments = Payment::with(['sharesPO.contributor'])
+            ->orderBy('date', 'desc')
+            ->paginate(15)
+            ->withQueryString();
 
-        return view('payments.index', compact('payments'));
+        $stats = $this->buildStats();
+
+        return view('payments.index', compact('payments', 'stats'));
     }
 
     /**
@@ -25,8 +45,12 @@ class PaymentsController extends Controller
      */
     public function create()
     {
-        $sharesPOs = SharesPO::all();
-        return view('payments.create', compact('sharesPOs'));
+        $sharesPOs = SharesPO::with('contributor')
+            ->orderByDesc('insert_date')
+            ->get();
+        $stats = $this->buildStats();
+
+        return view('payments.create', compact('sharesPOs', 'stats'));
     }
 
     /**
@@ -53,7 +77,7 @@ class PaymentsController extends Controller
         ]);
 
         return redirect()->route('payments.index')
-                        ->with('success', 'تم إضافة الدفعة بنجاح');
+            ->with('success', 'تم إضافة الدفعة بنجاح');
     }
 
     /**
@@ -61,7 +85,8 @@ class PaymentsController extends Controller
      */
     public function show(Payment $payment)
     {
-        $payment->load(['sharesPO']);
+        $payment->load(['sharesPO.contributor', 'sharesPO.sellShare']);
+
         return view('payments.show', compact('payment'));
     }
 
@@ -70,8 +95,14 @@ class PaymentsController extends Controller
      */
     public function edit(Payment $payment)
     {
-        $sharesPOs = SharesPO::all();
-        return view('payments.edit', compact('payment', 'sharesPOs'));
+        $payment->load(['sharesPO.contributor', 'sharesPO.sellShare']);
+
+        $sharesPOs = SharesPO::with('contributor')
+            ->orderByDesc('insert_date')
+            ->get();
+        $stats = $this->buildStats();
+
+        return view('payments.edit', compact('payment', 'sharesPOs', 'stats'));
     }
 
     /**
@@ -97,7 +128,8 @@ class PaymentsController extends Controller
             'transfer_document' => $request->transfer_document,
         ]);
 
-        return redirect()->route('payments.index');
+        return redirect()->route('payments.index')
+            ->with('success', 'تم تحديث بيانات الدفعة بنجاح');
     }
 
     /**
@@ -108,7 +140,7 @@ class PaymentsController extends Controller
         $payment->delete();
 
         return redirect()->route('payments.index')
-                        ->with('success', 'تم حذف الدفعة بنجاح');
+            ->with('success', 'تم حذف الدفعة بنجاح');
     }
 
     /**
@@ -117,12 +149,19 @@ class PaymentsController extends Controller
     public function toggleConfirmed(Payment $payment)
     {
         $payment->update([
-            'confirmed' => !$payment->confirmed
+            'confirmed' => !$payment->confirmed,
         ]);
+
+        if (!request()->expectsJson()) {
+            return redirect()->back()->with(
+                'success',
+                $payment->confirmed ? 'تم تأكيد الدفعة بنجاح' : 'تم إلغاء تأكيد الدفعة بنجاح'
+            );
+        }
 
         return response()->json([
             'success' => true,
-            'confirmed' => $payment->confirmed
+            'confirmed' => $payment->confirmed,
         ]);
     }
 }

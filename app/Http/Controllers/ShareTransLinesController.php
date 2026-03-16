@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\ShareTransLine;
 use App\Models\SharesTrans;
 use App\Models\Modification;
+use App\Models\Contributor;
 use Illuminate\Http\Request;
 
 class ShareTransLinesController extends Controller
@@ -14,9 +15,17 @@ class ShareTransLinesController extends Controller
      */
     public function index()
     {
-        $shareTransLines = ShareTransLine::with(['contributor'])->orderBy('created_at', 'desc')->paginate(10);
+        $selectedTransId = request()->query('trans_id');
 
-        return view('share-trans-lines.index', compact('shareTransLines'));
+        $query = ShareTransLine::with(['contributor', 'sharesTrans']);
+
+        if ($selectedTransId) {
+            $query->where('trans_id', $selectedTransId);
+        }
+
+        $shareTransLines = $query->orderBy('created_at', 'desc')->paginate(10)->withQueryString();
+
+        return view('share-trans-lines.index', compact('shareTransLines', 'selectedTransId'));
     }
 
     /**
@@ -24,8 +33,11 @@ class ShareTransLinesController extends Controller
      */
     public function create()
     {
-        $contributors = \App\Models\Contributor::all();
-        return view('share-trans-lines.create', compact('contributors'));
+        $contributors = Contributor::orderBy('name')->get();
+        $sharesTrans = SharesTrans::orderByDesc('date')->get();
+        $selectedTransId = request()->query('trans_id');
+
+        return view('share-trans-lines.create', compact('contributors', 'sharesTrans', 'selectedTransId'));
     }
 
     /**
@@ -35,7 +47,7 @@ class ShareTransLinesController extends Controller
     {
         $request->validate([
             'contributor_id' => 'required|exists:contributors,id',
-            'trans_id' => 'required|string|max:50',
+            'trans_id' => 'required|exists:shares_trans,id',
             'count_debit' => 'nullable|numeric|min:0',
             'count_credit' => 'nullable|numeric|min:0',
             'amount_per_share' => 'required|numeric|min:0',
@@ -43,11 +55,26 @@ class ShareTransLinesController extends Controller
             'posted' => 'boolean',
         ]);
 
+        $countDebit = $request->filled('count_debit') ? (float) $request->count_debit : 0;
+        $countCredit = $request->filled('count_credit') ? (float) $request->count_credit : 0;
+
+        if ($countDebit > 0 && $countCredit > 0) {
+            return redirect()->back()
+                ->withErrors(['count_debit' => 'لا يمكن تعبئة الخصم والدائن معًا في نفس السطر.'])
+                ->withInput();
+        }
+
+        if ($countDebit <= 0 && $countCredit <= 0) {
+            return redirect()->back()
+                ->withErrors(['count_debit' => 'يجب إدخال قيمة في الخصم أو الدائن.'])
+                ->withInput();
+        }
+
         ShareTransLine::create([
             'contributor_id' => $request->contributor_id,
             'trans_id' => $request->trans_id,
-            'count_debit' => $request->count_debit ?? 0,
-            'count_credit' => $request->count_credit ?? 0,
+            'count_debit' => $countDebit,
+            'count_credit' => $countCredit,
             'amount_per_share' => $request->amount_per_share,
             'line_notes' => $request->line_notes,
             'posted' => $request->has('posted'),
@@ -71,8 +98,11 @@ class ShareTransLinesController extends Controller
      */
     public function edit(ShareTransLine $shareTransLine)
     {
-        $sharesTrans = SharesTrans::all();
-        return view('share-trans-lines.edit', compact('shareTransLine', 'sharesTrans'));
+        $sharesTrans = SharesTrans::orderByDesc('date')->get();
+        $contributors = Contributor::orderBy('name')->get();
+        $shareTransLine->load(['sharesTrans', 'contributor']);
+
+        return view('share-trans-lines.edit', compact('shareTransLine', 'sharesTrans', 'contributors'));
     }
 
     /**
@@ -80,18 +110,39 @@ class ShareTransLinesController extends Controller
      */
     public function update(Request $request, ShareTransLine $shareTransLine)
     {
-        
         $request->validate([
-            // 'shares_trans_id' => 'required|exists:shares_trans,id',
-            // 'share_count' => 'required|integer|min:1',
-            // 'share_price' => 'required|numeric|min:0',
+            'contributor_id' => 'required|exists:contributors,id',
+            'trans_id' => 'required|exists:shares_trans,id',
+            'count_debit' => 'nullable|numeric|min:0',
+            'count_credit' => 'nullable|numeric|min:0',
+            'amount_per_share' => 'required|numeric|min:0',
+            'line_notes' => 'nullable|string|max:500',
             'line_notes_2' => 'required|string',
         ]);
+
+        $countDebit = $request->filled('count_debit') ? (float) $request->count_debit : 0;
+        $countCredit = $request->filled('count_credit') ? (float) $request->count_credit : 0;
+
+        if ($countDebit > 0 && $countCredit > 0) {
+            return redirect()->back()
+                ->withErrors(['count_debit' => 'لا يمكن تعبئة الخصم والدائن معًا في نفس السطر.'])
+                ->withInput();
+        }
+
+        if ($countDebit <= 0 && $countCredit <= 0) {
+            return redirect()->back()
+                ->withErrors(['count_debit' => 'يجب إدخال قيمة في الخصم أو الدائن.'])
+                ->withInput();
+        }
+
         $shareTransLine->update([
-            'shares_trans_id' => $request->shares_trans_id,
-            'share_count' => $request->share_count,
-            'share_price' => $request->share_price,
-            'total_amount' => $request->share_count * $request->share_price,
+            'contributor_id' => $request->contributor_id,
+            'trans_id' => $request->trans_id,
+            'count_debit' => $countDebit,
+            'count_credit' => $countCredit,
+            'amount_per_share' => $request->amount_per_share,
+            'line_notes' => $request->line_notes,
+            'posted' => $request->boolean('posted'),
         ]);
 
         $url = url()->previous();
@@ -122,9 +173,13 @@ class ShareTransLinesController extends Controller
             'posted' => !$shareTransLine->posted
         ]);
 
-        return response()->json([
-            'success' => true,
-            'posted' => $shareTransLine->posted
-        ]);
+        if (request()->expectsJson() || request()->ajax()) {
+            return response()->json([
+                'success' => true,
+                'posted' => $shareTransLine->posted
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'تم تحديث حالة اعتماد السطر بنجاح');
     }
 }

@@ -10,6 +10,10 @@ class SharesPO extends Model
 {
     use HasFactory;
 
+    public const PO_STATUS_PENDING = 0;
+    public const PO_STATUS_REVIEW = 1;
+    public const PO_STATUS_COMPLETED = 2;
+
     protected $table = 'shares_poes';
 
     protected $fillable = [
@@ -42,6 +46,27 @@ class SharesPO extends Model
      */
     public function sellShare(): BelongsTo
     {
-        return $this->belongsTo(SellShares::class, 'sale_number');
+        return $this->belongsTo(SellShares::class, 'sale_number', 'id');
+    }
+
+    /**
+     * Get the purchase order status label.
+     */
+    public function getPoStatusText(): string
+    {
+        return match ((int) $this->po_status) {
+            self::PO_STATUS_PENDING => 'في الانتظار',
+            self::PO_STATUS_REVIEW => 'قيد المراجعة',
+            self::PO_STATUS_COMPLETED => 'مكتمل',
+            default => 'غير محدد',
+        };
+    }
+
+    /**
+     * Get the total value for the purchase order.
+     */
+    public function getTotalAmountAttribute(): float
+    {
+        return (float) $this->count * (float) $this->amount_per_share;
     }
 }

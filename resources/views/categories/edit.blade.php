@@ -9,20 +9,22 @@
     <div class="container membership-shell">
         <section class="membership-hero">
             <span class="membership-kicker">
-                <i class="fa fa-pencil-square-o"></i>
+                <i class="bi bi-pencil-square"></i>
                 تحديث العضوية
             </span>
             <h1 class="membership-title">{{ $category->isCompany() ? 'تعديل الشركة' : 'تعديل الإدارة' }}</h1>
             <p class="membership-subtitle">
-                {{ $category->isCompany() ? 'يمكنك تعديل اسم الشركة فقط، لأنها تمثل المستوى الأعلى الثابت في الهيكل.' : 'يمكنك تعديل اسم الإدارة وتحديث الصلاحيات التي سيتحكم بها أعضاء هذه الإدارة.' }}
+                {{ $category->isCompany()
+                    ? 'يمكنك تحديث اسم الشركة بصفتها المستوى الأول داخل الهيكل التنظيمي.'
+                    : 'يمكنك تحديث اسم الإدارة أو نقلها إلى شركة أخرى، مع ضبط الصلاحيات المرتبطة بها.' }}
             </p>
             <div class="membership-actions">
                 <a href="{{ route('categories.show', $category) }}" class="membership-btn-secondary">
-                    <i class="fa fa-eye"></i>
+                    <i class="bi bi-eye-fill"></i>
                     عرض التفاصيل
                 </a>
                 <a href="{{ route('categories.index') }}" class="membership-btn-secondary">
-                    <i class="fa fa-arrow-right"></i>
+                    <i class="bi bi-arrow-right-circle"></i>
                     رجوع
                 </a>
             </div>
@@ -48,8 +50,19 @@
 
                     @if($category->isDepartment())
                         <div class="membership-field">
-                            <label>الشركة</label>
-                            <div class="membership-readonly">{{ $category->parent?->name }}</div>
+                            <label for="parent_id">الشركة التابعة لها الإدارة <span class="text-danger">*</span></label>
+                            <select name="parent_id" id="parent_id" class="membership-select" required>
+                                <option value="">اختر الشركة</option>
+                                @foreach($companies as $company)
+                                    <option value="{{ $company->id }}"
+                                        {{ (string) old('parent_id', $category->parent_id) === (string) $company->id ? 'selected' : '' }}>
+                                        {{ $company->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('parent_id')
+                                <span class="membership-error">{{ $message }}</span>
+                            @enderror
                         </div>
 
                         <div class="membership-field">
@@ -62,23 +75,21 @@
                                     </option>
                                 @endforeach
                             </select>
-                            @error('permission_ids')
-                                <span class="membership-error">{{ $message }}</span>
-                            @enderror
+                            <span class="membership-help">سيتم تطبيق هذه الصلاحيات على أعضاء ومساهمي هذه الإدارة فقط.</span>
                         </div>
                     @else
                         <div class="membership-note">
-                            الشركة هي المستوى الأول فقط، بينما المستخدمون والصلاحيات يرتبطون بالإدارات التابعة لها.
+                            تظل الشركة في المستوى الأول، وتبقى الإدارات والمساهمون مرتبطة بها بشكل غير مباشر من خلال الإدارات التابعة لها.
                         </div>
                     @endif
 
                     <div class="membership-actions-bar">
                         <button type="submit" class="membership-btn">
-                            <i class="fa fa-save"></i>
+                            <i class="bi bi-check2-circle"></i>
                             تحديث
                         </button>
                         <a href="{{ route('categories.index') }}" class="membership-btn-muted">
-                            <i class="fa fa-times"></i>
+                            <i class="bi bi-x-circle"></i>
                             إلغاء
                         </a>
                     </div>

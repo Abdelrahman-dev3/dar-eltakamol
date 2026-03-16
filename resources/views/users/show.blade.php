@@ -28,17 +28,23 @@
                                 <td>{{ $user->id_number ?? 'غير محدد' }}</td>
                             </tr>
                             <tr>
-                                <th>الإدارة</th>
-                                <td>{{ optional($user->department)->name ?? 'بدون إدارة' }}</td>
+                                <th>الإدارات</th>
+                                <td>{{ $user->department_names ?: 'بدون إدارات' }}</td>
                             </tr>
                             <tr>
-                                <th>الشركة</th>
-                                <td>{{ optional(optional($user->department)->parent)->name ?? '-' }}</td>
+                                <th>الشركات</th>
+                                <td>{{ $user->company_names ?: '-' }}</td>
                             </tr>
                             <tr>
                                 <th>المساهم المرتبط</th>
                                 <td>{{ optional($user->contributor)->name ?? 'غير مرتبط' }}</td>
                             </tr>
+                            @if($user->contributor && $user->contributor->departments->isNotEmpty())
+                                <tr>
+                                    <th>ملاحظة الصلاحيات</th>
+                                    <td>صلاحيات هذا المستخدم موروثة من إدارات المساهم المرتبط به.</td>
+                                </tr>
+                            @endif
                             <tr>
                                 <th>تاريخ الإنشاء</th>
                                 <td>{{ $user->created_at->format('Y-m-d H:i:s') }}</td>

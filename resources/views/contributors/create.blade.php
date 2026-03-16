@@ -47,7 +47,12 @@
                     data-empty-id="{{ __('يرجى إدخال رقم الهوية') }}">
                     @csrf
 
-                    @include('contributors.partials.form-fields', ['isEdit' => false, 'contributor' => null])
+                    @include('contributors.partials.form-fields', [
+                        'isEdit' => false,
+                        'contributor' => null,
+                        'companies' => $companies,
+                        'departments' => $departments,
+                    ])
 
                     <div class="contributor-form-footer">
                         <p class="contributor-form-footer-note">

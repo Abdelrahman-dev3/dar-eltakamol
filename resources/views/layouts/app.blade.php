@@ -249,11 +249,30 @@
             box-shadow: 0 14px 24px rgba(170, 134, 63, 0.24);
         }
 
+        .nav-link.dropdown-toggle::after {
+            content: "";
+            position: absolute;
+            bottom: -2px;
+            {{ app()->getLocale() == 'ar' ? 'right' : 'left' }}: 34px;
+            width: 2px;
+            height: 0;
+            border-radius: 999px;
+            background: linear-gradient(180deg, rgba(170, 134, 63, 0.42) 0%, rgba(170, 134, 63, 0.12) 100%);
+            opacity: 0;
+            transition: height 0.28s ease, opacity 0.24s ease;
+        }
+
+        .nav-item.is-open > .nav-link.dropdown-toggle::after,
+        .nav-item.has-active-child > .nav-link.dropdown-toggle::after {
+            height: 22px;
+            opacity: 1;
+        }
+
         .dropdown-menu {
-            background: rgba(170, 134, 63, 0.06);
-            border: 1px solid transparent;
-            border-radius: 16px;
-            margin: 8px 10px 0;
+            background: transparent;
+            border: 0;
+            border-radius: 0;
+            margin: 0;
             box-shadow: none;
             padding: 0;
             display: block;
@@ -267,50 +286,100 @@
             transition: max-height 0.34s ease, opacity 0.24s ease, transform 0.24s ease, padding 0.24s ease, border-color 0.24s ease, box-shadow 0.24s ease;
         }
 
+        .dropdown-menu::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            bottom: 14px;
+            {{ app()->getLocale() == 'ar' ? 'right' : 'left' }}: 34px;
+            width: 2px;
+            border-radius: 999px;
+            background: linear-gradient(180deg, rgba(170, 134, 63, 0.38) 0%, rgba(170, 134, 63, 0.12) 100%);
+            opacity: 0;
+            transition: opacity 0.24s ease;
+        }
+
         .dropdown-menu li {
             list-style: none;
+            position: relative;
+        }
+
+        .dropdown-menu li::before {
+            content: "";
+            position: absolute;
+            top: calc(50% - 10px);
+            {{ app()->getLocale() == 'ar' ? 'right' : 'left' }}: 34px;
+            width: 18px;
+            height: 20px;
+            background: transparent;
+            border-bottom: 2px solid rgba(170, 134, 63, 0.24);
+            {{ app()->getLocale() == 'ar' ? 'border-right' : 'border-left' }}: 2px solid rgba(170, 134, 63, 0.24);
+            {{ app()->getLocale() == 'ar' ? 'border-bottom-right-radius' : 'border-bottom-left-radius' }}: 16px;
+            opacity: 0;
+            transition: opacity 0.24s ease, transform 0.24s ease;
         }
 
         .nav-item.is-open > .dropdown-menu {
             opacity: 1;
             transform: translateY(0);
-            padding: 8px 0;
-            border-color: rgba(170, 134, 63, 0.14);
-            box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
+            padding: 6px 0 2px;
+        }
+
+        .nav-item.is-open > .dropdown-menu::before,
+        .nav-item.is-open > .dropdown-menu li::before {
+            opacity: 1;
         }
 
         .dropdown-menu li a {
             color: var(--primary-color);
-            padding: 11px 14px;
-            border-radius: 12px;
-            margin: 4px 8px;
+            padding: 10px 12px 10px 22px;
+            border-radius: 14px;
+            margin: 3px 0;
             font-size: 1.14rem;
             font-weight: 500;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
             text-decoration: none;
-            transition: all 0.3s ease;
+            position: relative;
+            {{ app()->getLocale() == 'ar' ? 'padding-right' : 'padding-left' }}: 50px;
+            {{ app()->getLocale() == 'ar' ? 'margin-right' : 'margin-left' }}: 18px;
+            transition: background-color 0.3s ease, color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
         }
 
         .dropdown-menu li a:hover,
         .dropdown-menu li a.active {
             background-color: rgba(170, 134, 63, 0.1);
             color: var(--primary-hover);
+            transform: translate{{ app()->getLocale() == 'ar' ? 'X(-2px)' : 'X(2px)' }};
+            box-shadow: 0 8px 18px rgba(170, 134, 63, 0.10);
         }
 
-        .nav-link i {
+        .nav-link .nav-icon,
+        .dropdown-menu li a .submenu-icon {
             margin: 0;
-            width: 24px;
-            text-align: center;
-            font-size: 1.25rem;
             flex-shrink: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 14px;
+            color: inherit;
+            background: rgba(170, 134, 63, 0.10);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65);
         }
 
-        .dropdown-menu li a i {
-            width: 18px;
-            text-align: center;
-            flex-shrink: 0;
+        .nav-link .nav-icon {
+            width: 2.35rem;
+            height: 2.35rem;
+            font-size: 1.18rem;
+        }
+
+        .dropdown-menu li a .submenu-icon {
+            width: 1.95rem;
+            height: 1.95rem;
+            font-size: 0.98rem;
+            position: relative;
+            z-index: 1;
         }
 
         .nav-link .nav-link-label {
@@ -332,8 +401,15 @@
             opacity: 1;
         }
 
+        .nav-link.active .nav-icon,
+        .nav-link.dropdown-toggle.active .nav-icon {
+            background: rgba(255, 255, 255, 0.16);
+            box-shadow: none;
+        }
+
         .nav-link.active i,
-        .nav-link.dropdown-toggle.active i {
+        .nav-link.dropdown-toggle.active i,
+        .dropdown-menu li a.active .submenu-icon {
             color: inherit;
         }
 
@@ -925,6 +1001,30 @@
             background: rgba(213, 179, 106, 0.12);
         }
 
+        html[data-theme="dark"] .nav-link .nav-icon,
+        html[data-theme="dark"] .dropdown-menu li a .submenu-icon {
+            background: rgba(148, 163, 184, 0.12);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        }
+
+        html[data-theme="dark"] .dropdown-menu {
+            background: transparent;
+            border-color: transparent;
+        }
+
+        html[data-theme="dark"] .dropdown-menu::before {
+            background: linear-gradient(180deg, rgba(213, 179, 106, 0.34) 0%, rgba(148, 163, 184, 0.10) 100%);
+        }
+
+        html[data-theme="dark"] .dropdown-menu li::before {
+            border-bottom-color: rgba(213, 179, 106, 0.20);
+            {{ app()->getLocale() == 'ar' ? 'border-right-color' : 'border-left-color' }}: rgba(213, 179, 106, 0.20);
+        }
+
+        html[data-theme="dark"] .nav-link.dropdown-toggle::after {
+            background: linear-gradient(180deg, rgba(213, 179, 106, 0.38) 0%, rgba(148, 163, 184, 0.08) 100%);
+        }
+
         html[data-theme="dark"] .table-striped tbody tr:nth-of-type(odd) {
             background-color: rgba(148, 163, 184, 0.06);
         }
@@ -1159,6 +1259,7 @@
             .dropdown-menu li a {
                 font-size: 1.05rem;
                 padding: 10px 12px;
+                {{ app()->getLocale() == 'ar' ? 'padding-right' : 'padding-left' }}: 46px;
             }
 
             .auth-container {
@@ -1319,6 +1420,7 @@
             .dropdown-menu li a {
                 font-size: 1.2rem;
                 padding: 10px 15px;
+                {{ app()->getLocale() == 'ar' ? 'padding-right' : 'padding-left' }}: 46px;
             }
         }
 
@@ -2065,8 +2167,7 @@
     <!-- Mobile Toggle Button (Only show when authenticated) -->
     @if (Auth::check())
                     <button class="mobile-toggle" onclick="toggleSidebar()">
-                        <i class="fa fa-bars"></i>
-                        <i class="bi bi-list" style="display: none;"></i>
+                        <i class="bi bi-list"></i>
                 </button>
     @endif
 
@@ -2082,28 +2183,28 @@
             <nav class="sidebar-nav">
                 <div class="nav-item">
                     <a href="{{ route('dashboard') }}" class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
-                        <i class="fa fa-dashboard"></i>
+                        <i class="bi bi-grid-1x2-fill nav-icon"></i>
                         <span class="nav-link-label">{{ __('لوحة التحكم') }}</span>
                     </a>
                 </div>
 
                 <div class="nav-item">
                     <a href="{{ route('contributors.index') }}" class="nav-link {{ request()->routeIs('contributors.*') ? 'active' : '' }}">
-                        <i class="fa fa-users-cog"></i>
+                        <i class="bi bi-people-fill nav-icon"></i>
                         <span class="nav-link-label">{{ __('المساهمين') }}</span>
                     </a>
                 </div>
 
                 <div class="nav-item">
                     <a href="{{ route('shares-trans.index') }}" class="nav-link {{ request()->routeIs('shares-trans.*') ? 'active' : '' }}">
-                        <i class="fa fa-line-chart"></i>
+                        <i class="bi bi-arrow-left-right nav-icon"></i>
                         <span class="nav-link-label">{{ __('معاملات الأسهم') }}</span>
                     </a>
                 </div>
 
                 <div class="nav-item">
                     <a href="{{ route('sell-shares.index') }}" class="nav-link {{ request()->routeIs('sell-shares.*') ? 'active' : '' }}">
-                        <i class="fa fa-handshake"></i>
+                        <i class="bi bi-megaphone-fill nav-icon"></i>
                         <span class="nav-link-label">{{ __('عروض البيع') }}</span>
                     </a>
                 </div>
@@ -2111,36 +2212,36 @@
                 <!-- Transactions Dropdown -->
                 <div class="nav-item {{ request()->routeIs('share-trans-lines.*') || request()->routeIs('modify.*') || request()->routeIs('payments.*') || request()->routeIs('shares-pos.*') ? 'has-active-child is-open' : '' }}">
                     <a href="#" class="nav-link dropdown-toggle {{ request()->routeIs('share-trans-lines.*') || request()->routeIs('modify.*') || request()->routeIs('payments.*') || request()->routeIs('shares-pos.*') ? 'active' : '' }}" data-toggle="dropdown" aria-expanded="{{ request()->routeIs('share-trans-lines.*') || request()->routeIs('modify.*') || request()->routeIs('payments.*') || request()->routeIs('shares-pos.*') ? 'true' : 'false' }}">
-                        <i class="fa fa-exchange-alt"></i>
+                        <i class="bi bi-diagram-3-fill nav-icon"></i>
                         <span class="nav-link-label">{{ __('المعاملات') }}</span>
-                        <i class="fa fa-chevron-down nav-arrow" aria-hidden="true"></i>
+                        <i class="bi bi-chevron-down nav-arrow" aria-hidden="true"></i>
                     </a>
                     <ul class="dropdown-menu">
-                        <li><a href="{{ route('share-trans-lines.index') }}" class="{{ request()->routeIs('share-trans-lines.*') ? 'active' : '' }}"><i class="fa fa-list-alt"></i>{{ __('تفاصيل المعاملات') }}</a></li>
-                        <li><a href="{{ route('modify.index') }}" class="{{ request()->routeIs('modify.*') ? 'active' : '' }}"><i class="fa fa-list-alt"></i>{{ __('ملاحظات التعديلات') }}</a></li>
-                        <li><a href="{{ route('payments.index') }}" class="{{ request()->routeIs('payments.*') ? 'active' : '' }}"><i class="fa fa-credit-card"></i>{{ __('المدفوعات') }}</a></li>
-                        <li><a href="{{ route('shares-pos.index') }}" class="{{ request()->routeIs('shares-pos.*') ? 'active' : '' }}"><i class="fa fa-shopping-cart"></i>{{ __('طلبات الشراء') }}</a></li>
+                        <li><a href="{{ route('share-trans-lines.index') }}" class="{{ request()->routeIs('share-trans-lines.*') ? 'active' : '' }}">{{ __('تفاصيل المعاملات') }}</a></li>
+                        <li><a href="{{ route('modify.index') }}" class="{{ request()->routeIs('modify.*') ? 'active' : '' }}">{{ __('ملاحظات التعديلات') }}</a></li>
+                        <li><a href="{{ route('payments.index') }}" class="{{ request()->routeIs('payments.*') ? 'active' : '' }}">{{ __('المدفوعات') }}</a></li>
+                        <li><a href="{{ route('shares-pos.index') }}" class="{{ request()->routeIs('shares-pos.*') ? 'active' : '' }}">{{ __('طلبات الشراء') }}</a></li>
                     </ul>
                 </div>
 
                 <!-- Polls Dropdown -->
                 <div class="nav-item {{ request()->routeIs('polls.*') || request()->routeIs('poll-options.*') || request()->routeIs('poll-answers.*') ? 'has-active-child is-open' : '' }}">
                     <a href="#" class="nav-link dropdown-toggle {{ request()->routeIs('polls.*') || request()->routeIs('poll-options.*') || request()->routeIs('poll-answers.*') ? 'active' : '' }}" data-toggle="dropdown" aria-expanded="{{ request()->routeIs('polls.*') || request()->routeIs('poll-options.*') || request()->routeIs('poll-answers.*') ? 'true' : 'false' }}">
-                        <i class="fa fa-list-alt"></i>
+                        <i class="bi bi-ui-checks-grid nav-icon"></i>
                         <span class="nav-link-label">{{ __('الاستطلاعات') }}</span>
-                        <i class="fa fa-chevron-down nav-arrow" aria-hidden="true"></i>
+                        <i class="bi bi-chevron-down nav-arrow" aria-hidden="true"></i>
                     </a>
                     <ul class="dropdown-menu">
-                        <li><a href="{{ route('polls.index') }}" class="{{ request()->routeIs('polls.*') ? 'active' : '' }}"><i class="fa fa-vote-yea"></i>{{ __('الاستطلاعات') }}</a></li>
-                        <li><a href="{{ route('poll-options.index') }}" class="{{ request()->routeIs('poll-options.*') ? 'active' : '' }}"><i class="fa fa-list-check"></i>{{ __('خيارات الاستطلاعات') }}</a></li>
-                        <li><a href="{{ route('poll-answers.index') }}" class="{{ request()->routeIs('poll-answers.*') ? 'active' : '' }}"><i class="fa fa-comments"></i>{{ __('إجابات الاستطلاعات') }}</a></li>
+                        <li><a href="{{ route('polls.index') }}" class="{{ request()->routeIs('polls.*') ? 'active' : '' }}">{{ __('الاستطلاعات') }}</a></li>
+                        <li><a href="{{ route('poll-options.index') }}" class="{{ request()->routeIs('poll-options.*') ? 'active' : '' }}">{{ __('خيارات الاستطلاعات') }}</a></li>
+                        <li><a href="{{ route('poll-answers.index') }}" class="{{ request()->routeIs('poll-answers.*') ? 'active' : '' }}">{{ __('إجابات الاستطلاعات') }}</a></li>
                     </ul>
                 </div>
 
                 <!-- Meetings -->
                 <div class="nav-item">
                     <a href="{{ route('meetings.index') }}" class="nav-link {{ request()->routeIs('meetings.*') ? 'active' : '' }}">
-                        <i class="fa fa-video"></i>
+                        <i class="bi bi-camera-video-fill nav-icon"></i>
                         <span class="nav-link-label">{{ __('الاجتماعات') }}</span>
                     </a>
                 </div>
@@ -2148,7 +2249,7 @@
                 <!-- Regulations -->
                 <div class="nav-item">
                     <a href="{{ route('regulations.index') }}" class="nav-link {{ request()->routeIs('regulations.*') ? 'active' : '' }}">
-                        <i class="fa fa-gavel"></i>
+                        <i class="bi bi-bank2 nav-icon"></i>
                         <span class="nav-link-label">{{ __('اللوائح') }}</span>
                     </a>
                 </div>
@@ -2156,7 +2257,7 @@
                 <!-- Documents -->
                 <div class="nav-item">
                     <a href="{{ route('documents.index') }}" class="nav-link {{ request()->routeIs('documents.*') ? 'active' : '' }}">
-                        <i class="fa fa-folder-open"></i>
+                        <i class="bi bi-folder2-open nav-icon"></i>
                         <span class="nav-link-label">{{ __('الملفات') }}</span>
                     </a>
                 </div>
@@ -2164,7 +2265,7 @@
                 <!-- Circulars -->
                 <div class="nav-item">
                     <a href="{{ route('circulars.index') }}" class="nav-link {{ request()->routeIs('circulars.*') ? 'active' : '' }}">
-                        <i class="fa fa-bullhorn"></i>
+                        <i class="bi bi-megaphone-fill nav-icon"></i>
                         <span class="nav-link-label">{{ __('التعاميم') }}</span>
                     </a>
                 </div>
@@ -2172,7 +2273,7 @@
                 <!-- Categories -->
                 <div class="nav-item">
                     <a href="{{ route('categories.index') }}" class="nav-link {{ request()->routeIs('categories.*') ? 'active' : '' }}">
-                        <i class="fa fa-tags"></i>
+                        <i class="bi bi-tags-fill nav-icon"></i>
                         <span class="nav-link-label">{{ __('العضوية') }}</span>
                     </a>
                 </div>
@@ -2180,7 +2281,7 @@
                 <!-- Users Management -->
                 <div class="nav-item">
                     <a href="{{ route('users.index') }}" class="nav-link {{ request()->routeIs('users.*') ? 'active' : '' }}">
-                        <i class="fa fa-users"></i>
+                        <i class="bi bi-people nav-icon"></i>
                         <span class="nav-link-label">{{ __('إدارة المستخدمين') }}</span>
                     </a>
                 </div>
@@ -2188,7 +2289,7 @@
                 <!-- Permissions Management -->
                 <div class="nav-item">
                     <a href="{{ route('permissions.index') }}" class="nav-link {{ request()->routeIs('permissions.*') ? 'active' : '' }}">
-                        <i class="fa fa-key"></i>
+                        <i class="bi bi-shield-lock-fill nav-icon"></i>
                         <span class="nav-link-label">{{ __('الصلاحيات') }}</span>
                     </a>
                 </div>
@@ -2196,20 +2297,20 @@
                 <!-- servies Dropdown -->
                 <div class="nav-item {{ request()->routeIs('servies.*') || request()->routeIs('bookings.*') ? 'has-active-child is-open' : '' }}">
                     <a href="#" class="nav-link dropdown-toggle {{ request()->routeIs('servies.*') || request()->routeIs('bookings.*') ? 'active' : '' }}" data-toggle="dropdown" aria-expanded="{{ request()->routeIs('servies.*') || request()->routeIs('bookings.*') ? 'true' : 'false' }}">
-                        <i class="fa fa-briefcase"></i>     
+                        <i class="bi bi-briefcase-fill nav-icon"></i>
                         <span class="nav-link-label">{{ __('الخدمات') }}</span>
-                        <i class="fa fa-chevron-down nav-arrow" aria-hidden="true"></i>
+                        <i class="bi bi-chevron-down nav-arrow" aria-hidden="true"></i>
                     </a>
                     <ul class="dropdown-menu">
-                        <li><a href="{{ route('servies.index') }}" class="{{ request()->routeIs('servies.index') || request()->routeIs('servies.edit') ? 'active' : '' }}"><i class="fa fa-briefcase"></i>{{ __('كل الخدمات') }}</a></li>
-                        <li><a href="{{ route('servies.create') }}" class="{{ request()->routeIs('servies.create') ? 'active' : '' }}"><i class="fa fa-plus-circle"></i>{{ __('اضافة خدمة') }}</a></li>
-                        <li><a href="{{ route('bookings.index') }}" class="{{ request()->routeIs('bookings.index') || request()->routeIs('bookings.edit') ? 'active' : '' }}"><i class="fa fa-calendar"></i>{{ __('كل الحجوزات') }}</a></li>
-                        <li><a href="{{ route('bookings.create') }}" class="{{ request()->routeIs('bookings.create') ? 'active' : '' }}"><i class="fa fa-calendar"></i>{{ __('اضافة حجز') }}</a></li>
+                        <li><a href="{{ route('servies.index') }}" class="{{ request()->routeIs('servies.index') || request()->routeIs('servies.edit') ? 'active' : '' }}">{{ __('كل الخدمات') }}</a></li>
+                        <li><a href="{{ route('servies.create') }}" class="{{ request()->routeIs('servies.create') ? 'active' : '' }}">{{ __('اضافة خدمة') }}</a></li>
+                        <li><a href="{{ route('bookings.index') }}" class="{{ request()->routeIs('bookings.index') || request()->routeIs('bookings.edit') ? 'active' : '' }}">{{ __('كل الحجوزات') }}</a></li>
+                        <li><a href="{{ route('bookings.create') }}" class="{{ request()->routeIs('bookings.create') ? 'active' : '' }}">{{ __('اضافة حجز') }}</a></li>
                 </ul>
                 </div>
                 <div class="nav-item">
                     <a href="{{ route('settings.index') }}" class="nav-link {{ request()->routeIs('settings.*') ? 'active' : '' }}">
-                        <i class="fa fa-cog"></i>
+                        <i class="bi bi-sliders2 nav-icon"></i>
                         <span class="nav-link-label">{{ __('الاعدادات الرئيسية') }}</span>
                     </a>
                 </div>

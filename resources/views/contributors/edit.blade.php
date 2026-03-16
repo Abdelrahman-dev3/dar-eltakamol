@@ -55,7 +55,12 @@
                     @csrf
                     @method('PUT')
 
-                    @include('contributors.partials.form-fields', ['isEdit' => true, 'contributor' => $contributor])
+                    @include('contributors.partials.form-fields', [
+                        'isEdit' => true,
+                        'contributor' => $contributor,
+                        'companies' => $companies,
+                        'departments' => $departments,
+                    ])
 
                     <div class="contributor-form-footer">
                         <p class="contributor-form-footer-note">

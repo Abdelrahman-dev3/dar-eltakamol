@@ -690,7 +690,7 @@
                 <input
                     type="search"
                     id="contributorsSearch"
-                    placeholder="{{ __('ابحث بالاسم أو رقم الهوية أو المنصب...') }}"
+                    placeholder="{{ __('ابحث بالاسم أو رقم الهوية أو الشركة أو الإدارة...') }}"
                     autocomplete="off"
                 >
             </div>
@@ -713,7 +713,7 @@
                 <div class="contributors-list-head">
                     <div>{{ __('المساهم') }}</div>
                     <div>{{ __('رقم الهوية') }}</div>
-                    <div>{{ __('المنصب') }}</div>
+                    <div>{{ __('الشركة والإدارات') }}</div>
                     <div>{{ __('عدد الأسهم') }}</div>
                     <div>{{ __('الإجراءات') }}</div>
                 </div>
@@ -721,11 +721,15 @@
                 <div class="contributors-list-body" id="contributorsList">
                     @foreach($contributors as $contributor)
                         @php
+                            $companyNames = $contributor->departments->pluck('parent.name')->filter()->unique()->values();
+                            $departmentNames = $contributor->departments->pluck('name')->filter()->values();
                             $searchableText = implode(' ', [
                                 $contributor->name,
                                 $contributor->id_number,
                                 $contributor->position,
                                 $contributor->phone_num,
+                                $companyNames->implode(' '),
+                                $departmentNames->implode(' '),
                             ]);
                         @endphp
 
@@ -750,6 +754,12 @@
                                             <i class="bi bi-hash"></i>
                                             #{{ $contributor->id }}
                                         </span>
+                                        @if($companyNames->isNotEmpty())
+                                            <span class="contributor-badge">
+                                                <i class="bi bi-building"></i>
+                                                {{ $companyNames->implode('، ') }}
+                                            </span>
+                                        @endif
                                         @if($contributor->is_board_member)
                                             <span class="contributor-badge board">
                                                 <i class="bi bi-patch-check-fill"></i>
@@ -766,9 +776,13 @@
                             </div>
 
                             <div class="contributor-field">
-                                <span class="contributor-field-label">{{ __('المنصب') }}</span>
-                                <span class="contributor-field-value {{ $contributor->position ? '' : 'muted' }}">
-                                    {{ $contributor->position ?: __('غير محدد') }}
+                                <span class="contributor-field-label">{{ __('الشركة والإدارات') }}</span>
+                                <span class="contributor-field-value {{ $departmentNames->isNotEmpty() ? '' : 'muted' }}">
+                                    @if($departmentNames->isNotEmpty())
+                                        {{ $departmentNames->implode('، ') }}
+                                    @else
+                                        {{ __('غير مرتبط بإدارات بعد') }}
+                                    @endif
                                 </span>
                             </div>
 

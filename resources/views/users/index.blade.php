@@ -32,8 +32,9 @@
                                         <th>الاسم</th>
                                         <th>البريد الإلكتروني</th>
                                         <th>رقم الهاتف</th>
-                                        <th>الإدارة</th>
-                                        <th>الشركة</th>
+                                        <th>الإدارات</th>
+                                        <th>الشركات</th>
+                                        <th>المساهم المرتبط</th>
                                         <th>تاريخ الإنشاء</th>
                                         <th>الإجراءات</th>
                                     </tr>
@@ -45,8 +46,9 @@
                                             <td>{{ $user->name }}</td>
                                             <td>{{ $user->email }}</td>
                                             <td>{{ $user->phone ?? 'غير محدد' }}</td>
-                                            <td>{{ optional($user->department)->name ?? 'بدون إدارة' }}</td>
-                                            <td>{{ optional(optional($user->department)->parent)->name ?? '-' }}</td>
+                                            <td>{{ $user->department_names ?: 'بدون إدارات' }}</td>
+                                            <td>{{ $user->company_names ?: '-' }}</td>
+                                            <td>{{ optional($user->contributor)->name ?? 'غير مرتبط' }}</td>
                                             <td>{{ $user->created_at->format('Y-m-d') }}</td>
                                             <td>
                                                 <a href="{{ route('users.show', $user) }}" class="btn btn-info btn-xs" title="عرض">

@@ -72,6 +72,9 @@
                             @if ($errors->has('department_id'))
                                 <span class="help-block">{{ $errors->first('department_id') }}</span>
                             @endif
+                            @if($user->contributor && $user->contributor->departments->isNotEmpty())
+                                <span class="help-block text-info">هذا المستخدم مرتبط بمساهم، لذلك ستُحفظ الإدارات من ملف المساهم وتُورّث له الصلاحيات تلقائيًا.</span>
+                            @endif
                         </div>
 
                         <div class="form-group">

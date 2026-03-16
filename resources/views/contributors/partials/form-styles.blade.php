@@ -267,6 +267,11 @@
         resize: vertical;
     }
 
+    select.contributor-input[multiple] {
+        min-height: 150px;
+        padding: 10px 12px;
+    }
+
     .contributor-input:focus,
     .contributor-textarea:focus {
         outline: none;

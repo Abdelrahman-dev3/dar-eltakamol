@@ -2,178 +2,246 @@
 
 @section('title', __('تعديل الدفعة'))
 
+@include('payments.partials.styles')
+
+@php
+    $recentOrders = $sharesPOs->take(5);
+@endphp
+
 @section('content')
-<div class="row">
-    <div class="col-md-8 col-md-offset-2">
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                <h3 class="panel-title">{{ __('تعديل الدفعة') }}</h3>
-            </div>
-            <div class="panel-body">
-                <form action="{{ route('payments.update', $payment) }}" method="POST">
-                    @csrf
-                    @method('PUT')
-                    
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="date">{{ __('تاريخ الدفع') }} <span class="text-danger">*</span></label>
-                                <input type="date" name="date" id="date" class="form-control @error('date') is-invalid @enderror" value="{{ old('date', $payment->date->format('Y-m-d')) }}" required>
+    <div class="st-page">
+        <div class="st-shell">
+            <section class="st-hero">
+                <div class="st-hero-inner">
+                    <div>
+                        <span class="st-hero-badge">
+                            <i class="bi bi-pencil-square"></i>
+                            {{ __('تعديل الدفعة') }} #{{ $payment->id }}
+                        </span>
+                        <h1 class="st-hero-title">{{ __('حدّث بيانات الدفعة بثقة') }}</h1>
+                        <p class="st-hero-subtitle">
+                            {{ __('راجع تاريخ الدفعة ومبلغها ورقم الطلب ومعلومات البنك، ثم احفظ التغييرات ضمن واجهة أوضح وأسرع وأكثر توافقًا مع بقية صفحات النظام الحديثة.') }}
+                        </p>
+                    </div>
+
+                    <div class="st-hero-actions">
+                        <a href="{{ route('payments.show', $payment) }}" class="st-btn st-btn-info">
+                            <i class="bi bi-eye-fill"></i>
+                            {{ __('عرض الدفعة') }}
+                        </a>
+                        <a href="{{ route('payments.index') }}" class="st-btn st-btn-secondary">
+                            <i class="bi bi-arrow-right-circle"></i>
+                            {{ __('العودة للمدفوعات') }}
+                        </a>
+                    </div>
+                </div>
+            </section>
+
+            <div class="st-grid-two">
+                <section class="st-card">
+                    <div class="st-card-header">
+                        <div class="st-card-title-wrap">
+                            <span class="st-card-icon"><i class="bi bi-sliders"></i></span>
+                            <div>
+                                <h2 class="st-card-title">{{ __('بيانات قابلة للتعديل') }}</h2>
+                                <p class="st-card-subtitle">{{ __('يمكنك تعديل جميع الحقول، مع الاحتفاظ بالربط الحالي بطلب الشراء أو تغييره عند الحاجة.') }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form action="{{ route('payments.update', $payment) }}" method="POST" data-payment-form data-confirm-message="{{ __('هل أنت متأكد من حفظ تعديلات هذه الدفعة؟') }}">
+                        @csrf
+                        @method('PUT')
+
+                        <div class="st-form-grid">
+                            <div class="st-form-field">
+                                <label for="date" class="st-label">{{ __('تاريخ الدفع') }} <span class="st-required">*</span></label>
+                                <input type="date" name="date" id="date" class="st-input" value="{{ old('date', $payment->date?->format('Y-m-d')) }}" required>
                                 @error('date')
-                                    <div class="text-danger">{{ $message }}</div>
+                                    <span class="st-error">{{ $message }}</span>
                                 @enderror
                             </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="amount">{{ __('المبلغ') }} <span class="text-danger">*</span></label>
-                                <div class="input-group">
-                                    <input type="number" name="amount" id="amount" class="form-control @error('amount') is-invalid @enderror" value="{{ old('amount', $payment->amount) }}" step="0.01" min="0" required>
-                                    <span class="input-group-addon">{{ __('ريال') }}</span>
-                                </div>
+
+                            <div class="st-form-field">
+                                <label for="amount" class="st-label">{{ __('المبلغ') }} <span class="st-required">*</span></label>
+                                <input type="number" name="amount" id="amount" class="st-input" value="{{ old('amount', $payment->amount) }}" step="0.01" min="0" required placeholder="{{ __('أدخل المبلغ') }}">
                                 @error('amount')
-                                    <div class="text-danger">{{ $message }}</div>
+                                    <span class="st-error">{{ $message }}</span>
                                 @enderror
                             </div>
+
+                            <div class="st-form-field">
+                                <label for="shares_po_number" class="st-label">{{ __('رقم طلب الشراء') }}</label>
+                                <input type="text" name="shares_po_number" id="shares_po_number" class="st-input" value="{{ old('shares_po_number', $payment->shares_po_number) }}" list="paymentOrderNumbers" placeholder="{{ __('اكتب رقم الطلب أو اختره من الاقتراحات') }}">
+                                <datalist id="paymentOrderNumbers">
+                                    @foreach($sharesPOs as $sharesPO)
+                                        <option value="{{ $sharesPO->sale_number }}">{{ $sharesPO->contributor->name ?? __('مساهم غير معروف') }}</option>
+                                    @endforeach
+                                </datalist>
+                                @error('shares_po_number')
+                                    <span class="st-error">{{ $message }}</span>
+                                @enderror
+                            </div>
+
+                            <div class="st-form-field">
+                                <label for="transfer_document" class="st-label">{{ __('رقم مستند التحويل') }}</label>
+                                <input type="text" name="transfer_document" id="transfer_document" class="st-input" value="{{ old('transfer_document', $payment->transfer_document) }}" placeholder="{{ __('أدخل المرجع أو رقم الإيصال') }}">
+                                @error('transfer_document')
+                                    <span class="st-error">{{ $message }}</span>
+                                @enderror
+                            </div>
+
+                            <div class="st-form-field full">
+                                <label for="bank_info" class="st-label">{{ __('معلومات البنك') }}</label>
+                                <textarea name="bank_info" id="bank_info" class="st-textarea" placeholder="{{ __('اسم البنك، الحساب، الآيبان أو أي ملاحظات بنكية مرتبطة بالدفعة') }}">{{ old('bank_info', $payment->bank_info) }}</textarea>
+                                @error('bank_info')
+                                    <span class="st-error">{{ $message }}</span>
+                                @enderror
+                            </div>
+
+                            <div class="st-form-field full">
+                                <label class="st-label">{{ __('حالة الدفعة') }}</label>
+                                <label class="st-chip" style="justify-content: space-between; cursor: pointer;">
+                                    <span style="display: inline-flex; align-items: center; gap: 0.5rem;">
+                                        <i class="bi bi-patch-check-fill"></i>
+                                        {{ __('الدفعة مؤكدة') }}
+                                    </span>
+                                    <input type="checkbox" name="confirmed" value="1" {{ old('confirmed', $payment->confirmed) ? 'checked' : '' }}>
+                                </label>
+                            </div>
                         </div>
-                    </div>
 
-                    <div class="form-group">
-                        <label for="shares_po_number">{{ __('رقم طلب الشراء') }}</label>
-                        <input type="text" name="shares_po_number" id="shares_po_number" class="form-control @error('shares_po_number') is-invalid @enderror" value="{{ old('shares_po_number', $payment->shares_po_number) }}" placeholder="{{ __('أدخل رقم طلب الشراء إن وجد') }}">
-                        @error('shares_po_number')
-                            <div class="text-danger">{{ $message }}</div>
-                        @enderror
-                    </div>
+                        <div class="st-form-footer">
+                            <p class="st-form-footer-note">{{ __('أي تغيير في مبلغ الدفعة أو ربطها بطلب الشراء سيظهر مباشرة في صفحات العرض والقوائم المرتبطة.') }}</p>
 
-                    <div class="form-group">
-                        <label for="bank_info">{{ __('معلومات البنك') }}</label>
-                        <textarea name="bank_info" id="bank_info" class="form-control @error('bank_info') is-invalid @enderror" rows="3" placeholder="{{ __('أدخل تفاصيل البنك والحساب البنكي') }}">{{ old('bank_info', $payment->bank_info) }}</textarea>
-                        @error('bank_info')
-                            <div class="text-danger">{{ $message }}</div>
-                        @enderror
-                    </div>
-
-                    <div class="form-group">
-                        <label for="transfer_document">{{ __('رقم مستند التحويل') }}</label>
-                        <input type="text" name="transfer_document" id="transfer_document" class="form-control @error('transfer_document') is-invalid @enderror" value="{{ old('transfer_document', $payment->transfer_document) }}" placeholder="{{ __('أدخل رقم أو مرجع مستند التحويل') }}">
-                        @error('transfer_document')
-                            <div class="text-danger">{{ $message }}</div>
-                        @enderror
-                    </div>
-
-                    <div class="form-group">
-                        <div class="checkbox">
-                            <label>
-                                <input type="checkbox" name="confirmed" value="1" {{ old('confirmed', $payment->confirmed) ? 'checked' : '' }}>
-                                {{ __('تأكيد الدفعة') }}
-                            </label>
+                            <div class="st-inline-actions">
+                                <button type="submit" class="st-btn st-btn-primary">
+                                    <i class="bi bi-check2-circle"></i>
+                                    {{ __('حفظ التعديلات') }}
+                                </button>
+                                <a href="{{ route('payments.show', $payment) }}" class="st-btn st-btn-info">
+                                    <i class="bi bi-eye-fill"></i>
+                                    {{ __('عرض') }}
+                                </a>
+                                <a href="{{ route('payments.index') }}" class="st-btn st-btn-secondary">
+                                    <i class="bi bi-x-circle"></i>
+                                    {{ __('إلغاء') }}
+                                </a>
+                            </div>
                         </div>
-                        <small class="text-muted">{{ __('يمكن تأكيد الدفعة لاحقاً من خلال قائمة المدفوعات.') }}</small>
-                    </div>
+                    </form>
+                </section>
 
-                    <div class="form-group">
-                        <button type="submit" class="btn btn-primary">
-                            <span class="glyphicon glyphicon-save"></span> {{ __('حفظ التعديلات') }}
-                        </button>
-                        <a href="{{ route('payments.show', $payment) }}" class="btn btn-default">
-                            <span class="glyphicon glyphicon-eye-open"></span> {{ __('عرض') }}
-                        </a>
-                        <a href="{{ route('payments.index') }}" class="btn btn-default">
-                            <span class="glyphicon glyphicon-arrow-right"></span> {{ __('إلغاء') }}
-                        </a>
-                    </div>
-                </form>
+                <div class="st-shell">
+                    <section class="st-summary-grid" style="grid-template-columns: repeat(2, minmax(0, 1fr));">
+                        <article class="st-summary-card">
+                            <div class="st-summary-icon"><i class="bi bi-cash-stack"></i></div>
+                            <p class="st-summary-value" id="paymentAmountPreview">{{ number_format($payment->amount, 2) }}</p>
+                            <p class="st-summary-label">{{ __('المبلغ الحالي') }} {{ __('ريال') }}</p>
+                        </article>
 
-                <div class="alert alert-info">
-                    <h5>{{ __('ملاحظة') }}:</h5>
-                    <ul>
-                        <li>{{ __('يمكن تعديل جميع البيانات إلا اذا كانت الدفعة مؤكدة ومكتملة.') }}</li>
-                        <li>{{ __('تاريخ ومبلغ الدفع ضروريان للمعالجة.') }}</li>
-                        <li>{{ __('معلومات البنك مهمة لتتبع العمليات.') }}</li>
-                    </ul>
+                        <article class="st-summary-card">
+                            <div class="st-summary-icon"><i class="bi bi-calendar-event-fill"></i></div>
+                            <p class="st-summary-value" id="paymentDatePreview">{{ $payment->date?->format('Y-m-d') }}</p>
+                            <p class="st-summary-label">{{ __('تاريخ الدفعة') }}</p>
+                        </article>
+                    </section>
+
+                    <section class="st-card">
+                        <div class="st-card-header">
+                            <div class="st-card-title-wrap">
+                                <span class="st-card-icon"><i class="bi bi-clock-history"></i></span>
+                                <div>
+                                    <h2 class="st-card-title">{{ __('معلومات زمنية') }}</h2>
+                                    <p class="st-card-subtitle">{{ __('سجل زمني مختصر لمتابعة إنشاء الدفعة وآخر تحديث عليها.') }}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="st-info-list">
+                            <div class="st-info-item">
+                                <span class="st-info-label">{{ __('تاريخ الإنشاء') }}</span>
+                                <div class="st-info-value">{{ $payment->created_at->format('Y-m-d H:i') }}</div>
+                            </div>
+                            <div class="st-info-item">
+                                <span class="st-info-label">{{ __('آخر تحديث') }}</span>
+                                <div class="st-info-value">{{ $payment->updated_at->format('Y-m-d H:i') }}</div>
+                            </div>
+                            <div class="st-info-item">
+                                <span class="st-info-label">{{ __('الحالة الحالية') }}</span>
+                                <div class="st-info-value">@include('payments.partials.status-badge', ['confirmed' => $payment->confirmed])</div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="st-card">
+                        <div class="st-card-header">
+                            <div class="st-card-title-wrap">
+                                <span class="st-card-icon"><i class="bi bi-link-45deg"></i></span>
+                                <div>
+                                    <h2 class="st-card-title">{{ __('طلبات شراء متاحة') }}</h2>
+                                    <p class="st-card-subtitle">{{ __('اقتراحات سريعة في حال أردت تعديل الربط الحالي.') }}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="st-info-list">
+                            @forelse($recentOrders as $sharesPO)
+                                <div class="st-info-item">
+                                    <span class="st-info-label">{{ __('رقم الطلب') }}</span>
+                                    <div class="st-info-value">
+                                        {{ $sharesPO->sale_number }}
+                                        <span class="st-help" style="display: block;">{{ $sharesPO->contributor->name ?? __('مساهم غير معروف') }}</span>
+                                    </div>
+                                </div>
+                            @empty
+                                <div class="st-note-box">
+                                    <i class="bi bi-info-circle-fill"></i>
+                                    <div>{{ __('لا توجد طلبات شراء متاحة حاليًا للربط.') }}</div>
+                                </div>
+                            @endforelse
+                        </div>
+                    </section>
                 </div>
             </div>
         </div>
     </div>
-</div>
-
-<!-- Payment History Panel -->
-<div class="row">
-    <div class="col-md-8 col-md-offset-2">
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                <h4 class="panel-title">{{ __('تاريخ التعديلات') }}</h4>
-            </div>
-            <div class="panel-body">
-                <div class="row">
-                    <div class="col-md-6">
-                        <strong>{{ __('تاريخ الإنشاء') }}:</strong>
-                        {{ $payment->created_at->format('Y-m-d H:i') }}
-                    </div>
-                    <div class="col-md-6">
-                        <strong>{{ __('آخر تحديث') }}:</strong>
-                        {{ $payment->updated_at->format('Y-m-d H:i') }}
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Quick Stats -->
-<div class="row">
-    <div class="col-md-8 col-md-offset-2">
-        <div class="panel panel-info">
-            <div class="panel-heading">
-                <h4 class="panel-title">{{ __('مقارنة مع الإحصائيات') }}</h4>
-            </div>
-            <div class="panel-body">
-                <div class="row text-center">
-                    <div class="col-md-4">
-                        <h5>{{ __('هذه الدفعة') }}</h5>
-                        <p class="text-primary">{{ number_format($payment->amount, 2) }} {{ __('ريال') }}</p>
-                    </div>
-                    <div class="col-md-4">
-                        <h5>{{ __('متوسط المدفوعات') }}</h5>
-                        <p class="text-info">{{ number_format(\App\Models\Payment::avg('amount'), 2) }} {{ __('ريال') }}</p>
-                    </div>
-                    <div class="col-md-4">
-                        <h5>{{ __('أكبر دفعة') }}</h5>
-                        <p class="text-success">{{ number_format(\App\Models\Payment::max('amount'), 2) }} {{ __('ريال') }}</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 @endsection
 
 @push('scripts')
-<script>
-$(document).ready(function() {
-    // Format amount input
-    $('#amount').on('blur', function() {
-        const value = parseFloat($(this).val());
-        if (!isNaN(value)) {
-            $(this).val(value.toFixed(2));
-        }
-    });
-    
-    // Warn if amount is significantly different
-    $('#amount').on('change', function() {
-        const currentAmount = parseFloat($(this).val());
-        const originalAmount = {{ $payment->amount }};
-        const difference = Math.abs(currentAmount - originalAmount);
-        
-        if (difference > originalAmount * 0.1) { // 10% change
-            if (confirm('{{ __("يبدو أن المبلغ تغير بشكل كبير. هل أنت متأكد من المبلغ الجديد؟") }}')) {
-                // Continue with the change
-            } else {
-                $(this).val({{ $payment->amount }});
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const form = document.querySelector('[data-payment-form]');
+            const amountInput = document.getElementById('amount');
+            const dateInput = document.getElementById('date');
+            const amountPreview = document.getElementById('paymentAmountPreview');
+            const datePreview = document.getElementById('paymentDatePreview');
+
+            function updatePreview() {
+                const amount = parseFloat(amountInput.value || 0);
+                amountPreview.textContent = amount.toFixed(2);
+                datePreview.textContent = dateInput.value || '{{ $payment->date?->format('Y-m-d') }}';
             }
-        }
-    });
-});
-</script>
+
+            if (amountInput) {
+                amountInput.addEventListener('input', updatePreview);
+            }
+
+            if (dateInput) {
+                dateInput.addEventListener('input', updatePreview);
+            }
+
+            if (form) {
+                form.addEventListener('submit', function (event) {
+                    const message = this.getAttribute('data-confirm-message');
+
+                    if (message && !window.confirm(message)) {
+                        event.preventDefault();
+                    }
+                });
+            }
+
+            updatePreview();
+        });
+    </script>
 @endpush

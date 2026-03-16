@@ -27,6 +27,15 @@ class Category extends Model
     }
 
     /**
+     * The contributors that belong to this department.
+     */
+    public function contributors(): BelongsToMany
+    {
+        return $this->belongsToMany(Contributor::class, 'category_contributor')
+            ->withTimestamps();
+    }
+
+    /**
      * The permissions that belong to this category.
      */
     public function permissions(): BelongsToMany
@@ -124,14 +133,6 @@ class Category extends Model
     }
 
     /**
-     * Get the number of users in this category.
-     */
-    public function getUsersCountAttribute(): int
-    {
-        return $this->users()->count();
-    }
-
-    /**
      * Get a readable label for the membership level.
      */
     public function getLevelLabelAttribute(): string
@@ -139,4 +140,3 @@ class Category extends Model
         return $this->isCompany() ? 'الشركة' : 'الإدارة';
     }
 }
-

@@ -17,7 +17,9 @@ class UsersController extends Controller
      */
     public function index(): View
     {
-        $users = User::with(['departments.parent'])->orderBy('created_at', 'desc')->paginate(15);
+        $users = User::with(['departments.parent', 'contributor.departments.parent'])
+            ->orderBy('created_at', 'desc')
+            ->paginate(15);
 
         return view('users.index', compact('users'));
     }
@@ -70,7 +72,7 @@ class UsersController extends Controller
      */
     public function show(User $user): View
     {
-        $user->load('departments.parent', 'contributor');
+        $user->load('departments.parent', 'contributor.departments.parent');
 
         return view('users.show', compact('user'));
     }
@@ -80,7 +82,7 @@ class UsersController extends Controller
      */
     public function edit(User $user): View
     {
-        $user->load('departments.parent');
+        $user->load('departments.parent', 'contributor.departments.parent');
         $departments = Category::departments()->with('parent')->orderBy('name')->get();
 
         return view('users.edit', compact('user', 'departments'));
@@ -114,7 +116,13 @@ class UsersController extends Controller
         }
 
         $user->update($updateData);
-        $user->categories()->sync($departmentId ? [$departmentId] : []);
+        $user->loadMissing('contributor.departments');
+
+        if ($user->contributor && $user->contributor->departments->isNotEmpty()) {
+            $user->categories()->sync($user->contributor->departments->pluck('id')->all());
+        } else {
+            $user->categories()->sync($departmentId ? [$departmentId] : []);
+        }
 
         return redirect()
             ->route('users.index')
