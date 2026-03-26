@@ -2,199 +2,257 @@
 
 @section('title', __('عرض إجابة الاستطلاع') . ' - ' . ($pollAnswer->user->name ?? __('غير معروف')))
 
+@include('polls.partials.ui-styles')
+
+@php
+    $poll = $pollAnswer->poll;
+    $pollOption = $pollAnswer->pollOption;
+    $user = $pollAnswer->user;
+    $pollAnswers = $poll?->pollAnswers ?? collect();
+    $totalPollVotes = $pollAnswers->count();
+    $selectedOptionVotes = $pollOption?->votes ?? 0;
+    $selectedOptionPercentage = $totalPollVotes > 0 ? ($selectedOptionVotes / $totalPollVotes) * 100 : 0;
+    $selectedOptionAnswers = $pollOption ? $pollAnswers->where('poll_option_id', $pollOption->id) : collect();
+    $recentAnswers = $pollAnswers->sortByDesc('answer_date')->take(6);
+@endphp
+
 @section('content')
-<div class="container">
-    <div class="row">
-        <div class="col-md-10 col-md-offset-1">
-            <div class="panel panel-default">
-                <div class="panel-heading">
-                    <h3 class="panel-title">
-                        {{ __('عرض إجابة الاستطلاع') }}
-                        <div class="pull-left">
-                            <a href="{{ route('poll-answers.edit', $pollAnswer) }}" class="btn btn-warning btn-sm">
-                                <span class="glyphicon glyphicon-edit"></span> {{ __('تعديل') }}
-                            </a>
-                            <a href="{{ route('poll-answers.index') }}" class="btn btn-default btn-sm">
-                                <span class="glyphicon glyphicon-arrow-right"></span> {{ __('العودة') }}
-                            </a>
-                        </div>
-                    </h3>
+<div class="poll-page">
+    <div class="poll-shell">
+        <section class="poll-hero">
+            <div class="poll-hero-inner">
+                <div>
+                    <span class="poll-badge">
+                        <i class="bi bi-check2-square"></i>
+                        {{ __('تفاصيل إجابة الاستطلاع') }} #{{ $pollAnswer->id }}
+                    </span>
+                    <h1 class="poll-title">{{ $user?->name ?? __('مستخدم غير معروف') }}</h1>
+                    <div class="poll-meta-row">
+                        <span class="poll-chip"><i class="bi bi-envelope-fill"></i>{{ $user?->email ?? __('بدون بريد إلكتروني') }}</span>
+                        <span class="poll-chip"><i class="bi bi-calendar2-check"></i>{{ optional($pollAnswer->answer_date)->format('Y-m-d H:i') ?? __('غير متوفر') }}</span>
+                        <span class="poll-chip"><i class="bi bi-list-check"></i>{{ $pollOption?->option_text ?? __('غير محدد') }}</span>
+                    </div>
                 </div>
-                <div class="panel-body">
-                    <div class="row">
-                        <div class="col-md-8">
-                            <h4><strong>{{ __('المستخدم:') }}</strong> 
-                                <a href="{{ route('contributors.show', $pollAnswer->user->id) }}" class="text-primary">
-                                    {{ $pollAnswer->user->name ?? __('غير معروف') }}
-                                </a>
-                            </h4>
-                            <hr>
-                            
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <p><strong>{{ __('الاستطلاع:') }}</strong> 
-                                        <a href="{{ route('polls.show', $pollAnswer->poll_id) }}" class="text-primary">
-                                            {{ $pollAnswer->poll->question ?? __('غير محدد') }}
-                                        </a>
-                                    </p>
-                                    <p><strong>{{ __('الخيار المختار:') }}</strong> 
-                                        <span class="label label-info" style="font-size: 14px;">
-                                            {{ $pollAnswer->pollOption->option_text ?? __('غير محدد') }}
-                                        </span>
-                                    </p>
-                                </div>
-                                <div class="col-md-6">
-                                    <p><strong>{{ __('تاريخ الإجابة:') }}</strong> {{ $pollAnswer->answer_date->format('Y-m-d H:i:s') }}</p>
-                                    <p><strong>{{ __('تاريخ الإنشاء:') }}</strong> {{ $pollAnswer->created_at->format('Y-m-d H:i:s') }}</p>
-                                    <p><strong>{{ __('آخر تحديث:') }}</strong> {{ $pollAnswer->updated_at->format('Y-m-d H:i:s') }}</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="panel panel-info">
-                                <div class="panel-heading">
-                                    <h4 class="panel-title">{{ __('معلومات الإجابة') }}</h4>
-                                </div>
-                                <div class="panel-body">
-                                    <p><strong>{{ __('رقم الإجابة:') }}</strong> #{{ $pollAnswer->id }}</p>
-                                    <p><strong>{{ __('المستخدم:') }}</strong> {{ $pollAnswer->user->name ?? __('غير معروف') }}</p>
-                                    <p><strong>{{ __('البريد الإلكتروني:') }}</strong> {{ $pollAnswer->user->email ?? __('غير محدد') }}</p>
-                                    @if($pollAnswer->poll)
-                                        <p><strong>{{ __('حالة الاستطلاع:') }}</strong> 
-                                            @if($pollAnswer->poll->is_active)
-                                                <span class="label label-success">{{ __('نشط') }}</span>
-                                            @else
-                                                <span class="label label-default">{{ __('غير نشط') }}</span>
-                                            @endif
-                                        </p>
-                                    @endif
-                                </div>
-                            </div>
-                        </div>
-                    </div>
 
-                    @if($pollAnswer->poll)
-                        <hr>
-                        <h4>{{ __('تفاصيل الاستطلاع') }}</h4>
-                        
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="panel panel-default">
-                                    <div class="panel-heading">
-                                        <h5 class="panel-title">{{ __('معلومات الاستطلاع') }}</h5>
-                                    </div>
-                                    <div class="panel-body">
-                                        <p><strong>{{ __('السؤال:') }}</strong> {{ $pollAnswer->poll->question }}</p>
-                                        @if($pollAnswer->poll->start_date)
-                                            <p><strong>{{ __('تاريخ البدء:') }}</strong> {{ $pollAnswer->poll->start_date->format('Y-m-d H:i') }}</p>
-                                        @endif
-                                        @if($pollAnswer->poll->end_date)
-                                            <p><strong>{{ __('تاريخ الانتهاء:') }}</strong> {{ $pollAnswer->poll->end_date->format('Y-m-d H:i') }}</p>
-                                        @endif
-                                        <p><strong>{{ __('الحالة:') }}</strong> 
-                                            @if($pollAnswer->poll->is_active)
-                                                <span class="label label-success">{{ __('نشط') }}</span>
-                                            @else
-                                                <span class="label label-default">{{ __('غير نشط') }}</span>
-                                            @endif
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="panel panel-default">
-                                    <div class="panel-heading">
-                                        <h5 class="panel-title">{{ __('إحصائيات الاستطلاع') }}</h5>
-                                    </div>
-                                    <div class="panel-body">
-                                        @if($pollAnswer->poll->pollAnswers)
-                                            <p><strong>{{ __('إجمالي الأصوات:') }}</strong> {{ $pollAnswer->poll->pollAnswers->count() }}</p>
-                                        @endif
-                                        @if($pollAnswer->poll->pollOptions)
-                                            <p><strong>{{ __('عدد الخيارات:') }}</strong> {{ $pollAnswer->poll->pollOptions->count() }}</p>
-                                        @endif
-                                        @if($pollAnswer->pollOption && $pollAnswer->poll->pollAnswers)
-                                            @php
-                                                $totalVotes = $pollAnswer->poll->pollAnswers->count();
-                                                $optionVotes = $pollAnswer->pollOption->votes;
-                                                $percentage = $totalVotes > 0 ? ($optionVotes / $totalVotes) * 100 : 0;
-                                            @endphp
-                                            <p><strong>{{ __('أصوات الخيار المختار:') }}</strong> {{ number_format($optionVotes) }}</p>
-                                            <p><strong>{{ __('نسبة الخيار:') }}</strong> {{ number_format($percentage, 1) }}%</p>
-                                        @endif
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    @endif
-
-                    @if($pollAnswer->pollOption)
-                        <hr>
-                        <h4>{{ __('تفاصيل الخيار المختار') }}</h4>
-                        
-                        <div class="panel panel-default">
-                            <div class="panel-body">
-                                <div class="row">
-                                    <div class="col-md-8">
-                                        <h5><strong>{{ __('نص الخيار:') }}</strong> {{ $pollAnswer->pollOption->option_text }}</h5>
-                                        <p><strong>{{ __('عدد الأصوات:') }}</strong> 
-                                            <span class="badge badge-primary" style="font-size: 16px;">{{ number_format($pollAnswer->pollOption->votes) }}</span>
-                                        </p>
-                                    </div>
-                                    <div class="col-md-4 text-right">
-                                        <a href="{{ route('poll-options.show', $pollAnswer->pollOption->id) }}" class="btn btn-info">
-                                            <span class="glyphicon glyphicon-eye-open"></span> {{ __('عرض الخيار') }}
-                                        </a>
-                                    </div>
-                                </div>
-                                
-                                @if($pollAnswer->poll && $pollAnswer->poll->pollAnswers)
-                                    @php
-                                        $totalVotes = $pollAnswer->poll->pollAnswers->count();
-                                        $optionVotes = $pollAnswer->pollOption->votes;
-                                        $percentage = $totalVotes > 0 ? ($optionVotes / $totalVotes) * 100 : 0;
-                                    @endphp
-                                    
-                                    <div class="progress" style="height: 25px; margin-top: 15px;">
-                                        <div class="progress-bar progress-bar-info" role="progressbar" 
-                                             style="width: {{ $percentage }}%" 
-                                             aria-valuenow="{{ $percentage }}" 
-                                             aria-valuemin="0" 
-                                             aria-valuemax="100">
-                                            {{ number_format($percentage, 1) }}% ({{ number_format($optionVotes) }} {{ __('صوت') }})
-                                        </div>
-                                    </div>
-                                @endif
-                            </div>
-                        </div>
-                    @endif
-
-                    <div class="well">
-                        <div class="row">
-                            <div class="col-md-3">
-                                <a href="{{ route('poll-answers.edit', $pollAnswer) }}" class="btn btn-warning btn-block">
-                                    <span class="glyphicon glyphicon-edit"></span> {{ __('تعديل الإجابة') }}
-                                </a>
-                            </div>
-                            <div class="col-md-3">
-                                <a href="{{ route('polls.show', $pollAnswer->poll_id) }}" class="btn btn-info btn-block">
-                                    <span class="glyphicon glyphicon-eye-open"></span> {{ __('عرض الاستطلاع') }}
-                                </a>
-                            </div>
-                            <div class="col-md-3">
-                                <a href="{{ route('poll-options.show', $pollAnswer->poll_option_id) }}" class="btn btn-success btn-block">
-                                    <span class="glyphicon glyphicon-list"></span> {{ __('عرض الخيار') }}
-                                </a>
-                            </div>
-                            <div class="col-md-3">
-                                <a href="{{ route('poll-answers.index') }}" class="btn btn-default btn-block">
-                                    <span class="glyphicon glyphicon-arrow-right"></span> {{ __('العودة للقائمة') }}
-                                </a>
-                            </div>
-                        </div>
-                    </div>
+                <div class="poll-hero-actions">
+                    <a href="{{ route('poll-answers.edit', $pollAnswer) }}" class="poll-btn">
+                        <i class="bi bi-pencil-square"></i>
+                        {{ __('تعديل') }}
+                    </a>
+                    <a href="{{ route('poll-answers.index') }}" class="poll-btn-muted">
+                        <i class="bi bi-arrow-right-circle"></i>
+                        {{ __('العودة للقائمة') }}
+                    </a>
                 </div>
             </div>
+        </section>
+
+        <section class="poll-stats-grid">
+            <article class="poll-stat-card" style="animation-delay: 0.05s;">
+                <div class="poll-stat-icon"><i class="bi bi-hash"></i></div>
+                <p class="poll-stat-value">#{{ $pollAnswer->id }}</p>
+                <p class="poll-stat-label">{{ __('رقم الإجابة') }}</p>
+            </article>
+            <article class="poll-stat-card" style="animation-delay: 0.11s;">
+                <div class="poll-stat-icon"><i class="bi bi-bar-chart-fill"></i></div>
+                <p class="poll-stat-value">{{ number_format($totalPollVotes) }}</p>
+                <p class="poll-stat-label">{{ __('إجمالي أصوات الاستطلاع') }}</p>
+            </article>
+            <article class="poll-stat-card" style="animation-delay: 0.17s;">
+                <div class="poll-stat-icon"><i class="bi bi-percent"></i></div>
+                <p class="poll-stat-value">{{ number_format($selectedOptionPercentage, 1) }}%</p>
+                <p class="poll-stat-label">{{ __('نسبة الخيار المختار') }}</p>
+            </article>
+            <article class="poll-stat-card" style="animation-delay: 0.23s;">
+                <div class="poll-stat-icon"><i class="bi bi-people-fill"></i></div>
+                <p class="poll-stat-value">{{ number_format($selectedOptionAnswers->count()) }}</p>
+                <p class="poll-stat-label">{{ __('إجابات على نفس الخيار') }}</p>
+            </article>
+        </section>
+
+        <div class="poll-grid">
+            <section class="poll-card">
+                <div class="poll-card-header">
+                    <div class="poll-card-title-wrap">
+                        <span class="poll-card-icon"><i class="bi bi-person-badge-fill"></i></span>
+                        <div>
+                            <h2 class="poll-card-title">{{ __('بيانات المستخدم والإجابة') }}</h2>
+                            <p class="poll-card-note">{{ __('المعلومات الأساسية المرتبطة بهذه الإجابة مع التواريخ الرئيسية الخاصة بها.') }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="poll-detail-grid">
+                    <div class="poll-detail-item">
+                        <span class="poll-detail-label">{{ __('اسم المستخدم') }}</span>
+                        <div class="poll-detail-value">{{ $user?->name ?? __('غير معروف') }}</div>
+                    </div>
+                    <div class="poll-detail-item">
+                        <span class="poll-detail-label">{{ __('البريد الإلكتروني') }}</span>
+                        <div class="poll-detail-value">{{ $user?->email ?? __('غير متوفر') }}</div>
+                    </div>
+                    <div class="poll-detail-item">
+                        <span class="poll-detail-label">{{ __('تاريخ الإجابة') }}</span>
+                        <div class="poll-detail-value">{{ optional($pollAnswer->answer_date)->format('Y-m-d H:i') ?? __('غير متوفر') }}</div>
+                    </div>
+                    <div class="poll-detail-item">
+                        <span class="poll-detail-label">{{ __('تاريخ الإنشاء') }}</span>
+                        <div class="poll-detail-value">{{ optional($pollAnswer->created_at)->format('Y-m-d H:i') ?? __('غير متوفر') }}</div>
+                    </div>
+                    <div class="poll-detail-item">
+                        <span class="poll-detail-label">{{ __('آخر تحديث') }}</span>
+                        <div class="poll-detail-value">{{ optional($pollAnswer->updated_at)->format('Y-m-d H:i') ?? __('غير متوفر') }}</div>
+                    </div>
+                    <div class="poll-detail-item">
+                        <span class="poll-detail-label">{{ __('حالة الاستطلاع') }}</span>
+                        <div class="poll-detail-value">
+                            @if($poll?->is_active)
+                                {{ __('نشط') }}
+                            @elseif($poll)
+                                {{ __('غير نشط') }}
+                            @else
+                                {{ __('غير متوفر') }}
+                            @endif
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="poll-card">
+                <div class="poll-card-header">
+                    <div class="poll-card-title-wrap">
+                        <span class="poll-card-icon"><i class="bi bi-ui-radios-grid"></i></span>
+                        <div>
+                            <h2 class="poll-card-title">{{ __('الاستطلاع والخيار') }}</h2>
+                            <p class="poll-card-note">{{ __('ربط مباشر بين سؤال الاستطلاع والخيار الذي اختاره المستخدم.') }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="poll-mini-stats">
+                    <div class="poll-mini-stat">
+                        <span class="poll-mini-label">{{ __('سؤال الاستطلاع') }}</span>
+                        <div class="poll-mini-value">{{ $poll ? \Illuminate\Support\Str::limit($poll->question, 140) : __('غير متوفر') }}</div>
+                    </div>
+                    <div class="poll-mini-stat">
+                        <span class="poll-mini-label">{{ __('الخيار المختار') }}</span>
+                        <div class="poll-mini-value">{{ $pollOption?->option_text ?? __('غير محدد') }}</div>
+                    </div>
+                    <div class="poll-mini-stat">
+                        <span class="poll-mini-label">{{ __('أصوات هذا الخيار') }}</span>
+                        <div class="poll-mini-value">{{ number_format($selectedOptionVotes) }}</div>
+                    </div>
+                    <div class="poll-mini-stat">
+                        <span class="poll-mini-label">{{ __('إجمالي خيارات الاستطلاع') }}</span>
+                        <div class="poll-mini-value">{{ number_format($poll?->pollOptions?->count() ?? 0) }}</div>
+                    </div>
+                </div>
+
+                <div class="poll-footer-actions" style="margin-top: 18px;">
+                    @if($poll)
+                        <a href="{{ route('polls.show', $poll) }}" class="poll-btn-muted">
+                            <i class="bi bi-eye-fill"></i>
+                            {{ __('عرض الاستطلاع') }}
+                        </a>
+                    @endif
+                    @if($pollOption)
+                        <a href="{{ route('poll-options.show', $pollOption) }}" class="poll-btn-muted">
+                            <i class="bi bi-list-check"></i>
+                            {{ __('عرض الخيار') }}
+                        </a>
+                    @endif
+                </div>
+            </section>
+
+            <section class="poll-card full-span">
+                <div class="poll-card-header">
+                    <div class="poll-card-title-wrap">
+                        <span class="poll-card-icon"><i class="bi bi-bar-chart-steps"></i></span>
+                        <div>
+                            <h2 class="poll-card-title">{{ __('أداء الخيار داخل الاستطلاع') }}</h2>
+                            <p class="poll-card-note">{{ __('قراءة سريعة لموقع هذا الخيار من إجمالي أصوات الاستطلاع الحالي.') }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                @if($poll && $pollOption)
+                    <div class="poll-progress-list">
+                        <article class="poll-progress-item">
+                            <div class="poll-progress-head">
+                                <strong>{{ __('نسبة الخيار من إجمالي الأصوات') }}</strong>
+                                <span class="poll-progress-values">{{ number_format($selectedOptionPercentage, 1) }}%</span>
+                            </div>
+                            <div class="poll-progress">
+                                <div class="poll-progress-bar" style="width: {{ $selectedOptionPercentage }}%;"></div>
+                            </div>
+                        </article>
+                        <article class="poll-progress-item">
+                            <div class="poll-progress-head">
+                                <strong>{{ __('عدد الأصوات على الخيار') }}</strong>
+                                <span class="poll-progress-values">{{ number_format($selectedOptionVotes) }}</span>
+                            </div>
+                        </article>
+                        <article class="poll-progress-item">
+                            <div class="poll-progress-head">
+                                <strong>{{ __('إجمالي أصوات الاستطلاع') }}</strong>
+                                <span class="poll-progress-values">{{ number_format($totalPollVotes) }}</span>
+                            </div>
+                        </article>
+                    </div>
+                @else
+                    <div class="poll-empty-state">
+                        <i class="bi bi-bar-chart-line-fill"></i>
+                        <h3>{{ __('تعذر تحميل إحصائيات هذا السجل') }}</h3>
+                        <p>{{ __('بعض العلاقات المرتبطة بهذه الإجابة غير متوفرة حاليًا، لذلك لا يمكن عرض مقارنة الأداء بشكل كامل.') }}</p>
+                    </div>
+                @endif
+            </section>
+
+            <section class="poll-card full-span">
+                <div class="poll-card-header">
+                    <div class="poll-card-title-wrap">
+                        <span class="poll-card-icon"><i class="bi bi-clock-history"></i></span>
+                        <div>
+                            <h2 class="poll-card-title">{{ __('آخر الإجابات داخل الاستطلاع') }}</h2>
+                            <p class="poll-card-note">{{ __('نظرة سريعة على أحدث المشاركات داخل نفس الاستطلاع لتسهيل المتابعة والمراجعة.') }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                @if($recentAnswers->count() > 0)
+                    <table class="poll-attendees-table">
+                        <thead>
+                            <tr>
+                                <th>{{ __('المستخدم') }}</th>
+                                <th>{{ __('الخيار') }}</th>
+                                <th>{{ __('تاريخ الإجابة') }}</th>
+                                <th>{{ __('الإجراء') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($recentAnswers as $answer)
+                                <tr>
+                                    <td>{{ $answer->user?->name ?? __('غير معروف') }}</td>
+                                    <td>{{ $answer->pollOption?->option_text ?? __('غير محدد') }}</td>
+                                    <td>{{ optional($answer->answer_date)->format('Y-m-d H:i') ?? __('غير متوفر') }}</td>
+                                    <td>
+                                        <a href="{{ route('poll-answers.show', $answer) }}" class="poll-btn-muted" style="min-height: 40px; padding: 8px 14px;">
+                                            <i class="bi bi-eye-fill"></i>
+                                            {{ __('عرض الإجابة') }}
+                                        </a>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                @else
+                    <div class="poll-empty-state">
+                        <i class="bi bi-inboxes-fill"></i>
+                        <h3>{{ __('لا توجد إجابات أخرى لعرضها') }}</h3>
+                        <p>{{ __('هذه الصفحة لا تحتوي حاليًا على سجل حديث إضافي داخل نفس الاستطلاع.') }}</p>
+                    </div>
+                @endif
+            </section>
         </div>
     </div>
 </div>

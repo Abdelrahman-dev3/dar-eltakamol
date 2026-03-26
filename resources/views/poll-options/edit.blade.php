@@ -2,144 +2,167 @@
 
 @section('title', __('تعديل خيار الاستطلاع') . ' - ' . $pollOption->option_text)
 
+@include('polls.partials.ui-styles')
+
+@php
+    $linkedPoll = $pollOption->poll;
+@endphp
+
 @section('content')
-<div class="container">
-    <div class="row">
-        <div class="col-md-8 col-md-offset-2">
-            <div class="panel panel-default">
-                <div class="panel-heading">
-                    <h3 class="panel-title">
-                        {{ __('تعديل خيار الاستطلاع') }}
-                        <div class="pull-left">
-                            <a href="{{ route('poll-options.show', $pollOption) }}" class="btn btn-info btn-sm">
-                                <span class="glyphicon glyphicon-eye-open"></span> {{ __('عرض') }}
-                            </a>
-                            <a href="{{ route('poll-options.index') }}" class="btn btn-default btn-sm">
-                                <span class="glyphicon glyphicon-arrow-right"></span> {{ __('العودة') }}
-                            </a>
-                        </div>
-                    </h3>
+<div class="poll-page">
+    <div class="poll-shell">
+        <section class="poll-hero">
+            <div class="poll-hero-inner">
+                <div>
+                    <span class="poll-badge">
+                        <i class="bi bi-pencil-fill"></i>
+                        {{ __('تعديل خيار الاستطلاع') }} #{{ $pollOption->id }}
+                    </span>
+                    <h1 class="poll-title">{{ $pollOption->option_text }}</h1>
+                    <div class="poll-meta-row">
+                        <span class="poll-chip"><i class="bi bi-hand-thumbs-up-fill"></i>{{ number_format($pollOption->votes) }} {{ __('صوت') }}</span>
+                        <span class="poll-chip"><i class="bi bi-ui-radios-grid"></i>{{ $linkedPoll ? '#' . $linkedPoll->id : __('غير مرتبط') }}</span>
+                    </div>
                 </div>
-                <div class="panel-body">
-                    <form action="{{ route('poll-options.update', $pollOption) }}" method="POST">
-                        @csrf
-                        @method('PUT')
-                        
-                        <div class="form-group">
-                            <label for="poll_id" class="control-label">{{ __('الاستطلاع') }} <span class="text-danger">*</span></label>
-                            <select name="poll_id" id="poll_id" class="form-control" required>
-                                <option value="">{{ __('اختر الاستطلاع') }}</option>
-                                @foreach($polls as $poll)
-                                    <option value="{{ $poll->id }}" 
-                                            {{ (old('poll_id', $pollOption->poll_id) == $poll->id) ? 'selected' : '' }}>
-                                        {{ $poll->question }} 
-                                        @if($poll->start_date)
-                                            ({{ $poll->start_date->format('Y-m-d') }} - {{ $poll->end_date->format('Y-m-d') }})
-                                        @endif
-                                    </option>
-                                @endforeach
-                            </select>
-                            @error('poll_id')
-                                <span class="help-block text-danger">{{ $message }}</span>
-                            @enderror
-                        </div>
 
-                        <div class="form-group">
-                            <label for="option_text" class="control-label">{{ __('نص الخيار') }} <span class="text-danger">*</span></label>
-                            <input type="text" name="option_text" id="option_text" class="form-control" 
-                                   value="{{ old('option_text', $pollOption->option_text) }}" 
-                                   placeholder="{{ __('أدخل نص الخيار') }}" 
-                                   required maxlength="255">
-                            @error('option_text')
-                                <span class="help-block text-danger">{{ $message }}</span>
-                            @enderror
-                        </div>
+                <div class="poll-hero-actions">
+                    <a href="{{ route('poll-options.show', $pollOption) }}" class="poll-btn">
+                        <i class="bi bi-eye-fill"></i>
+                        {{ __('عرض') }}
+                    </a>
+                    <a href="{{ route('poll-options.index') }}" class="poll-btn-muted">
+                        <i class="bi bi-arrow-right-circle"></i>
+                        {{ __('العودة') }}
+                    </a>
+                </div>
+            </div>
+        </section>
 
-                        <div class="form-group">
-                            <label for="votes" class="control-label">{{ __('عدد الأصوات') }}</label>
-                            <input type="number" name="votes" id="votes" class="form-control" 
-                                   value="{{ old('votes', $pollOption->votes) }}" 
-                                   min="0" 
-                                   placeholder="{{ __('عدد الأصوات') }}">
-                            @error('votes')
-                                <span class="help-block text-danger">{{ $message }}</span>
-                            @enderror
-                            <small class="help-block">{{ __('تعديل عدد الأصوات قد يؤثر على نتائج الاستطلاع') }}</small>
+        <div class="poll-form-layout">
+            <section class="poll-card">
+                <div class="poll-card-header">
+                    <div class="poll-card-title-wrap">
+                        <span class="poll-card-icon"><i class="bi bi-sliders2"></i></span>
+                        <div>
+                            <h2 class="poll-card-title">{{ __('تحديث بيانات الخيار') }}</h2>
+                            <p class="poll-card-note">{{ __('النموذج نفسه يحافظ على نفس لغة التصميم الحديثة ويعرض الحقول الأساسية بشكل أوضح وأسهل للمراجعة.') }}</p>
                         </div>
+                    </div>
+                </div>
 
-                        <div class="alert alert-info">
-                            <h5>{{ __('معلومات الخيار') }}</h5>
-                            <p><strong>{{ __('تاريخ الإنشاء:') }}</strong> {{ $pollOption->created_at->format('Y-m-d H:i:s') }}</p>
-                            <p><strong>{{ __('آخر تحديث:') }}</strong> {{ $pollOption->updated_at->format('Y-m-d H:i:s') }}</p>
-                            <p><strong>{{ __('الاستطلاع الحالي:') }}</strong> 
-                                <a href="{{ route('polls.show', $pollOption->poll_id) }}" target="_blank">
-                                    {{ $pollOption->poll->question ?? __('غير محدد') }}
-                                </a>
-                            </p>
+                <form action="{{ route('poll-options.update', $pollOption) }}" method="POST" id="pollOptionEditForm">
+                    @csrf
+                    @method('PUT')
+
+                    @include('poll-options.partials.form-fields', ['pollOption' => $pollOption])
+
+                    <div class="poll-footer-actions" style="margin-top: 22px;">
+                        <button type="submit" class="poll-btn">
+                            <i class="bi bi-save2-fill"></i>
+                            {{ __('حفظ التغييرات') }}
+                        </button>
+                        <a href="{{ route('poll-options.show', $pollOption) }}" class="poll-btn-muted">
+                            <i class="bi bi-eye"></i>
+                            {{ __('عرض') }}
+                        </a>
+                    </div>
+                </form>
+            </section>
+
+            <aside class="poll-shell" style="gap: 18px;">
+                <section class="poll-card">
+                    <div class="poll-card-header">
+                        <div class="poll-card-title-wrap">
+                            <span class="poll-card-icon"><i class="bi bi-speedometer2"></i></span>
+                            <div>
+                                <h2 class="poll-card-title">{{ __('ملخص الخيار') }}</h2>
+                                <p class="poll-card-note">{{ __('مؤشرات سريعة مرتبطة بالخيار الحالي.') }}</p>
+                            </div>
                         </div>
+                    </div>
 
-                        <div class="form-group">
-                            <div class="row">
-                                <div class="col-md-4">
-                                    <button type="submit" class="btn btn-success btn-block">
-                                        <span class="glyphicon glyphicon-save"></span> {{ __('حفظ التغييرات') }}
-                                    </button>
-                                </div>
-                                <div class="col-md-4">
-                                    <a href="{{ route('poll-options.show', $pollOption) }}" class="btn btn-info btn-block">
-                                        <span class="glyphicon glyphicon-eye-open"></span> {{ __('عرض') }}
-                                    </a>
-                                </div>
-                                <div class="col-md-4">
-                                    <a href="{{ route('poll-options.index') }}" class="btn btn-default btn-block">
-                                        <span class="glyphicon glyphicon-arrow-right"></span> {{ __('إلغاء') }}
-                                    </a>
+                    <div class="poll-detail-grid" style="grid-template-columns: 1fr;">
+                        <div class="poll-detail-item">
+                            <span class="poll-detail-label">{{ __('الاستطلاع الحالي') }}</span>
+                            <div class="poll-detail-value">{{ $linkedPoll ? \Illuminate\Support\Str::limit($linkedPoll->question, 110) : __('غير مرتبط') }}</div>
+                        </div>
+                        <div class="poll-detail-item">
+                            <span class="poll-detail-label">{{ __('عدد الأصوات') }}</span>
+                            <div class="poll-detail-value">{{ number_format($pollOption->votes) }}</div>
+                        </div>
+                        <div class="poll-detail-item">
+                            <span class="poll-detail-label">{{ __('تاريخ الإنشاء') }}</span>
+                            <div class="poll-detail-value">{{ optional($pollOption->created_at)->format('Y-m-d H:i') ?? __('غير متوفر') }}</div>
+                        </div>
+                        <div class="poll-detail-item">
+                            <span class="poll-detail-label">{{ __('آخر تحديث') }}</span>
+                            <div class="poll-detail-value">{{ optional($pollOption->updated_at)->format('Y-m-d H:i') ?? __('غير متوفر') }}</div>
+                        </div>
+                    </div>
+                </section>
+
+                @if($linkedPoll)
+                    <section class="poll-card">
+                        <div class="poll-card-header">
+                            <div class="poll-card-title-wrap">
+                                <span class="poll-card-icon"><i class="bi bi-box-arrow-up-left"></i></span>
+                                <div>
+                                    <h2 class="poll-card-title">{{ __('روابط سريعة') }}</h2>
+                                    <p class="poll-card-note">{{ __('انتقال مباشر للاستطلاع المرتبط أو شاشة النتائج.') }}</p>
                                 </div>
                             </div>
                         </div>
-                    </form>
-                </div>
-            </div>
+
+                        <div class="poll-footer-actions">
+                            <a href="{{ route('polls.show', $linkedPoll) }}" class="poll-btn-muted">
+                                <i class="bi bi-eye-fill"></i>
+                                {{ __('عرض الاستطلاع') }}
+                            </a>
+                            <a href="{{ route('polls.results', $linkedPoll) }}" class="poll-btn-muted">
+                                <i class="bi bi-bar-chart-fill"></i>
+                                {{ __('نتائج الاستطلاع') }}
+                            </a>
+                        </div>
+                    </section>
+                @endif
+            </aside>
         </div>
     </div>
 </div>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Auto-focus on the option text field
-    document.getElementById('option_text').focus();
-    
-    // Add some validation feedback
-    const form = document.querySelector('form');
-    const pollSelect = document.getElementById('poll_id');
-    const optionText = document.getElementById('option_text');
-    
-    form.addEventListener('submit', function(e) {
-        if (!pollSelect.value) {
-            e.preventDefault();
-            alert('{{ __("يرجى اختيار الاستطلاع") }}');
-            pollSelect.focus();
-            return false;
-        }
-        
-        if (!optionText.value.trim()) {
-            e.preventDefault();
-            alert('{{ __("يرجى إدخال نص الخيار") }}');
-            optionText.focus();
-            return false;
-        }
-        
-        // Confirm if votes are being changed significantly
-        const currentVotes = {{ $pollOption->votes }};
-        const newVotes = parseInt(document.getElementById('votes').value) || 0;
-        
-        if (Math.abs(newVotes - currentVotes) > 10) {
-            if (!confirm('{{ __("هل أنت متأكد من تغيير عدد الأصوات بشكل كبير؟ قد يؤثر هذا على نتائج الاستطلاع.") }}')) {
-                e.preventDefault();
-                return false;
-            }
-        }
-    });
-});
-</script>
 @endsection
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const optionText = document.getElementById('option_text');
+        const votes = document.getElementById('votes');
+        const form = document.getElementById('pollOptionEditForm');
+        optionText?.focus();
+
+        form?.addEventListener('submit', function (event) {
+            const pollId = document.getElementById('poll_id');
+
+            if (!pollId?.value) {
+                event.preventDefault();
+                window.alert('{{ __('يرجى اختيار الاستطلاع أولًا.') }}');
+                pollId?.focus();
+                return;
+            }
+
+            if (!optionText?.value.trim()) {
+                event.preventDefault();
+                window.alert('{{ __('يرجى إدخال نص الخيار.') }}');
+                optionText?.focus();
+                return;
+            }
+
+            if (votes && Number(votes.value || 0) < 0) {
+                event.preventDefault();
+                window.alert('{{ __('لا يمكن أن يكون عدد الأصوات أقل من صفر.') }}');
+                votes.focus();
+                return;
+            }
+        });
+    });
+</script>
+@endpush

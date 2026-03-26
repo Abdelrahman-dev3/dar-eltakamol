@@ -13,9 +13,7 @@ class PollOptionsController extends Controller
      */
     public function index()
     {
-        $pollOptions = PollOption::with(['poll'])
-                                ->orderBy('created_at', 'desc')
-                                ->paginate(10);
+        $pollOptions = PollOption::with(['poll.creator'])->orderByDesc('created_at')->paginate(10);
 
         return view('poll-options.index', compact('pollOptions'));
     }
@@ -25,7 +23,11 @@ class PollOptionsController extends Controller
      */
     public function create()
     {
-        $polls = Poll::where('is_active', true)->get();
+        $polls = Poll::with(['creator', 'pollOptions'])
+            ->where('is_active', true)
+            ->orderByDesc('created_date')
+            ->get();
+
         return view('poll-options.create', compact('polls'));
     }
 
@@ -34,19 +36,24 @@ class PollOptionsController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'poll_id' => 'required|exists:polls,id',
             'option_text' => 'required|string|max:255',
+            'votes' => 'nullable|integer|min:0',
         ]);
 
         PollOption::create([
-            'poll_id' => $request->poll_id,
-            'option_text' => $request->option_text,
-            'votes' => 0,
+            'poll_id' => $validated['poll_id'],
+            'poll_question_id' => null,
+            'option_text' => trim($validated['option_text']),
+            'votes' => $validated['votes'] ?? 0,
         ]);
 
-        return redirect()->route('poll-options.index')
-                        ->with('success', 'تم إنشاء خيار الاستطلاع بنجاح');
+        if ($request->boolean('return_to_poll')) {
+            return redirect()->back()->with('success', 'تمت إضافة خيار جديد للاستطلاع بنجاح');
+        }
+
+        return redirect()->route('poll-options.index')->with('success', 'تم إنشاء خيار الاستطلاع بنجاح');
     }
 
     /**
@@ -54,7 +61,12 @@ class PollOptionsController extends Controller
      */
     public function show(PollOption $pollOption)
     {
-        $pollOption->load('poll');
+        $pollOption->load([
+            'poll.creator',
+            'poll.pollAnswers.user',
+            'poll.pollOptions',
+        ]);
+
         return view('poll-options.show', compact('pollOption'));
     }
 
@@ -63,7 +75,15 @@ class PollOptionsController extends Controller
      */
     public function edit(PollOption $pollOption)
     {
-        $polls = Poll::where('is_active', true)->get();
+        $pollOption->load('poll');
+        $polls = Poll::with(['creator', 'pollOptions'])
+            ->where('is_active', true)
+            ->orWhere('id', $pollOption->poll_id)
+            ->orderByDesc('created_date')
+            ->get()
+            ->unique('id')
+            ->values();
+
         return view('poll-options.edit', compact('pollOption', 'polls'));
     }
 
@@ -72,28 +92,39 @@ class PollOptionsController extends Controller
      */
     public function update(Request $request, PollOption $pollOption)
     {
-        $request->validate([
+        $validated = $request->validate([
             'poll_id' => 'required|exists:polls,id',
             'option_text' => 'required|string|max:255',
+            'votes' => 'nullable|integer|min:0',
         ]);
 
         $pollOption->update([
-            'poll_id' => $request->poll_id,
-            'option_text' => $request->option_text,
+            'poll_id' => $validated['poll_id'],
+            'poll_question_id' => null,
+            'option_text' => trim($validated['option_text']),
+            'votes' => $validated['votes'] ?? 0,
         ]);
 
+        if ($request->boolean('return_to_poll')) {
+            return redirect()->back()->with('success', 'تم تحديث خيار الاستطلاع بنجاح');
+        }
+
         return redirect()->route('poll-options.index')
-                        ->with('success', 'تم تحديث خيار الاستطلاع بنجاح');
+            ->with('success', 'تم تحديث خيار الاستطلاع بنجاح');
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(PollOption $pollOption)
+    public function destroy(Request $request, PollOption $pollOption)
     {
         $pollOption->delete();
 
+        if ($request->boolean('return_to_poll')) {
+            return redirect()->back()->with('success', 'تم حذف خيار الاستطلاع بنجاح');
+        }
+
         return redirect()->route('poll-options.index')
-                        ->with('success', 'تم حذف خيار الاستطلاع بنجاح');
+            ->with('success', 'تم حذف خيار الاستطلاع بنجاح');
     }
 }

@@ -4,10 +4,11 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Database\Eloquent\Relations\HasOne;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Support\Collection;
 
 class User extends Authenticatable
 {
@@ -64,7 +65,16 @@ class User extends Authenticatable
     public function groups(): BelongsToMany
     {
         return $this->belongsToMany(AppGroup::class, 'app_users_groups', 'user_id', 'group_id')
-                    ->withTimestamps();
+            ->withTimestamps();
+    }
+
+    /**
+     * Get the permissions assigned directly to the user.
+     */
+    public function permissions(): BelongsToMany
+    {
+        return $this->belongsToMany(Permission::class, 'permission_user')
+            ->withTimestamps();
     }
 
     /**
@@ -73,7 +83,7 @@ class User extends Authenticatable
     public function categories(): BelongsToMany
     {
         return $this->belongsToMany(Category::class, 'user_category')
-                    ->withTimestamps();
+            ->withTimestamps();
     }
 
     /**
@@ -122,5 +132,86 @@ class User extends Authenticatable
             ->filter()
             ->unique()
             ->implode('، ');
+    }
+
+    /**
+     * Get all inherited permissions from departments and linked contributor.
+     */
+    public function getInheritedPermissionsAttribute(): Collection
+    {
+        $departments = $this->relationLoaded('departments')
+            ? $this->departments
+            : $this->departments()->with('permissions')->get();
+
+        $departments->loadMissing('permissions');
+
+        $permissions = $departments->flatMap(function ($department) {
+            return $department->permissions;
+        });
+
+        $contributor = $this->relationLoaded('contributor')
+            ? $this->contributor
+            : $this->contributor()->with('departments.permissions')->first();
+
+        if ($contributor) {
+            $contributor->loadMissing('departments.permissions');
+
+            $permissions = $permissions->merge(
+                $contributor->departments->flatMap(function ($department) {
+                    return $department->permissions;
+                })
+            );
+        }
+
+        return $permissions
+            ->unique('id')
+            ->sortBy('name')
+            ->values();
+    }
+
+    /**
+     * Get all effective permissions for the user.
+     */
+    public function getEffectivePermissionsAttribute(): Collection
+    {
+        $directPermissions = $this->relationLoaded('permissions')
+            ? $this->permissions
+            : $this->permissions()->get();
+
+        return $directPermissions
+            ->merge($this->inherited_permissions)
+            ->unique('id')
+            ->sortBy('name')
+            ->values();
+    }
+
+    /**
+     * Check whether the user has a permission directly or through inherited departments.
+     */
+    public function hasPermission(string $slug): bool
+    {
+        return $this->effective_permissions->contains(function (Permission $permission) use ($slug) {
+            return $permission->slug === $slug;
+        });
+    }
+
+    /**
+     * Get direct permission names as a readable string.
+     */
+    public function getDirectPermissionNamesAttribute(): string
+    {
+        $permissions = $this->relationLoaded('permissions')
+            ? $this->permissions
+            : $this->permissions()->get();
+
+        return $permissions->pluck('display_name')->filter()->implode('، ');
+    }
+
+    /**
+     * Get effective permission names as a readable string.
+     */
+    public function getEffectivePermissionNamesAttribute(): string
+    {
+        return $this->effective_permissions->pluck('display_name')->filter()->implode('، ');
     }
 }

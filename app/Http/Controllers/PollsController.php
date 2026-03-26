@@ -7,6 +7,7 @@ use App\Models\ZoomMeeting;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 
 class PollsController extends Controller
 {
@@ -15,9 +16,9 @@ class PollsController extends Controller
      */
     public function index()
     {
-        $polls = Poll::with(['pollOptions', 'creator'])
-                    ->orderBy('created_date', 'desc')
-                    ->paginate(10);
+        $polls = Poll::with(['pollOptions', 'creator', 'referencedUsers'])
+            ->orderBy('created_date', 'desc')
+            ->paginate(10);
 
         return view('polls.index', compact('polls'));
     }
@@ -29,7 +30,7 @@ class PollsController extends Controller
     {
         $zoomMeetings = ZoomMeeting::orderBy('meeting_date', 'desc')->get();
         $users = User::orderBy('name')->get();
-        
+
         return view('polls.create', compact('zoomMeetings', 'users'));
     }
 
@@ -46,9 +47,24 @@ class PollsController extends Controller
             'zoom_meeting_id' => 'nullable|exists:zoom_meetings,id',
             'referenced_users' => 'nullable|array',
             'referenced_users.*' => 'exists:users,id',
+            'options' => 'required|array',
+            'options.*' => 'nullable|string|max:255',
         ]);
 
+        $options = collect($request->input('options', []))
+            ->map(fn ($option) => trim((string) $option))
+            ->filter()
+            ->unique()
+            ->values();
+
+        if ($options->count() < 2) {
+            return redirect()->back()
+                ->withErrors(['options' => 'يجب إدخال خيارين مختلفين على الأقل.'])
+                ->withInput();
+        }
+
         $poll = Poll::create([
+            'title' => Str::limit($request->question, 255, ''),
             'question' => $request->question,
             'start_date' => $request->start_date,
             'end_date' => $request->end_date,
@@ -58,13 +74,19 @@ class PollsController extends Controller
             'zoom_meeting_id' => $request->zoom_meeting_id,
         ]);
 
-        // Attach referenced users if provided
         if ($request->has('referenced_users') && is_array($request->referenced_users)) {
             $poll->referencedUsers()->sync($request->referenced_users);
         }
 
+        foreach ($options as $optionText) {
+            $poll->pollOptions()->create([
+                'option_text' => $optionText,
+                'votes' => 0,
+            ]);
+        }
+
         return redirect()->route('polls.index')
-                        ->with('success', 'تم إنشاء الاستطلاع بنجاح');
+            ->with('success', 'تم إنشاء الاستطلاع بنجاح');
     }
 
     /**
@@ -72,7 +94,16 @@ class PollsController extends Controller
      */
     public function show(Poll $poll)
     {
-        $poll->load(['pollOptions', 'creator']);
+        $poll->load([
+            'pollOptions' => fn ($query) => $query->orderBy('votes', 'desc'),
+            'creator',
+            'pollAnswers.user',
+            'referencedUsers',
+            'zoomMeeting',
+            'meeting',
+            'questions.options',
+        ]);
+
         return view('polls.show', compact('poll'));
     }
 
@@ -81,10 +112,16 @@ class PollsController extends Controller
      */
     public function edit(Poll $poll)
     {
-        $poll->load(['zoomMeeting', 'referencedUsers']);
+        $poll->load([
+            'zoomMeeting',
+            'referencedUsers',
+            'pollOptions' => fn ($query) => $query->orderBy('votes', 'desc'),
+            'pollAnswers',
+            'creator',
+        ]);
         $zoomMeetings = ZoomMeeting::orderBy('meeting_date', 'desc')->get();
         $users = User::orderBy('name')->get();
-        
+
         return view('polls.edit', compact('poll', 'zoomMeetings', 'users'));
     }
 
@@ -104,6 +141,7 @@ class PollsController extends Controller
         ]);
 
         $poll->update([
+            'title' => Str::limit($request->question, 255, ''),
             'question' => $request->question,
             'start_date' => $request->start_date,
             'end_date' => $request->end_date,
@@ -111,7 +149,6 @@ class PollsController extends Controller
             'zoom_meeting_id' => $request->zoom_meeting_id,
         ]);
 
-        // Sync referenced users if provided, or clear if empty
         if ($request->has('referenced_users') && is_array($request->referenced_users)) {
             $poll->referencedUsers()->sync($request->referenced_users);
         } else {
@@ -119,7 +156,7 @@ class PollsController extends Controller
         }
 
         return redirect()->route('polls.index')
-                        ->with('success', 'تم تحديث الاستطلاع بنجاح');
+            ->with('success', 'تم تحديث الاستطلاع بنجاح');
     }
 
     /**
@@ -130,7 +167,7 @@ class PollsController extends Controller
         $poll->delete();
 
         return redirect()->route('polls.index')
-                        ->with('success', 'تم حذف الاستطلاع بنجاح');
+            ->with('success', 'تم حذف الاستطلاع بنجاح');
     }
 
     /**
@@ -138,17 +175,20 @@ class PollsController extends Controller
      */
     public function results(Poll $poll)
     {
-        // Load with questions and options for new system
         $poll->load([
-            'questions.options' => function($query) {
+            'creator',
+            'referencedUsers',
+            'zoomMeeting',
+            'meeting',
+            'questions.options' => function ($query) {
                 $query->orderBy('id');
             },
             'questions.answers.user',
-            'pollOptions' => function($query) {
+            'pollOptions' => function ($query) {
                 $query->orderBy('votes', 'desc');
             },
             'pollAnswers.user',
-            'pollAnswers.pollOption'
+            'pollAnswers.pollOption',
         ]);
 
         return view('polls.results', compact('poll'));

@@ -2,82 +2,141 @@
 
 @section('title', __('تعديل التعميم'))
 
+@php
+    $extension = strtoupper($circular->file_extension ?: '-');
+@endphp
+
+@include('circulars.partials.form-styles')
+
 @section('content')
-<div class="container">
-    <div class="row">
-        <div class="col-md-8 col-md-offset-2">
-            <div class="panel panel-default">
-                <div class="panel-heading">
-                    <h3 class="panel-title">
-                        {{ __('تعديل التعميم') }}
-                        <div class="pull-left">
-                            <a href="{{ route('circulars.index') }}" class="btn btn-default btn-sm">
-                                <span class="glyphicon glyphicon-arrow-right"></span> {{ __('رجوع') }}
-                            </a>
-                        </div>
-                    </h3>
+<div class="container-fluid cir-form-page">
+    <div class="cir-form-shell">
+        <section class="cir-form-hero">
+            <div class="cir-form-hero-inner">
+                <div>
+                    <span class="cir-form-badge">
+                        <i class="bi bi-pencil-fill"></i>
+                        {{ __('تعديل التعميم') }} #{{ $circular->id }}
+                    </span>
+                    <h1 class="cir-form-title">{{ __('حدّث اسم التعميم أو استبدل ملفه مع الحفاظ على وضوح الربط والسياق') }}</h1>
+                    <p class="cir-form-subtitle">
+                        {{ __('يمكنك تعديل الاسم المعروض، مراجعة الملف الحالي، وربط التعميم باجتماع مناسب أو استبداله بملف أحدث من نفس الشاشة.') }}
+                    </p>
                 </div>
-                <div class="panel-body">
-                    <form action="{{ route('circulars.update', $circular) }}" method="POST" enctype="multipart/form-data">
-                        @csrf
-                        @method('PUT')
 
-                        <div class="form-group @error('name') has-error @enderror">
-                            <label for="name">{{ __('اسم التعميم') }} <span class="text-danger">*</span></label>
-                            <input type="text" name="name" id="name" class="form-control"
-                                   value="{{ old('name', $circular->name) }}" required maxlength="255"
-                                   placeholder="{{ __('أدخل اسم التعميم') }}">
-                            @error('name')
-                                <span class="help-block">{{ $message }}</span>
-                            @enderror
-                        </div>
-
-                        <div class="form-group">
-                            <label>{{ __('الملف الحالي') }}</label>
-                            <div class="well">
-                                <div class="file-info">
-                                    <i class="fa {{ $circular->file_icon }} text-primary" style="font-size: 1.5rem; margin-left: 8px;"></i>
-                                    <strong>{{ $circular->original_filename }}</strong>
-                                    <br>
-                                    <small class="text-muted">
-                                        {{ __('الحجم') }}: {{ $circular->file_size_human }} |
-                                        {{ __('التاريخ') }}: {{ $circular->created_at->format('Y-m-d H:i') }}
-                                    </small>
-                                </div>
-                                <br>
-                                <a href="{{ route('circulars.download', $circular) }}" class="btn btn-primary btn-sm" target="_blank">
-                                    <i class="fa fa-download"></i> {{ __('تحميل الملف الحالي') }}
-                                </a>
-                            </div>
-                        </div>
-
-                        <div class="form-group @error('file') has-error @enderror">
-                            <label for="file">{{ __('استبدال الملف (اختياري)') }}</label>
-                            <input type="file" name="file" id="file" class="form-control"
-                                   accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.jpg,.jpeg,.png,.gif,.zip,.rar">
-                            <small class="text-muted">
-                                {{ __('اتركه فارغاً إذا كنت تريد الاحتفاظ بالملف الحالي') }}<br>
-                                {{ __('الحد الأقصى لحجم الملف: 50 ميجابايت') }}<br>
-                                {{ __('الأنواع المسموحة: PDF, Word, Excel, PowerPoint, صور، نصوص، أرشيف') }}
-                            </small>
-                            @error('file')
-                                <span class="help-block">{{ $message }}</span>
-                            @enderror
-                        </div>
-
-                        <div class="form-group">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fa fa-save"></i> {{ __('تحديث') }}
-                            </button>
-                            <a href="{{ route('circulars.index') }}" class="btn btn-default">
-                                <i class="fa fa-times"></i> {{ __('إلغاء') }}
-                            </a>
-                        </div>
-                    </form>
+                <div class="cir-form-actions">
+                    <a href="{{ route('circulars.show', $circular) }}" class="cir-form-btn">
+                        <i class="bi bi-eye"></i>
+                        {{ __('عرض التعميم') }}
+                    </a>
+                    <a href="{{ route('circulars.index') }}" class="cir-form-btn-muted">
+                        <i class="bi bi-arrow-right-circle"></i>
+                        {{ __('العودة إلى التعميمات') }}
+                    </a>
                 </div>
             </div>
+        </section>
+
+        <div class="cir-form-grid">
+            <section class="cir-panel">
+                <div class="cir-panel-header">
+                    <div class="cir-panel-title-wrap">
+                        <span class="cir-panel-icon"><i class="bi bi-sliders2"></i></span>
+                        <div>
+                            <h2 class="cir-panel-title">{{ __('تحديث بيانات التعميم') }}</h2>
+                            <p class="cir-panel-subtitle">{{ __('احتفظ بالملف الحالي أو استبدله، وحدّث الاسم والارتباط بالاجتماع من نفس الواجهة.') }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <form action="{{ route('circulars.update', $circular) }}" method="POST" enctype="multipart/form-data"
+                    data-cir-form
+                    data-confirm-message="{{ __('هل أنت متأكد من حفظ تعديلات التعميم؟') }}"
+                    data-name-label="{{ __('اسم التعميم') }}"
+                    data-empty-name="{{ __('يرجى إدخال اسم التعميم') }}"
+                    data-require-name="true">
+                    @csrf
+                    @method('PUT')
+
+                    @include('circulars.partials.form-fields', [
+                        'isEdit' => true,
+                        'circular' => $circular,
+                        'meetings' => $meetings,
+                    ])
+
+                    <div class="cir-form-footer">
+                        <p class="cir-form-footer-note">
+                            {{ __('إذا لم يتم اختيار ملف بديل فسيتم الاحتفاظ بالملف الحالي تلقائيًا. وعند الاستبدال ستُحدّث بيانات الملف بالكامل بالنسخة الجديدة.') }}
+                        </p>
+
+                        <div class="cir-form-footer-actions">
+                            <button type="submit" class="cir-form-btn">
+                                <i class="bi bi-save2"></i>
+                                {{ __('حفظ التغييرات') }}
+                            </button>
+                            <a href="{{ route('circulars.show', $circular) }}" class="cir-form-btn-muted">
+                                <i class="bi bi-eye"></i>
+                                {{ __('عرض') }}
+                            </a>
+                            <a href="{{ route('circulars.index') }}" class="cir-form-btn-muted">
+                                <i class="bi bi-x-circle"></i>
+                                {{ __('إلغاء') }}
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </section>
+
+            <aside class="cir-side-stack">
+                <section class="cir-mini-card">
+                    <h3 class="cir-mini-title">
+                        <i class="bi bi-file-earmark-text"></i>
+                        {{ __('ملخص سريع') }}
+                    </h3>
+                    <div class="cir-stat-grid">
+                        <div class="cir-stat-box">
+                            <strong>#{{ $circular->id }}</strong>
+                            <span>{{ __('رقم التعميم') }}</span>
+                        </div>
+                        <div class="cir-stat-box">
+                            <strong>{{ $extension }}</strong>
+                            <span>{{ __('امتداد الملف الحالي') }}</span>
+                        </div>
+                        <div class="cir-stat-box">
+                            <strong>{{ $circular->file_size_human }}</strong>
+                            <span>{{ __('حجم الملف الحالي') }}</span>
+                        </div>
+                        <div class="cir-stat-box">
+                            <strong>{{ $circular->updated_at->diffForHumans() }}</strong>
+                            <span>{{ __('آخر تحديث') }}</span>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="cir-mini-card">
+                    <h3 class="cir-mini-title">
+                        <i class="bi bi-link-45deg"></i>
+                        {{ __('الارتباط الحالي') }}
+                    </h3>
+                    <div class="cir-meta-list">
+                        <div class="cir-meta-item">
+                            <i class="bi bi-calendar-plus"></i>
+                            <div>{{ __('أُضيف في') }}: {{ $circular->created_at->format('Y-m-d H:i') }}</div>
+                        </div>
+                        <div class="cir-meta-item">
+                            <i class="bi bi-arrow-repeat"></i>
+                            <div>{{ __('آخر تحديث') }}: {{ $circular->updated_at->format('Y-m-d H:i') }}</div>
+                        </div>
+                        <div class="cir-meta-item">
+                            <i class="bi bi-people"></i>
+                            <div>{{ __('الاجتماع المرتبط') }}: {{ optional($circular->meeting)->name ?: __('بدون اجتماع') }}</div>
+                        </div>
+                    </div>
+                </section>
+            </aside>
         </div>
     </div>
 </div>
 @endsection
 
+@include('circulars.partials.form-scripts')

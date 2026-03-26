@@ -11,22 +11,27 @@ class BookingsController extends Controller
 {
     public function index()
     {
-        $bookings = Booking::all();
+        $bookings = Booking::with(['service', 'user'])
+            ->orderByDesc('booking_date')
+            ->orderByDesc('booking_time')
+            ->get();
+
         return view('bookings.index', compact('bookings'));
     }
 
 
     public function create()
     {
-        $services = Service::all();
-        $users = User::all();
+        $services = Service::orderBy('name')->get();
+        $users = User::orderBy('name')->get();
+
         return view('bookings.create' , compact('services' , 'users'));
     }
 
 
     public function store(Request $request)
     {
-        request()->validate([
+        $validated = $request->validate([
             'user_id' => 'required|exists:users,id',
             'service_id' => 'required|exists:services,id',
             'date' => 'required|date',
@@ -35,11 +40,11 @@ class BookingsController extends Controller
         ]);
 
         Booking::create([
-            'user_id' => $request->user_id,
-            'service_id' => $request->service_id,
-            'booking_date' => $request->date,
-            'booking_time' => $request->time,
-            'notes' => $request->notes,
+            'user_id' => $validated['user_id'],
+            'service_id' => $validated['service_id'],
+            'booking_date' => $validated['date'],
+            'booking_time' => $validated['time'],
+            'notes' => $validated['notes'] ?? null,
             'status' => 'pending',
         ]);
 
@@ -48,15 +53,16 @@ class BookingsController extends Controller
 
     public function edit($id)
     {
-        $services = Service::all();
-        $users = User::all();
+        $services = Service::orderBy('name')->get();
+        $users = User::orderBy('name')->get();
         $booking = Booking::findOrFail($id);
+
         return view('bookings.edit' , compact('booking' , 'services' , 'users'));
     }
 
-    public function update($id)
+    public function update(Request $request, $id)
     {
-        request()->validate([
+        $validated = $request->validate([
             'user_id' => 'required|exists:users,id',
             'service_id' => 'required|exists:services,id',
             'date' => 'required|date',
@@ -66,11 +72,11 @@ class BookingsController extends Controller
 
         $booking = Booking::findOrFail($id);
         $booking->update([
-            'user_id' => request()->user_id,
-            'service_id' => request()->service_id,
-            'booking_date' => request()->date,
-            'booking_time' => request()->time,
-            'notes' => request()->notes,
+            'user_id' => $validated['user_id'],
+            'service_id' => $validated['service_id'],
+            'booking_date' => $validated['date'],
+            'booking_time' => $validated['time'],
+            'notes' => $validated['notes'] ?? null,
         ]);
 
         return redirect()->route('bookings.index')->with('success', 'تم تحديث الحجز بنجاح');
@@ -86,7 +92,11 @@ class BookingsController extends Controller
     public function update_status($bookingId, Request $request)
     {
         $booking = Booking::findOrFail($bookingId);
-        $booking->status = $request->input('status');
+        $validated = $request->validate([
+            'status' => 'required|in:' . implode(',', array_keys(Booking::getStatuses())),
+        ]);
+
+        $booking->status = $validated['status'];
         $booking->save();
 
         return response()->json(['message' => 'Booking status updated successfully.' , 'status' => $booking->status]);

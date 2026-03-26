@@ -2,143 +2,108 @@
 
 @section('title', __('إضافة استطلاع جديد'))
 
+@include('polls.partials.ui-styles')
+
+@php
+    $options = collect(old('options', ['', '']))->values();
+
+    while ($options->count() < 2) {
+        $options->push('');
+    }
+@endphp
+
 @section('content')
-<div class="row">
-    <div class="col-md-8 col-md-offset-2">
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                <h3 class="panel-title">{{ __('إضافة استطلاع جديد') }}</h3>
+<div class="poll-page">
+    <div class="poll-shell">
+        <section class="poll-hero">
+            <div class="poll-hero-inner">
+                <div>
+                    <span class="poll-badge">
+                        <i class="bi bi-plus-circle-fill"></i>
+                        {{ __('إضافة استطلاع جديد') }}
+                    </span>
+                    <h1 class="poll-title">{{ __('ابنِ استطلاعًا واضحًا وسهل القراءة من أول خطوة') }}</h1>
+                </div>
+
+                <div class="poll-hero-actions">
+                    <a href="{{ route('polls.index') }}" class="poll-btn-muted">
+                        <i class="bi bi-arrow-right-circle"></i>
+                        {{ __('العودة للاستطلاعات') }}
+                    </a>
+                </div>
             </div>
-            <div class="panel-body">
+        </section>
+        <div class="poll-form-layout">
+            <section class="poll-card">
+                <div class="poll-card-header">
+                    <div class="poll-card-title-wrap">
+                        <span class="poll-card-icon"><i class="bi bi-pencil-square"></i></span>
+                        <div>
+                            <h2 class="poll-card-title">{{ __('نموذج إنشاء الاستطلاع') }}</h2>
+                        </div>
+                    </div>
+                </div>
+
                 <form action="{{ route('polls.store') }}" method="POST">
                     @csrf
-                    
-                    <div class="form-group">
-                        <label for="question">{{ __('السؤال') }} <span class="text-danger">*</span></label>
-                        <textarea name="question" id="question" class="form-control @error('question') is-invalid @enderror" rows="3" required>{{ old('question') }}</textarea>
-                        @error('question')
-                            <div class="text-danger">{{ $message }}</div>
+
+                    @include('polls.partials.form-core-fields', ['poll' => null])
+
+                    <section class="poll-option-builder">
+                        <div class="poll-option-builder-head">
+                            <div>
+                                <h2 class="poll-section-title" style="margin-bottom: 0;">
+                                    <i class="bi bi-list-check"></i>
+                                    {{ __('خيارات الاستطلاع') }}
+                                </h2>
+                                <div class="poll-help-text">{{ __('أضف خيارين على الأقل. يمكنك إضافة المزيد أو حذف غير الضروري قبل الحفظ.') }}</div>
+                            </div>
+
+                            <button type="button" class="poll-btn-muted" id="addOptionBtn">
+                                <i class="bi bi-plus-circle"></i>
+                                {{ __('إضافة خيار') }}
+                            </button>
+                        </div>
+
+                        @error('options')
+                            <div class="poll-error" style="margin-bottom: 14px;">{{ $message }}</div>
                         @enderror
-                    </div>
 
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="start_date">{{ __('تاريخ البدء') }} <span class="text-danger">*</span></label>
-                                <input type="datetime-local" name="start_date" id="start_date" class="form-control @error('start_date') is-invalid @enderror" value="{{ old('start_date') }}" required>
-                                @error('start_date')
-                                    <div class="text-danger">{{ $message }}</div>
-                                @enderror
-                            </div>
+                        <div class="poll-option-list" id="optionsList">
+                            @foreach($options as $index => $option)
+                                <article class="poll-option-card option-item">
+                                    <div class="poll-option-top">
+                                        <span class="poll-option-order">{{ $index + 1 }}</span>
+                                        <div>
+                                            <h3 class="poll-option-title">{{ __('خيار التصويت') }}</h3>
+                                            <div class="poll-option-meta">{{ __('سيظهر هذا النص للمصوتين داخل صفحة العرض.') }}</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="poll-option-input-row">
+                                        <input type="text" name="options[]" class="poll-input" value="{{ $option }}" placeholder="{{ __('اكتب نص الخيار') }}" required>
+                                        <button type="button" class="poll-btn-danger remove-option-btn">
+                                            <i class="bi bi-dash-circle"></i>
+                                            {{ __('حذف') }}
+                                        </button>
+                                    </div>
+                                </article>
+                            @endforeach
                         </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="end_date">{{ __('تاريخ الانتهاء') }} <span class="text-danger">*</span></label>
-                                <input type="datetime-local" name="end_date" id="end_date" class="form-control @error('end_date') is-invalid @enderror" value="{{ old('end_date') }}" required>
-                                @error('end_date')
-                                    <div class="text-danger">{{ $message }}</div>
-                                @enderror
-                            </div>
-                        </div>
-                    </div>
+                    </section>
 
-                    <div class="form-group">
-                        <div class="checkbox">
-                            <label>
-                                <input type="checkbox" name="is_active" value="1" {{ old('is_active', true) ? 'checked' : '' }}>
-                                {{ __('تفعيل الاستطلاع') }}
-                            </label>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="zoom_meeting_id">{{ __('اجتماع الزوم') }}</label>
-                        <select name="zoom_meeting_id" id="zoom_meeting_id" class="form-control @error('zoom_meeting_id') is-invalid @enderror">
-                            <option value="">{{ __('-- اختر اجتماع الزوم (اختياري) --') }}</option>
-                            @forelse($zoomMeetings as $zoomMeeting)
-                                <option value="{{ $zoomMeeting->id }}" {{ old('zoom_meeting_id') == $zoomMeeting->id ? 'selected' : '' }}>
-                                    {{ $zoomMeeting->title }}
-                                    @if($zoomMeeting->meeting_date)
-                                        ({{ $zoomMeeting->meeting_date->format('Y-m-d H:i') }})
-                                    @endif
-                                </option>
-                            @empty
-                                <option value="" disabled>{{ __('لا توجد اجتماعات زوم متاحة') }}</option>
-                            @endforelse
-                        </select>
-                        @error('zoom_meeting_id')
-                            <div class="text-danger">{{ $message }}</div>
-                        @enderror
-                    </div>
-
-                    <div class="form-group">
-                        <label for="referenced_users">{{ __('المستخدمون المشاركون في الاستطلاع') }}</label>
-                        <select name="referenced_users[]" id="referenced_users" class="form-control @error('referenced_users') is-invalid @enderror" multiple size="5">
-                            @forelse($users as $user)
-                                <option value="{{ $user->id }}" {{ in_array($user->id, old('referenced_users', [])) ? 'selected' : '' }}>
-                                    {{ $user->name }} ({{ $user->email }})
-                                </option>
-                            @empty
-                                <option value="" disabled>{{ __('لا توجد مستخدمين متاحين') }}</option>
-                            @endforelse
-                        </select>
-                        <small class="help-block">{{ __('يمكنك اختيار عدة مستخدمين. اضغط Ctrl (أو Cmd على Mac) للاختيار المتعدد. (اختياري)') }}</small>
-                        @error('referenced_users')
-                            <div class="text-danger">{{ $message }}</div>
-                        @enderror
-                    </div>
-
-                    <div id="options-container">
-                        <label>{{ __('خيارات الاستطلاع') }} <span class="text-danger">*</span></label>
-                        <div class="alert alert-info">
-                            {{ __('قم بإضافة خيارات الاستطلاع. يجب أن يكون هناك خياران على الأقل.') }}
-                        </div>
-                        
-                        <div class="form-group option-group">
-                            <label>{{ __('Chọn Option 1') }}</label>
-                            <div class="input-group">
-                                <input type="text" name="options[]" class="form-control @error('options') is-invalid @enderror" placeholder="{{ __('أدخل الخيار الأول') }}" required>
-                                <span class="input-group-btn">
-                                    <button type="button" class="btn btn-danger btn-remove-option" disabled>
-                                        <span class="glyphicon glyphicon-minus"></span>
-                                    </button>
-                                </span>
-                            </div>
-                        </div>
-
-                        <div class="form-group option-group">
-                            <label>{{ __('Chọn Option 2') }}</label>
-                            <div class="input-group">
-                                <input type="text" name="options[]" class="form-control @error('options') is-invalid @enderror" placeholder="{{ __('أدخل الخيار الثاني') }}" required>
-                                <span class="input-group-btn">
-                                    <button type="button" class="btn btn-danger btn-remove-option">
-                                        <span class="glyphicon glyphicon-minus"></span>
-                                    </button>
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-
-                    @error('options')
-                        <div class="text-danger">{{ $message }}</div>
-                    @enderror
-
-                    <div class="form-group">
-                        <button type="button" class="btn btn-success" id="add-option">
-                            <span class="glyphicon glyphicon-plus"></span> {{ __('إضافة خيار') }}
+                    <div class="poll-footer-actions" style="margin-top: 22px;">
+                        <button type="submit" class="poll-btn">
+                            <i class="bi bi-check2-circle"></i>
+                            {{ __('حفظ الاستطلاع') }}
                         </button>
-                    </div>
-
-                    <div class="form-group">
-                        <button type="submit" class="btn btn-primary">
-                            <span class="glyphicon glyphicon-save"></span> {{ __('حفظ الاستطلاع') }}
-                        </button>
-                        <a href="{{ route('polls.index') }}" class="btn btn-default">
-                            <span class="glyphicon glyphicon-arrow-right"></span> {{ __('إلغاء') }}
+                        <a href="{{ route('polls.index') }}" class="poll-btn-muted">
+                            <i class="bi bi-x-circle"></i>
+                            {{ __('إلغاء') }}
                         </a>
                     </div>
                 </form>
-            </div>
+            </section>
         </div>
     </div>
 </div>
@@ -146,60 +111,92 @@
 
 @push('scripts')
 <script>
-$(document).ready(function() {
-    let optionCount = 2;
-    
-    $('#add-option').click(function() {
-        optionCount++;
-        let newOption = `
-            <div class="form-group option-group">
-                <label>{{ __('Chọn Option') }} ${optionCount}</label>
-                <div class="input-group">
-                    <input type="text" name="options[]" class="form-control" placeholder="{{ __('أدخل الخيار') }}">
-                    <span class="input-group-btn">
-                        <button type="button" class="btn btn-danger btn-remove-option">
-                            <span class="glyphicon glyphicon-minus"></span>
-                        </button>
-                    </span>
+    document.addEventListener('DOMContentLoaded', function () {
+        const optionsList = document.getElementById('optionsList');
+        const addOptionBtn = document.getElementById('addOptionBtn');
+        const startDateInput = document.getElementById('start_date');
+        const endDateInput = document.getElementById('end_date');
+
+        const createOptionCard = function (index, value) {
+            const article = document.createElement('article');
+            article.className = 'poll-option-card option-item';
+            article.innerHTML = `
+                <div class="poll-option-top">
+                    <span class="poll-option-order">${index}</span>
+                    <div>
+                        <h3 class="poll-option-title">{{ __('خيار التصويت') }}</h3>
+                        <div class="poll-option-meta">{{ __('سيظهر هذا النص للمصوتين داخل صفحة العرض.') }}</div>
+                    </div>
                 </div>
-            </div>
-        `;
-        $('#options-container').append(newOption);
-        updateRemoveButtons();
-    });
+                <div class="poll-option-input-row">
+                    <input type="text" name="options[]" class="poll-input" value="${value || ''}" placeholder="{{ __('اكتب نص الخيار') }}" required>
+                    <button type="button" class="poll-btn-danger remove-option-btn">
+                        <i class="bi bi-dash-circle"></i>
+                        {{ __('حذف') }}
+                    </button>
+                </div>
+            `;
 
-    $(document).on('click', '.btn-remove-option', function() {
-        $(this).closest('.option-group').remove();
-        optionCount--;
-        updateRemoveButtons();
-    });
+            return article;
+        };
 
-    function updateRemoveButtons() {
-        let optionGroups = $('.option-group');
-        optionGroups.each(function(index) {
-            let btn = $(this).find('.btn-remove-option');
-            if (optionGroups.length <= 2) {
-                btn.prop('disabled', true);
-            } else {
-                btn.prop('disabled', false);
-            }
+        const refreshOptionIndexes = function () {
+            const items = Array.from(optionsList.querySelectorAll('.option-item'));
+            items.forEach(function (item, index) {
+                const order = item.querySelector('.poll-option-order');
+                if (order) {
+                    order.textContent = index + 1;
+                }
+            });
+
+            items.forEach(function (item) {
+                const removeButton = item.querySelector('.remove-option-btn');
+                if (removeButton) {
+                    removeButton.disabled = items.length <= 2;
+                }
+            });
+        };
+
+        addOptionBtn?.addEventListener('click', function () {
+            const nextIndex = optionsList.querySelectorAll('.option-item').length + 1;
+            optionsList.appendChild(createOptionCard(nextIndex, ''));
+            refreshOptionIndexes();
         });
-    }
 
-    // Set default dates
-    let now = new Date();
-    let nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-    
-    $('#start_date').val(formatDate(now));
-    $('#end_date').val(formatDate(nextWeek));
-});
+        optionsList?.addEventListener('click', function (event) {
+            const button = event.target.closest('.remove-option-btn');
+            if (!button) {
+                return;
+            }
 
-function formatDate(date) {
-    return date.getFullYear() + '-' + 
-           String(date.getMonth() + 1).padStart(2, '0') + '-' + 
-           String(date.getDate()).padStart(2, '0') + 'T' + 
-           String(date.getHours()).padStart(2, '0') + ':' + 
-           String(date.getMinutes()).padStart(2, '0');
-}
+            const items = optionsList.querySelectorAll('.option-item');
+            if (items.length <= 2) {
+                return;
+            }
+
+            button.closest('.option-item')?.remove();
+            refreshOptionIndexes();
+        });
+
+        const formatDate = function (date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+
+            return `${year}-${month}-${day}T${hours}:${minutes}`;
+        };
+
+        if (startDateInput && !startDateInput.value) {
+            startDateInput.value = formatDate(new Date());
+        }
+
+        if (endDateInput && !endDateInput.value) {
+            endDateInput.value = formatDate(new Date(Date.now() + (7 * 24 * 60 * 60 * 1000)));
+        }
+
+        refreshOptionIndexes();
+    });
 </script>
 @endpush

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Document;
+use App\Models\Meeting;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -16,7 +17,9 @@ class DocumentsController extends Controller
      */
     public function index(): View
     {
-        $documents = Document::orderBy('created_at', 'desc')->paginate(15);
+        $documents = Document::with('meeting:id,name,date')
+            ->orderBy('created_at', 'desc')
+            ->paginate(15);
 
         return view('documents.index', compact('documents'));
     }
@@ -26,7 +29,9 @@ class DocumentsController extends Controller
      */
     public function create(): View
     {
-        return view('documents.create');
+        $meetings = Meeting::orderBy('date', 'desc')->get(['id', 'name', 'date']);
+
+        return view('documents.create', compact('meetings'));
     }
 
     /**
@@ -80,6 +85,8 @@ class DocumentsController extends Controller
      */
     public function show(Document $document): View
     {
+        $document->load('meeting:id,name,date');
+
         return view('documents.show', compact('document'));
     }
 
@@ -88,7 +95,10 @@ class DocumentsController extends Controller
      */
     public function edit(Document $document): View
     {
-        return view('documents.edit', compact('document'));
+        $document->load('meeting:id,name,date');
+        $meetings = Meeting::orderBy('date', 'desc')->get(['id', 'name', 'date']);
+
+        return view('documents.edit', compact('document', 'meetings'));
     }
 
     /**
@@ -99,9 +109,13 @@ class DocumentsController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'file' => 'nullable|file|max:51200', // 50MB max
+            'meeting_id' => 'nullable|exists:meetings,id',
         ]);
 
-        $updateData = ['name' => $validated['name']];
+        $updateData = [
+            'name' => $validated['name'],
+            'meeting_id' => $validated['meeting_id'] ?? null,
+        ];
 
         // Handle file upload if new file is provided
         if ($request->hasFile('file')) {

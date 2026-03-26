@@ -1,70 +1,126 @@
 @extends('layouts.app')
 
+@section('title', __('تعديل الصلاحية'))
+
+@php
+    $linkedDepartmentsCount = $permission->departments->count();
+@endphp
+
+@include('permissions.partials.form-styles')
+
 @section('content')
-<div class="container">
-    <div class="row">
-        <div class="col-md-8 col-md-offset-2">
-            <div class="panel panel-default">
-                <div class="panel-heading">
-                    <h3 class="panel-title">تعديل الصلاحية: {{ $permission->name }}</h3>
+<div class="container-fluid permf-page">
+    <div class="permf-shell">
+        <section class="permf-hero">
+            <div class="permf-hero-inner">
+                <div>
+                    <span class="permf-badge">
+                        <i class="bi bi-pencil-square"></i>
+                        {{ __('تعديل الصلاحية') }}
+                    </span>
+                    <h1 class="permf-title">{{ $permission->display_name }}</h1>
+                    <p class="permf-subtitle">{{ __('حدّث الاسم البرمجي أو الوحدة أو الإدارات المرتبطة، وسيستمر عرض الصلاحية بالعربي في الواجهات الإدارية مع الاحتفاظ بالمرجع التقني عند الحاجة.') }}</p>
                 </div>
-                <div class="panel-body">
-                    <form action="{{ route('permissions.update', $permission) }}" method="POST">
-                        @csrf
-                        @method('PUT')
 
-                        <div class="form-group {{ $errors->has('name') ? 'has-error' : '' }}">
-                            <label for="name">اسم الصلاحية <span class="text-danger">*</span></label>
-                            <input type="text" name="name" id="name" class="form-control" value="{{ old('name', $permission->name) }}" required>
-                        </div>
-
-                        <div class="form-group {{ $errors->has('slug') ? 'has-error' : '' }}">
-                            <label for="slug">المعرّف (Slug) <span class="text-danger">*</span></label>
-                            <input type="text" name="slug" id="slug" class="form-control" value="{{ old('slug', $permission->slug) }}" required>
-                        </div>
-
-                        <div class="form-group {{ $errors->has('module') ? 'has-error' : '' }}">
-                            <label for="module">الوحدة</label>
-                            <select name="module" id="module" class="form-control">
-                                <option value="">-- اختر الوحدة --</option>
-                                @foreach($modules as $key => $value)
-                                    <option value="{{ $key }}" {{ old('module', $permission->module) == $key ? 'selected' : '' }}>{{ $value }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-
-                        <div class="form-group {{ $errors->has('description') ? 'has-error' : '' }}">
-                            <label for="description">الوصف</label>
-                            <textarea name="description" id="description" class="form-control" rows="3">{{ old('description', $permission->description) }}</textarea>
-                        </div>
-
-                        <div class="form-group {{ $errors->has('department_ids') ? 'has-error' : '' }}">
-                            <label for="department_ids">الإدارات المرتبطة بهذه الصلاحية</label>
-                            <select name="department_ids[]" id="department_ids" class="form-control" multiple size="8">
-                                @foreach($departments as $department)
-                                    <option value="{{ $department->id }}"
-                                        {{ in_array($department->id, old('department_ids', $permission->departments->pluck('id')->toArray())) ? 'selected' : '' }}>
-                                        {{ $department->full_name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            @if ($errors->has('department_ids'))
-                                <span class="help-block">{{ $errors->first('department_ids') }}</span>
-                            @endif
-                        </div>
-
-                        <div class="form-group">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fa fa-save"></i> حفظ التغييرات
-                            </button>
-                            <a href="{{ route('permissions.index') }}" class="btn btn-default">
-                                <i class="fa fa-times"></i> إلغاء
-                            </a>
-                        </div>
-                    </form>
+                <div class="permf-actions">
+                    <a href="{{ route('permissions.show', $permission) }}" class="permf-btn-muted">
+                        <i class="bi bi-eye-fill"></i>
+                        {{ __('عرض التفاصيل') }}
+                    </a>
+                    <a href="{{ route('permissions.index') }}" class="permf-btn-muted">
+                        <i class="bi bi-arrow-right-circle"></i>
+                        {{ __('العودة إلى الصلاحيات') }}
+                    </a>
                 </div>
             </div>
+        </section>
+
+        <div class="permf-grid">
+            <section class="permf-panel">
+                <div class="permf-panel-header">
+                    <div class="permf-panel-title-wrap">
+                        <span class="permf-panel-icon"><i class="bi bi-shield-check"></i></span>
+                        <div>
+                            <h2 class="permf-panel-title">{{ __('تحديث بيانات الصلاحية') }}</h2>
+                            <p class="permf-panel-subtitle">{{ __('راجع الكود البرمجي والوحدة والوصف ثم حدّث الإدارات التي يجب أن ترث هذه الصلاحية أو ترتبط بها داخل النظام.') }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <form action="{{ route('permissions.update', $permission) }}" method="POST">
+                    @csrf
+                    @method('PUT')
+
+                    @include('permissions.partials.form-fields', [
+                        'isEdit' => true,
+                        'permission' => $permission,
+                        'modules' => $modules,
+                        'departments' => $departments,
+                    ])
+
+                    <div class="permf-footer">
+                        <p class="permf-footer-note">{{ __('أي تعديل هنا سيؤثر على عرض الصلاحية للمشرفين وعلى الإدارات المرتبطة بها، لذلك يفضّل الحفاظ على نمط تسمية ثابت وواضح.') }}</p>
+
+                        <div class="permf-footer-actions">
+                            <button type="submit" class="permf-btn">
+                                <i class="bi bi-check2-circle"></i>
+                                {{ __('حفظ التغييرات') }}
+                            </button>
+                            <a href="{{ route('permissions.show', $permission) }}" class="permf-btn-muted">
+                                <i class="bi bi-x-circle"></i>
+                                {{ __('إلغاء') }}
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </section>
+
+            <aside class="permf-side-stack">
+                <section class="permf-mini-card">
+                    <h3 class="permf-mini-title">
+                        <i class="bi bi-info-circle"></i>
+                        {{ __('ملخص الصلاحية') }}
+                    </h3>
+                    <div class="permf-stat-grid">
+                        <div class="permf-stat-box">
+                            <strong>#{{ $permission->id }}</strong>
+                            <span>{{ __('رقم الصلاحية') }}</span>
+                        </div>
+                        <div class="permf-stat-box">
+                            <strong>{{ $linkedDepartmentsCount }}</strong>
+                            <span>{{ __('إدارة مرتبطة') }}</span>
+                        </div>
+                        <div class="permf-stat-box">
+                            <strong>{{ $permission->module_display }}</strong>
+                            <span>{{ __('الوحدة الحالية') }}</span>
+                        </div>
+                        <div class="permf-stat-box">
+                            <strong>{{ $permission->created_at->format('Y-m-d') }}</strong>
+                            <span>{{ __('تاريخ الإنشاء') }}</span>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="permf-mini-card">
+                    <h3 class="permf-mini-title">
+                        <i class="bi bi-lightbulb"></i>
+                        {{ __('تنبيه') }}
+                    </h3>
+                    <div class="permf-tip-list">
+                        <div class="permf-tip-item">
+                            <i class="bi bi-check2-circle"></i>
+                            <div>{{ __('الاسم العربي الظاهر في النظام يتم اشتقاقه من الاسم البرمجي، لذلك أي تعديل في الكود سيغيّر العرض العربي تلقائيًا.') }}</div>
+                        </div>
+                        <div class="permf-tip-item">
+                            <i class="bi bi-check2-circle"></i>
+                            <div>{{ __('إذا كانت الصلاحية مستخدمة داخل إدارات أو مستخدمين، فالأفضل تعديلها بحذر للحفاظ على اتساق الصلاحيات داخل النظام.') }}</div>
+                        </div>
+                    </div>
+                </section>
+            </aside>
         </div>
     </div>
 </div>
 @endsection
+
+@include('permissions.partials.form-scripts')

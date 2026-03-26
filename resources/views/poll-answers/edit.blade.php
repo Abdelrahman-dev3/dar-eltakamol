@@ -2,211 +2,212 @@
 
 @section('title', __('تعديل إجابة الاستطلاع') . ' - ' . ($pollAnswer->user->name ?? __('غير معروف')))
 
+@include('polls.partials.ui-styles')
+
+@php
+    $linkedPoll = $pollAnswer->poll;
+    $linkedOption = $pollAnswer->pollOption;
+    $linkedUser = $pollAnswer->user;
+@endphp
+
 @section('content')
-<div class="container">
-    <div class="row">
-        <div class="col-md-8 col-md-offset-2">
-            <div class="panel panel-default">
-                <div class="panel-heading">
-                    <h3 class="panel-title">
-                        {{ __('تعديل إجابة الاستطلاع') }}
-                        <div class="pull-left">
-                            <a href="{{ route('poll-answers.show', $pollAnswer) }}" class="btn btn-info btn-sm">
-                                <span class="glyphicon glyphicon-eye-open"></span> {{ __('عرض') }}
-                            </a>
-                            <a href="{{ route('poll-answers.index') }}" class="btn btn-default btn-sm">
-                                <span class="glyphicon glyphicon-arrow-right"></span> {{ __('العودة') }}
-                            </a>
-                        </div>
-                    </h3>
+<div class="poll-page">
+    <div class="poll-shell">
+        <section class="poll-hero">
+            <div class="poll-hero-inner">
+                <div>
+                    <span class="poll-badge">
+                        <i class="bi bi-pencil-fill"></i>
+                        {{ __('تعديل إجابة الاستطلاع') }} #{{ $pollAnswer->id }}
+                    </span>
+                    <h1 class="poll-title">{{ $linkedUser?->name ?? __('مستخدم غير معروف') }}</h1>
+                    <div class="poll-meta-row">
+                        <span class="poll-chip"><i class="bi bi-ui-radios-grid"></i>{{ $linkedPoll ? '#' . $linkedPoll->id : __('بدون استطلاع') }}</span>
+                        <span class="poll-chip"><i class="bi bi-check2-circle"></i>{{ $linkedOption?->option_text ?? __('بدون خيار') }}</span>
+                        <span class="poll-chip"><i class="bi bi-calendar2-check"></i>{{ optional($pollAnswer->answer_date)->format('Y-m-d H:i') ?? __('غير متوفر') }}</span>
+                    </div>
                 </div>
-                <div class="panel-body">
-                    <form action="{{ route('poll-answers.update', $pollAnswer) }}" method="POST">
-                        @csrf
-                        @method('PUT')
-                        
-                        <div class="form-group">
-                            <label for="poll_id" class="control-label">{{ __('الاستطلاع') }} <span class="text-danger">*</span></label>
-                            <select name="poll_id" id="poll_id" class="form-control" required>
-                                <option value="">{{ __('اختر الاستطلاع') }}</option>
-                                @foreach($polls as $poll)
-                                    <option value="{{ $poll->id }}" 
-                                            {{ (old('poll_id', $pollAnswer->poll_id) == $poll->id) ? 'selected' : '' }}>
-                                        {{ $poll->question }} 
-                                        @if($poll->start_date)
-                                            ({{ $poll->start_date->format('Y-m-d') }} - {{ $poll->end_date->format('Y-m-d') }})
-                                        @endif
-                                    </option>
-                                @endforeach
-                            </select>
-                            @error('poll_id')
-                                <span class="help-block text-danger">{{ $message }}</span>
-                            @enderror
-                        </div>
 
-                        <div class="form-group">
-                            <label for="poll_option_id" class="control-label">{{ __('الخيار المختار') }} <span class="text-danger">*</span></label>
-                            <select name="poll_option_id" id="poll_option_id" class="form-control" required>
-                                <option value="">{{ __('اختر الخيار') }}</option>
-                                @foreach($pollOptions as $option)
-                                    <option value="{{ $option->id }}" 
-                                            data-poll-id="{{ $option->poll_id }}"
-                                            {{ (old('poll_option_id', $pollAnswer->poll_option_id) == $option->id) ? 'selected' : '' }}>
-                                        {{ $option->option_text }} 
-                                        @if($option->poll)
-                                            ({{ $option->poll->question }})
-                                        @endif
-                                    </option>
-                                @endforeach
-                            </select>
-                            @error('poll_option_id')
-                                <span class="help-block text-danger">{{ $message }}</span>
-                            @enderror
-                        </div>
-
-                        <div class="form-group">
-                            <label for="user_id" class="control-label">{{ __('المستخدم') }} <span class="text-danger">*</span></label>
-                            <select name="user_id" id="user_id" class="form-control" required>
-                                <option value="">{{ __('اختر المستخدم') }}</option>
-                                @foreach($users as $user)
-                                    <option value="{{ $user->id }}" 
-                                            {{ (old('user_id', $pollAnswer->user_id) == $user->id) ? 'selected' : '' }}>
-                                        {{ $user->name }} 
-                                        @if($user->email)
-                                            ({{ $user->email }})
-                                        @endif
-                                    </option>
-                                @endforeach
-                            </select>
-                            @error('user_id')
-                                <span class="help-block text-danger">{{ $message }}</span>
-                            @enderror
-                        </div>
-
-                        <div class="form-group">
-                            <label for="answer_date" class="control-label">{{ __('تاريخ الإجابة') }}</label>
-                            <input type="datetime-local" name="answer_date" id="answer_date" class="form-control" 
-                                   value="{{ old('answer_date', $pollAnswer->answer_date->format('Y-m-d\TH:i')) }}">
-                            @error('answer_date')
-                                <span class="help-block text-danger">{{ $message }}</span>
-                            @enderror
-                        </div>
-
-                        <div class="alert alert-info">
-                            <h5>{{ __('معلومات الإجابة الحالية') }}</h5>
-                            <p><strong>{{ __('المستخدم:') }}</strong> {{ $pollAnswer->user->name ?? __('غير معروف') }}</p>
-                            <p><strong>{{ __('الاستطلاع:') }}</strong> {{ $pollAnswer->poll->question ?? __('غير محدد') }}</p>
-                            <p><strong>{{ __('الخيار المختار:') }}</strong> {{ $pollAnswer->pollOption->option_text ?? __('غير محدد') }}</p>
-                            <p><strong>{{ __('تاريخ الإجابة:') }}</strong> {{ $pollAnswer->answer_date->format('Y-m-d H:i:s') }}</p>
-                            <p><strong>{{ __('تاريخ الإنشاء:') }}</strong> {{ $pollAnswer->created_at->format('Y-m-d H:i:s') }}</p>
-                            <p><strong>{{ __('آخر تحديث:') }}</strong> {{ $pollAnswer->updated_at->format('Y-m-d H:i:s') }}</p>
-                        </div>
-
-                        <div class="alert alert-warning">
-                            <h5>{{ __('تحذير') }}</h5>
-                            <p>{{ __('تعديل إجابة الاستطلاع قد يؤثر على نتائج الاستطلاع وإحصائياته. تأكد من صحة البيانات قبل الحفظ.') }}</p>
-                        </div>
-
-                        <div class="form-group">
-                            <div class="row">
-                                <div class="col-md-4">
-                                    <button type="submit" class="btn btn-success btn-block">
-                                        <span class="glyphicon glyphicon-save"></span> {{ __('حفظ التغييرات') }}
-                                    </button>
-                                </div>
-                                <div class="col-md-4">
-                                    <a href="{{ route('poll-answers.show', $pollAnswer) }}" class="btn btn-info btn-block">
-                                        <span class="glyphicon glyphicon-eye-open"></span> {{ __('عرض') }}
-                                    </a>
-                                </div>
-                                <div class="col-md-4">
-                                    <a href="{{ route('poll-answers.index') }}" class="btn btn-default btn-block">
-                                        <span class="glyphicon glyphicon-arrow-right"></span> {{ __('إلغاء') }}
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                    </form>
+                <div class="poll-hero-actions">
+                    <a href="{{ route('poll-answers.show', $pollAnswer) }}" class="poll-btn">
+                        <i class="bi bi-eye-fill"></i>
+                        {{ __('عرض') }}
+                    </a>
+                    <a href="{{ route('poll-answers.index') }}" class="poll-btn-muted">
+                        <i class="bi bi-arrow-right-circle"></i>
+                        {{ __('العودة') }}
+                    </a>
                 </div>
             </div>
+        </section>
+
+        <div class="poll-grid">
+            <section class="poll-card">
+                <div class="poll-card-header">
+                    <div class="poll-card-title-wrap">
+                        <span class="poll-card-icon"><i class="bi bi-sliders2"></i></span>
+                        <div>
+                            <h2 class="poll-card-title">{{ __('تحديث بيانات الإجابة') }}</h2>
+                            <p class="poll-card-note">{{ __('يمكنك تعديل الاستطلاع أو الخيار أو المستخدم أو وقت الإجابة، مع بقاء التحقق من صحة الربط وتفادي التكرار مفعّلًا.') }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <form action="{{ route('poll-answers.update', $pollAnswer) }}" method="POST" id="pollAnswerEditForm">
+                    @csrf
+                    @method('PUT')
+
+                    @include('poll-answers.partials.form-fields', ['pollAnswer' => $pollAnswer])
+
+                    <div class="poll-footer-actions" style="margin-top: 22px;">
+                        <button type="submit" class="poll-btn">
+                            <i class="bi bi-save2-fill"></i>
+                            {{ __('حفظ التغييرات') }}
+                        </button>
+                        <a href="{{ route('poll-answers.show', $pollAnswer) }}" class="poll-btn-muted">
+                            <i class="bi bi-eye"></i>
+                            {{ __('عرض الإجابة') }}
+                        </a>
+                    </div>
+                </form>
+            </section>
+
+            <aside class="poll-shell" style="gap: 18px;">
+                <section class="poll-card">
+                    <div class="poll-card-header">
+                        <div class="poll-card-title-wrap">
+                            <span class="poll-card-icon"><i class="bi bi-info-circle-fill"></i></span>
+                            <div>
+                                <h2 class="poll-card-title">{{ __('البيانات الحالية') }}</h2>
+                                <p class="poll-card-note">{{ __('مرجع سريع قبل الحفظ حتى تراجع القيم الأصلية بسهولة.') }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="poll-detail-grid" style="grid-template-columns: 1fr;">
+                        <div class="poll-detail-item">
+                            <span class="poll-detail-label">{{ __('المستخدم') }}</span>
+                            <div class="poll-detail-value">{{ $linkedUser?->name ?? __('غير معروف') }}</div>
+                        </div>
+                        <div class="poll-detail-item">
+                            <span class="poll-detail-label">{{ __('الاستطلاع الحالي') }}</span>
+                            <div class="poll-detail-value">{{ $linkedPoll ? \Illuminate\Support\Str::limit($linkedPoll->question, 110) : __('غير متوفر') }}</div>
+                        </div>
+                        <div class="poll-detail-item">
+                            <span class="poll-detail-label">{{ __('الخيار الحالي') }}</span>
+                            <div class="poll-detail-value">{{ $linkedOption?->option_text ?? __('غير محدد') }}</div>
+                        </div>
+                        <div class="poll-detail-item">
+                            <span class="poll-detail-label">{{ __('آخر تحديث') }}</span>
+                            <div class="poll-detail-value">{{ optional($pollAnswer->updated_at)->format('Y-m-d H:i') ?? __('غير متوفر') }}</div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="poll-card">
+                    <div class="poll-card-header">
+                        <div class="poll-card-title-wrap">
+                            <span class="poll-card-icon"><i class="bi bi-exclamation-triangle-fill"></i></span>
+                            <div>
+                                <h2 class="poll-card-title">{{ __('تنبيه') }}</h2>
+                                <p class="poll-card-note">{{ __('تغيير الخيار قد يؤثر على عدادات التصويت والنتائج الظاهرة داخل الاستطلاع.') }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="poll-mini-stats">
+                        <div class="poll-mini-stat">
+                            <span class="poll-mini-label">{{ __('قبل الحفظ') }}</span>
+                            <div class="poll-mini-value">{{ __('راجع أن الخيار المحدد يتبع الاستطلاع نفسه، وأن المستخدم المقصود لم يُسجل إجابة أخرى داخل نفس الاستطلاع.') }}</div>
+                        </div>
+                    </div>
+
+                    <div class="poll-footer-actions" style="margin-top: 18px;">
+                        @if($linkedPoll)
+                            <a href="{{ route('polls.show', $linkedPoll) }}" class="poll-btn-muted">
+                                <i class="bi bi-ui-radios-grid"></i>
+                                {{ __('عرض الاستطلاع') }}
+                            </a>
+                        @endif
+                        @if($linkedOption)
+                            <a href="{{ route('poll-options.show', $linkedOption) }}" class="poll-btn-muted">
+                                <i class="bi bi-list-check"></i>
+                                {{ __('عرض الخيار') }}
+                            </a>
+                        @endif
+                    </div>
+                </section>
+            </aside>
         </div>
     </div>
 </div>
+@endsection
 
+@push('scripts')
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const pollSelect = document.getElementById('poll_id');
-    const optionSelect = document.getElementById('poll_option_id');
-    const userSelect = document.getElementById('user_id');
-    
-    // Filter options based on selected poll
-    function filterOptions() {
-        const selectedPollId = pollSelect.value;
-        const options = optionSelect.querySelectorAll('option');
-        
-        options.forEach(option => {
-            if (option.value === '') {
-                option.style.display = 'block';
-                return;
-            }
-            
-            const optionPollId = option.getAttribute('data-poll-id');
-            if (selectedPollId && optionPollId !== selectedPollId) {
-                option.style.display = 'none';
-                if (option.selected) {
+    document.addEventListener('DOMContentLoaded', function () {
+        const form = document.getElementById('pollAnswerEditForm');
+        const pollSelect = document.getElementById('poll_id');
+        const optionSelect = document.getElementById('poll_option_id');
+        const userSelect = document.getElementById('user_id');
+
+        const filterOptions = function () {
+            const selectedPollId = pollSelect?.value || '';
+            const options = Array.from(optionSelect?.options || []);
+
+            options.forEach(function (option) {
+                if (!option.value) {
+                    option.hidden = false;
+                    return;
+                }
+
+                const belongsToPoll = !selectedPollId || option.dataset.pollId === selectedPollId;
+                option.hidden = !belongsToPoll;
+
+                if (!belongsToPoll && option.selected) {
                     option.selected = false;
                 }
-            } else {
-                option.style.display = 'block';
+            });
+
+            const selectedOption = optionSelect?.selectedOptions?.[0];
+            if (selectedOption && selectedOption.dataset.pollId !== selectedPollId) {
+                optionSelect.value = '';
+            }
+        };
+
+        pollSelect?.addEventListener('change', filterOptions);
+        filterOptions();
+
+        form?.addEventListener('submit', function (event) {
+            const selectedOption = optionSelect?.selectedOptions?.[0];
+
+            if (!pollSelect?.value) {
+                event.preventDefault();
+                window.alert('{{ __('يرجى اختيار الاستطلاع أولًا.') }}');
+                pollSelect?.focus();
+                return;
+            }
+
+            if (!optionSelect?.value) {
+                event.preventDefault();
+                window.alert('{{ __('يرجى اختيار الخيار المرتبط بالاستطلاع.') }}');
+                optionSelect?.focus();
+                return;
+            }
+
+            if (selectedOption && selectedOption.dataset.pollId !== pollSelect.value) {
+                event.preventDefault();
+                window.alert('{{ __('الخيار المحدد لا ينتمي إلى الاستطلاع المختار.') }}');
+                optionSelect?.focus();
+                return;
+            }
+
+            if (!userSelect?.value) {
+                event.preventDefault();
+                window.alert('{{ __('يرجى اختيار المستخدم.') }}');
+                userSelect?.focus();
             }
         });
-    }
-    
-    pollSelect.addEventListener('change', filterOptions);
-    
-    // Initial filter
-    filterOptions();
-    
-    // Add validation
-    const form = document.querySelector('form');
-    form.addEventListener('submit', function(e) {
-        if (!pollSelect.value) {
-            e.preventDefault();
-            alert('{{ __("يرجى اختيار الاستطلاع") }}');
-            pollSelect.focus();
-            return false;
-        }
-        
-        if (!optionSelect.value) {
-            e.preventDefault();
-            alert('{{ __("يرجى اختيار الخيار") }}');
-            optionSelect.focus();
-            return false;
-        }
-        
-        if (!userSelect.value) {
-            e.preventDefault();
-            alert('{{ __("يرجى اختيار المستخدم") }}');
-            userSelect.focus();
-            return false;
-        }
-        
-        // Check if option belongs to selected poll
-        const selectedOption = optionSelect.options[optionSelect.selectedIndex];
-        const optionPollId = selectedOption.getAttribute('data-poll-id');
-        if (pollSelect.value !== optionPollId) {
-            e.preventDefault();
-            alert('{{ __("الخيار المختار لا ينتمي للاستطلاع المحدد") }}');
-            optionSelect.focus();
-            return false;
-        }
-        
-        // Confirm changes
-        if (!confirm('{{ __("هل أنت متأكد من حفظ التغييرات؟ قد يؤثر هذا على نتائج الاستطلاع.") }}')) {
-            e.preventDefault();
-            return false;
-        }
     });
-});
 </script>
-@endsection
+@endpush

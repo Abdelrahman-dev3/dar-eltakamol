@@ -71,7 +71,7 @@
                                 @foreach($permissions as $permission)
                                     <option value="{{ $permission->id }}"
                                         {{ in_array($permission->id, old('permission_ids', $category->permissions->pluck('id')->toArray())) ? 'selected' : '' }}>
-                                        {{ $permission->name }}{{ $permission->module ? ' - ' . $permission->module : '' }}
+                                        {{ $permission->display_name }}{{ $permission->module ? ' - ' . $permission->module_display : '' }}
                                     </option>
                                 @endforeach
                             </select>

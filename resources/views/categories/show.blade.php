@@ -146,10 +146,10 @@
                         <div class="membership-list">
                             @foreach($category->permissions as $permission)
                                 <article class="membership-list-item" style="animation-delay: {{ 0.08 + ($loop->index * 0.05) }}s;">
-                                    <div class="membership-list-name">{{ $permission->name }}</div>
-                                    <div class="membership-list-sub"><code>{{ $permission->slug }}</code></div>
+                                    <div class="membership-list-name">{{ $permission->display_name }}</div>
+                                    <div class="membership-list-sub">صلاحية مرتبطة بهذه الإدارة وتنتقل للحسابات التابعة لها.</div>
                                     <div class="membership-chip-row">
-                                        <span class="membership-chip"><i class="bi bi-grid-fill"></i> {{ $permission->module ?? 'عام' }}</span>
+                                        <span class="membership-chip"><i class="bi bi-grid-fill"></i> {{ $permission->module_display }}</span>
                                     </div>
                                 </article>
                             @endforeach

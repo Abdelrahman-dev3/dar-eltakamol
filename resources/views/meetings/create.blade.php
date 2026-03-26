@@ -2,139 +2,130 @@
 
 @section('title', __('إضافة اجتماع جديد'))
 
+@include('meetings.partials.form-styles')
+
 @section('content')
-<div class="container">
-    <div class="row">
-        <div class="col-md-8 col-md-offset-2">
-            <div class="panel panel-default">
-                <div class="panel-heading">
-                    <h3 class="panel-title">
+<div class="container-fluid meeting-form-page">
+    <div class="meeting-form-shell">
+        <section class="meeting-form-hero">
+            <div class="meeting-form-hero-inner">
+                <div>
+                    <span class="meeting-form-badge">
+                        <i class="bi bi-calendar-plus-fill"></i>
                         {{ __('إضافة اجتماع جديد') }}
-                        <div class="pull-left">
-                            <a href="{{ route('meetings.index') }}" class="btn btn-default btn-sm">
-                                <span class="glyphicon glyphicon-arrow-right"></span> {{ __('رجوع') }}
-                            </a>
-                        </div>
-                    </h3>
+                    </span>
+                    <h1 class="meeting-form-title">{{ __('أنشئ اجتماعًا منظمًا وواضحًا من أول خطوة') }}</h1>
+                    <p class="meeting-form-subtitle">
+                        {{ __('أدخل بيانات الاجتماع، حدّد المدعوين، وأرفق الملفات اللازمة في نفس الشاشة') }}
+                    </p>
                 </div>
-                <div class="panel-body">
-                    <form action="{{ route('meetings.store') }}" method="POST" enctype="multipart/form-data">
-                        @csrf
 
-                        <div class="form-group @error('name') has-error @enderror">
-                            <label for="name">{{ __('اسم الاجتماع') }} <span class="text-danger">*</span></label>
-                            <input type="text" name="name" id="name" class="form-control" 
-                                   value="{{ old('name') }}" required maxlength="255"
-                                   placeholder="{{ __('أدخل اسم الاجتماع') }}">
-                            @error('name')
-                                <span class="help-block">{{ $message }}</span>
-                            @enderror
-                        </div>
-
-                        <div class="form-group @error('url') has-error @enderror">
-                            <label for="url">{{ __('رابط الاجتماع') }} <span class="text-danger">*</span></label>
-                            <input type="url" name="url" id="url" class="form-control" 
-                                   value="{{ old('url') }}" required maxlength="500"
-                                   placeholder="{{ __('أدخل رابط الاجتماع (مثال: https://zoom.us/j/123456789)') }}">
-                            @error('url')
-                                <span class="help-block">{{ $message }}</span>
-                            @enderror
-                        </div>
-
-                        <div class="form-group @error('date') has-error @enderror">
-                            <label for="date">{{ __('تاريخ ووقت الاجتماع') }} <span class="text-danger">*</span></label>
-                            <input type="datetime-local" name="date" id="date" class="form-control" 
-                                   value="{{ old('date') }}" required>
-                            @error('date')
-                                <span class="help-block">{{ $message }}</span>
-                            @enderror
-                        </div>
-
-                        <div class="form-group @error('user_ids') has-error @enderror">
-                            <label for="user_ids">{{ __('المستخدمين المدعوين للاجتماع') }}</label>
-                            <select name="user_ids[]" id="user_ids" class="form-control" multiple size="10">
-                                @foreach($users as $user)
-                                    <option value="{{ $user->id }}" {{ in_array($user->id, old('user_ids', [])) ? 'selected' : '' }}>
-                                        {{ $user->name }} ({{ $user->email }})
-                                    </option>
-                                @endforeach
-                            </select>
-                            <small class="text-muted">
-                                {{ __('اضغط مع Ctrl (أو Cmd في Mac) لاختيار عدة مستخدمين') }}
-                            </small>
-                            @error('user_ids')
-                                <span class="help-block">{{ $message }}</span>
-                            @enderror
-                        </div>
-
-                        <div class="form-group">
-                            <label>{{ __('مرفقات الاجتماع') }}</label>
-                            <div id="attachments-container">
-                                <div class="attachment-item" style="margin-bottom: 15px;">
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <input type="file" name="attachments[]" class="form-control">
-                                        </div>
-                                        <div class="col-md-6">
-                                            <input type="text" name="attachment_descriptions[]" class="form-control" 
-                                                   placeholder="{{ __('وصف المرفق (اختياري)') }}">
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <button type="button" class="btn btn-sm btn-info" onclick="addAttachmentField()">
-                                <i class="fa fa-plus"></i> {{ __('إضافة مرفق آخر') }}
-                            </button>
-                            <small class="text-muted display-block">
-                                {{ __('الحد الأقصى لحجم كل ملف: 20 ميجابايت') }}
-                            </small>
-                        </div>
-
-                        <div class="form-group">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fa fa-save"></i> {{ __('حفظ') }}
-                            </button>
-                            <a href="{{ route('meetings.index') }}" class="btn btn-default">
-                                <i class="fa fa-times"></i> {{ __('إلغاء') }}
-                            </a>
-                        </div>
-                    </form>
-
-                    <script>
-                        function addAttachmentField() {
-                            const container = document.getElementById('attachments-container');
-                            const newField = document.createElement('div');
-                            newField.className = 'attachment-item';
-                            newField.style.marginBottom = '15px';
-                            newField.innerHTML = `
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <input type="file" name="attachments[]" class="form-control">
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="input-group">
-                                            <input type="text" name="attachment_descriptions[]" class="form-control" 
-                                                   placeholder="{{ __('وصف المرفق (اختياري)') }}">
-                                            <span class="input-group-btn">
-                                                <button type="button" class="btn btn-danger" onclick="removeAttachmentField(this)">
-                                                    <i class="fa fa-trash"></i>
-                                                </button>
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            `;
-                            container.appendChild(newField);
-                        }
-
-                        function removeAttachmentField(button) {
-                            button.closest('.attachment-item').remove();
-                        }
-                    </script>
+                <div class="meeting-form-actions">
+                    <a href="{{ route('meetings.index') }}" class="meeting-form-btn-muted">
+                        <i class="bi bi-arrow-right-circle"></i>
+                        {{ __('العودة للاجتماعات') }}
+                    </a>
                 </div>
             </div>
+        </section>
+
+        <div class="meeting-form-grid">
+            <section class="meeting-panel">
+                <div class="meeting-panel-header">
+                    <div class="meeting-panel-title-wrap">
+                        <span class="meeting-panel-icon"><i class="bi bi-pencil-square"></i></span>
+                        <div>
+                            <h2 class="meeting-panel-title">{{ __('نموذج إضافة الاجتماع') }}</h2>
+                            <p class="meeting-panel-subtitle">{{ __('كل الحقول مرتبة في أقسام قصيرة لتسريع الإدخال وتقليل الأخطاء أثناء تجهيز الاجتماع.') }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <form action="{{ route('meetings.store') }}" method="POST" enctype="multipart/form-data"
+                    data-meeting-form
+                    data-confirm-message="{{ __('هل أنت متأكد من إنشاء هذا الاجتماع؟') }}"
+                    data-name-label="{{ __('اسم الاجتماع') }}"
+                    data-date-label="{{ __('التاريخ') }}"
+                    data-empty-name="{{ __('يرجى إدخال اسم الاجتماع') }}"
+                    data-empty-url="{{ __('يرجى إدخال رابط الاجتماع') }}"
+                    data-empty-date="{{ __('يرجى إدخال تاريخ الاجتماع') }}">
+                    @csrf
+
+                    @include('meetings.partials.form-fields', [
+                        'isEdit' => false,
+                        'meeting' => null,
+                        'users' => $users,
+                    ])
+
+                    <div class="meeting-form-footer">
+                        <p class="meeting-form-footer-note">
+                            {{ __('سيتم حفظ الاجتماع وربط المدعوين والمرفقات مباشرة. يمكنك تعديل البيانات لاحقًا أو مراجعتها من صفحة العرض.') }}
+                        </p>
+
+                        <div class="meeting-form-footer-actions">
+                            <button type="submit" class="meeting-form-btn">
+                                <i class="bi bi-check2-circle"></i>
+                                {{ __('حفظ الاجتماع') }}
+                            </button>
+                            <a href="{{ route('meetings.index') }}" class="meeting-form-btn-muted">
+                                <i class="bi bi-x-circle"></i>
+                                {{ __('إلغاء') }}
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </section>
+
+            <aside class="meeting-side-stack">
+                <section class="meeting-mini-card">
+                    <h3 class="meeting-mini-title">
+                        <i class="bi bi-lightbulb"></i>
+                        {{ __('خطوات سريعة') }}
+                    </h3>
+                    <div class="meeting-tip-list">
+                        <div class="meeting-tip-item">
+                            <i class="bi bi-1-circle"></i>
+                            <div>{{ __('اختر اسمًا واضحًا يسهّل العثور على الاجتماع لاحقًا في القائمة.') }}</div>
+                        </div>
+                        <div class="meeting-tip-item">
+                            <i class="bi bi-2-circle"></i>
+                            <div>{{ __('حدّد التاريخ والوقت بدقة حتى تظهر حالة الاجتماع بشكل صحيح في صفحة العرض.') }}</div>
+                        </div>
+                        <div class="meeting-tip-item">
+                            <i class="bi bi-3-circle"></i>
+                            <div>{{ __('أضف المرفقات الأساسية مثل جدول الأعمال أو الملفات المرجعية قبل الحفظ.') }}</div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="meeting-mini-card">
+                    <h3 class="meeting-mini-title">
+                        <i class="bi bi-bar-chart"></i>
+                        {{ __('ملخص سريع') }}
+                    </h3>
+                    <div class="meeting-stat-grid">
+                        <div class="meeting-stat-box">
+                            <strong>{{ number_format($users->count()) }}</strong>
+                            <span>{{ __('مستخدم متاح للدعوة') }}</span>
+                        </div>
+                        <div class="meeting-stat-box">
+                            <strong>20MB</strong>
+                            <span>{{ __('الحد الأقصى لكل مرفق') }}</span>
+                        </div>
+                        <div class="meeting-stat-box">
+                            <strong>{{ now()->format('Y-m-d') }}</strong>
+                            <span>{{ __('تاريخ العمل الحالي') }}</span>
+                        </div>
+                        <div class="meeting-stat-box">
+                            <strong>{{ __('مرن') }}</strong>
+                            <span>{{ __('يمكن تعديل المدعوين والمرفقات لاحقًا') }}</span>
+                        </div>
+                    </div>
+                </section>
+            </aside>
         </div>
     </div>
 </div>
 @endsection
 
+@include('meetings.partials.form-scripts')

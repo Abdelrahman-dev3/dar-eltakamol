@@ -75,13 +75,13 @@
 
                     <div class="membership-field" data-department-only style="{{ $selectedKind === 'department' ? '' : 'display:none;' }}">
                         <label for="permission_ids">الصلاحيات الخاصة بهذه الإدارة</label>
-                        <select name="permission_ids[]" id="permission_ids" class="membership-select" multiple size="8">
-                            @foreach($permissions as $permission)
-                                <option value="{{ $permission->id }}" {{ in_array($permission->id, old('permission_ids', [])) ? 'selected' : '' }}>
-                                    {{ $permission->name }}{{ $permission->module ? ' - ' . $permission->module : '' }}
-                                </option>
-                            @endforeach
-                        </select>
+                            <select name="permission_ids[]" id="permission_ids" class="membership-select" multiple size="8">
+                                @foreach($permissions as $permission)
+                                    <option value="{{ $permission->id }}" {{ in_array($permission->id, old('permission_ids', [])) ? 'selected' : '' }}>
+                                        {{ $permission->display_name }}{{ $permission->module ? ' - ' . $permission->module_display : '' }}
+                                    </option>
+                                @endforeach
+                            </select>
                         <span class="membership-help">
                             أي مساهم يرتبط بهذه الإدارة ويملك حساب مستخدم مرتبطًا به سيرث نفس صلاحيات هذه الإدارة تلقائيًا.
                         </span>

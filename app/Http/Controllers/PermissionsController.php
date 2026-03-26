@@ -6,6 +6,7 @@ use App\Models\Category;
 use App\Models\Permission;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
@@ -37,27 +38,11 @@ class PermissionsController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'slug' => 'required|string|max:255|unique:permissions',
-            'description' => 'nullable|string|max:500',
-            'module' => 'nullable|string|max:100',
-            'department_ids' => 'nullable|array',
-            'department_ids.*' => 'exists:categories,id',
-        ]);
-
+        $validated = $this->validatePermissionRequest($request);
         $departmentIds = $this->validateDepartmentIds($validated['department_ids'] ?? []);
 
-        $permission = Permission::create([
-            'name' => $validated['name'],
-            'slug' => $validated['slug'],
-            'description' => $validated['description'] ?? null,
-            'module' => $validated['module'] ?? null,
-        ]);
-
-        if (!empty($departmentIds)) {
-            $permission->categories()->attach($departmentIds);
-        }
+        $permission = Permission::create($this->buildPermissionPayload($validated));
+        $permission->categories()->sync($departmentIds);
 
         return redirect()
             ->route('permissions.index')
@@ -91,24 +76,10 @@ class PermissionsController extends Controller
      */
     public function update(Request $request, Permission $permission): RedirectResponse
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'slug' => 'required|string|max:255|unique:permissions,slug,' . $permission->id,
-            'description' => 'nullable|string|max:500',
-            'module' => 'nullable|string|max:100',
-            'department_ids' => 'nullable|array',
-            'department_ids.*' => 'exists:categories,id',
-        ]);
-
+        $validated = $this->validatePermissionRequest($request, $permission);
         $departmentIds = $this->validateDepartmentIds($validated['department_ids'] ?? []);
 
-        $permission->update([
-            'name' => $validated['name'],
-            'slug' => $validated['slug'],
-            'description' => $validated['description'] ?? null,
-            'module' => $validated['module'] ?? null,
-        ]);
-
+        $permission->update($this->buildPermissionPayload($validated, $permission));
         $permission->categories()->sync($departmentIds);
 
         return redirect()
@@ -167,5 +138,49 @@ class PermissionsController extends Controller
         }
 
         return $departmentIds;
+    }
+
+    private function validatePermissionRequest(Request $request, ?Permission $permission = null): array
+    {
+        $nameRule = 'required|string|max:255';
+
+        if (Schema::hasColumn('permissions', 'slug')) {
+            return $request->validate([
+                'name' => $nameRule,
+                'slug' => 'required|string|max:255|unique:permissions,slug,' . ($permission?->id ?? 'NULL'),
+                'description' => 'nullable|string|max:500',
+                'module' => 'nullable|string|max:100',
+                'department_ids' => 'nullable|array',
+                'department_ids.*' => 'exists:categories,id',
+            ]);
+        }
+
+        return $request->validate([
+            'name' => $permission
+                ? $nameRule . '|unique:permissions,name,' . $permission->id
+                : $nameRule . '|unique:permissions,name',
+            'slug' => 'nullable|string|max:255',
+            'description' => 'nullable|string|max:500',
+            'module' => 'nullable|string|max:100',
+            'department_ids' => 'nullable|array',
+            'department_ids.*' => 'exists:categories,id',
+        ]);
+    }
+
+    private function buildPermissionPayload(array $validated, ?Permission $permission = null): array
+    {
+        if (Schema::hasColumn('permissions', 'slug')) {
+            return [
+                'name' => $validated['name'],
+                'slug' => $validated['slug'],
+                'description' => $validated['description'] ?? null,
+                'module' => $validated['module'] ?? null,
+            ];
+        }
+
+        return [
+            'name' => $validated['name'],
+            'guard_name' => $permission->guard_name ?? 'web',
+        ];
     }
 }

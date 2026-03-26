@@ -1,225 +1,517 @@
 @extends('layouts.app')
 
+@php
+    $inviteesCount = $meeting->users->count();
+    $attachmentsCount = $meeting->attachments->count();
+    $isToday = $meeting->date->isToday();
+    $isUpcoming = $meeting->date->isFuture() && ! $isToday;
+    $statusText = $isToday ? __('اليوم') : ($isUpcoming ? __('قادم') : __('منتهٍ'));
+    $statusClass = $isToday ? 'info' : ($isUpcoming ? 'success' : 'danger');
+    $daysLabel = $isToday
+        ? __('اليوم')
+        : ($isUpcoming ? __('متبقي بالأيام') : __('منذ الاجتماع'));
+    $daysValue = $isToday ? 0 : abs(now()->diffInDays($meeting->date, false));
+@endphp
+
 @section('title', __('عرض تفاصيل الاجتماع'))
 
+@push('styles')
+<style>
+    .meeting-show-page {
+        padding: 10px 0 30px;
+        color: var(--text-primary);
+        font-size: 1rem;
+    }
+    .meeting-show-shell { display: flex; flex-direction: column; gap: 22px; }
+    .meeting-show-page button,
+    .meeting-show-page a {
+        font: inherit;
+    }
+    .meeting-show-hero,
+    .meeting-show-card,
+    .meeting-show-stat-card {
+        border-radius: 28px;
+        background: rgba(255, 255, 255, 0.96);
+        border: 1px solid rgba(170, 134, 63, 0.14);
+        box-shadow: 0 18px 42px rgba(15, 23, 42, 0.07);
+    }
+    .meeting-show-hero {
+        padding: 28px;
+        background:
+            radial-gradient(circle at top right, rgba(196, 168, 90, 0.28), transparent 30%),
+            linear-gradient(135deg, #fff8ed 0%, #ffffff 44%, #f5ecde 100%);
+    }
+    .meeting-show-hero-inner {
+        display: grid;
+        grid-template-columns: minmax(0, 1.6fr) minmax(280px, 0.9fr);
+        gap: 20px;
+        align-items: center;
+    }
+    .meeting-show-profile { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+    .meeting-show-avatar {
+        width: 108px;
+        height: 108px;
+        border-radius: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, var(--primary-color), #d4b066);
+        color: #fff;
+        font-size: 2.5rem;
+        box-shadow: 0 20px 36px rgba(170, 134, 63, 0.22);
+    }
+    .meeting-show-badge,
+    .meeting-show-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border-radius: 999px;
+        font-weight: 800;
+    }
+    .meeting-show-badge {
+        margin-bottom: 14px;
+        padding: 8px 14px;
+        background: rgba(170, 134, 63, 0.12);
+        color: var(--primary-color);
+    }
+    .meeting-show-title {
+        margin: 0;
+        font-size: clamp(2rem, 4vw, 3rem);
+        font-weight: 900;
+        color: var(--text-primary);
+    }
+    .meeting-show-meta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+    .meeting-show-chip {
+        padding: 10px 14px;
+        background: rgba(255, 255, 255, 0.92);
+        border: 1px solid rgba(170, 134, 63, 0.12);
+        color: var(--text-primary);
+    }
+    .meeting-show-chip.success { background: rgba(5, 150, 105, 0.10); color: var(--success-color); border-color: rgba(5, 150, 105, 0.18); }
+    .meeting-show-chip.info { background: rgba(14, 165, 233, 0.10); color: #0284c7; border-color: rgba(14, 165, 233, 0.18); }
+    .meeting-show-chip.danger { background: rgba(220, 38, 38, 0.08); color: var(--danger-color); border-color: rgba(220, 38, 38, 0.16); }
+    .meeting-show-actions { display: flex; flex-direction: column; gap: 12px; }
+    .meeting-show-btn,
+    .meeting-show-btn-muted,
+    .meeting-show-btn-danger {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        width: 100%;
+        padding: 13px 18px;
+        border-radius: 18px;
+        text-decoration: none !important;
+        border: 1px solid transparent;
+        font-size: 1rem;
+        font-weight: 800;
+        transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+    .meeting-show-btn { background: linear-gradient(135deg, var(--primary-color), #c49b48); color: #fff !important; box-shadow: 0 16px 28px rgba(170, 134, 63, 0.24); }
+    .meeting-show-btn-muted { background: rgba(255, 255, 255, 0.9); color: var(--text-primary) !important; border-color: rgba(170, 134, 63, 0.14); }
+    .meeting-show-btn-danger { background: rgba(220, 38, 38, 0.08); color: var(--danger-color) !important; border-color: rgba(220, 38, 38, 0.16); }
+    .meeting-show-btn:hover,
+    .meeting-show-btn-muted:hover,
+    .meeting-show-btn-danger:hover { transform: translateY(-2px); }
+    .meeting-show-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+    .meeting-show-stat-card { padding: 20px; }
+    .meeting-show-stat-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 16px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(170, 134, 63, 0.12);
+        color: var(--primary-color);
+        font-size: 1.3rem;
+        margin-bottom: 14px;
+    }
+    .meeting-show-stat-value { margin: 0; font-size: 1.9rem; font-weight: 900; color: var(--text-primary); }
+    .meeting-show-stat-label { margin: 6px 0 0; color: var(--text-secondary); font-weight: 700; }
+    .meeting-show-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+    .meeting-show-card { padding: 24px; }
+    .meeting-show-card.full-width { grid-column: 1 / -1; }
+    .meeting-show-card-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-bottom: 16px;
+    }
+    .meeting-show-card-title {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin: 0;
+        font-size: 1.3rem;
+        font-weight: 900;
+        color: var(--text-primary);
+    }
+    .meeting-show-card-title i {
+        width: 46px;
+        height: 46px;
+        border-radius: 16px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(170, 134, 63, 0.12);
+        color: var(--primary-color);
+    }
+    .meeting-show-card-note { color: var(--text-secondary); font-size: 0.95rem; line-height: 1.8; }
+    .meeting-detail-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    .meeting-detail-item {
+        padding: 16px;
+        border-radius: 20px;
+        background: rgba(248, 250, 252, 0.92);
+        border: 1px solid rgba(170, 134, 63, 0.10);
+    }
+    .meeting-detail-label {
+        display: block;
+        margin-bottom: 8px;
+        color: var(--text-secondary);
+        font-size: 0.92rem;
+        font-weight: 700;
+    }
+    .meeting-detail-value {
+        color: var(--text-primary);
+        font-size: 1rem;
+        font-weight: 800;
+        word-break: break-word;
+    }
+    .meeting-detail-code {
+        display: inline-flex;
+        padding: 6px 10px;
+        border-radius: 12px;
+        background: rgba(170, 134, 63, 0.10);
+        color: var(--primary-color);
+    }
+    .meeting-users-grid,
+    .meeting-attachments-grid {
+        display: grid;
+        gap: 16px;
+    }
+    .meeting-users-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .meeting-attachments-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .meeting-user-card,
+    .meeting-attachment-card {
+        padding: 18px;
+        border-radius: 22px;
+        background: rgba(248, 250, 252, 0.94);
+        border: 1px solid rgba(170, 134, 63, 0.10);
+    }
+    .meeting-user-card {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+    }
+    .meeting-user-avatar {
+        width: 52px;
+        height: 52px;
+        border-radius: 18px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, var(--primary-color), #cfa75b);
+        color: #fff;
+        font-size: 1.1rem;
+        font-weight: 900;
+        flex-shrink: 0;
+    }
+    .meeting-user-card strong,
+    .meeting-attachment-name { display: block; color: var(--text-primary); font-size: 1.02rem; font-weight: 800; }
+    .meeting-user-card span,
+    .meeting-attachment-meta,
+    .meeting-attachment-desc { color: var(--text-secondary); line-height: 1.8; }
+    .meeting-attachment-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 12px;
+    }
+    .meeting-attachment-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 14px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(170, 134, 63, 0.12);
+        color: var(--primary-color);
+        font-size: 1.1rem;
+        flex-shrink: 0;
+    }
+    .meeting-attachment-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 12px;
+    }
+    .meeting-attachment-actions a,
+    .meeting-attachment-actions button {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 14px;
+        border-radius: 14px;
+        border: 1px solid transparent;
+        text-decoration: none !important;
+        font-weight: 800;
+    }
+    .meeting-attachment-actions a { background: rgba(170, 134, 63, 0.10); color: var(--primary-color); }
+    .meeting-attachment-actions button { background: rgba(220, 38, 38, 0.08); color: var(--danger-color); border-color: rgba(220, 38, 38, 0.12); }
+    .meeting-empty-state {
+        padding: 24px;
+        border-radius: 22px;
+        text-align: center;
+        color: var(--text-secondary);
+        background: rgba(248, 250, 252, 0.9);
+        border: 1px dashed rgba(170, 134, 63, 0.18);
+    }
+    html[data-theme="dark"] .meeting-show-hero {
+        background:
+            radial-gradient(circle at top right, rgba(141, 110, 43, 0.28), transparent 30%),
+            linear-gradient(135deg, rgba(17, 24, 39, 0.98) 0%, rgba(15, 23, 42, 0.98) 44%, rgba(30, 41, 59, 0.98) 100%);
+        border-color: rgba(148, 163, 184, 0.14);
+        box-shadow: 0 24px 52px rgba(2, 6, 23, 0.34);
+    }
+    html[data-theme="dark"] .meeting-show-card,
+    html[data-theme="dark"] .meeting-show-stat-card,
+    html[data-theme="dark"] .meeting-user-card,
+    html[data-theme="dark"] .meeting-attachment-card,
+    html[data-theme="dark"] .meeting-empty-state {
+        background: rgba(15, 23, 42, 0.92);
+        border-color: rgba(148, 163, 184, 0.14);
+        box-shadow: 0 18px 38px rgba(2, 6, 23, 0.28);
+    }
+    html[data-theme="dark"] .meeting-detail-item,
+    html[data-theme="dark"] .meeting-show-chip,
+    html[data-theme="dark"] .meeting-detail-code {
+        background: rgba(15, 23, 42, 0.78);
+        border-color: rgba(148, 163, 184, 0.12);
+    }
+    html[data-theme="dark"] .meeting-show-badge {
+        background: rgba(141, 110, 43, 0.16);
+        color: #f6deb0;
+    }
+    html[data-theme="dark"] .meeting-show-chip.success { background: rgba(5, 150, 105, 0.16); color: #6ee7b7; }
+    html[data-theme="dark"] .meeting-show-chip.info { background: rgba(14, 165, 233, 0.16); color: #7dd3fc; }
+    html[data-theme="dark"] .meeting-show-chip.danger { background: rgba(220, 38, 38, 0.16); color: #fca5a5; }
+    html[data-theme="dark"] .meeting-show-btn-muted {
+        background: rgba(15, 23, 42, 0.92);
+        border-color: rgba(148, 163, 184, 0.14);
+        color: var(--text-primary) !important;
+    }
+    html[data-theme="dark"] .meeting-show-btn-muted:hover,
+    html[data-theme="dark"] .meeting-attachment-actions a:hover {
+        color: #f6deb0 !important;
+        border-color: rgba(141, 110, 43, 0.26);
+    }
+    @media (max-width: 1399px) {
+        .meeting-show-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 1199px) {
+        .meeting-show-hero-inner,
+        .meeting-show-grid,
+        .meeting-users-grid,
+        .meeting-attachments-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 767px) {
+        .meeting-show-stats,
+        .meeting-detail-list { grid-template-columns: 1fr; }
+        .meeting-show-hero,
+        .meeting-show-card,
+        .meeting-show-stat-card { padding: 20px; border-radius: 24px; }
+    }
+</style>
+@endpush
+
 @section('content')
-<div class="container">
-    <div class="row">
-        <div class="col-md-8 col-md-offset-2">
-            <div class="panel panel-default">
-                <div class="panel-heading">
-                    <h3 class="panel-title">
-                        {{ __('عرض تفاصيل الاجتماع') }} #{{ $meeting->id }}
-                        <div class="pull-left">
-                            <a href="{{ route('meetings.edit', $meeting->id) }}" class="btn btn-warning btn-sm">
-                                <span class="glyphicon glyphicon-edit"></span> {{ __('تعديل') }}
-                            </a>
-                            <a href="{{ route('meetings.index') }}" class="btn btn-default btn-sm">
-                                <span class="glyphicon glyphicon-arrow-right"></span> {{ __('رجوع') }}
-                            </a>
+<div class="container-fluid meeting-show-page">
+    <div class="meeting-show-shell">
+        <section class="meeting-show-hero">
+            <div class="meeting-show-hero-inner">
+                <div>
+                    <div class="meeting-show-profile">
+                        <div class="meeting-show-avatar">
+                            <i class="bi bi-camera-video-fill"></i>
                         </div>
-                    </h3>
+
+                        <div>
+                            <span class="meeting-show-badge">
+                                <i class="bi bi-calendar2-event"></i>
+                                {{ __('ملف الاجتماع') }} #{{ $meeting->id }}
+                            </span>
+                            <h1 class="meeting-show-title">{{ $meeting->name }}</h1>
+                            <div class="meeting-show-meta">
+                                <span class="meeting-show-chip"><i class="bi bi-calendar-check"></i>{{ $meeting->date->format('Y-m-d H:i') }}</span>
+                                <span class="meeting-show-chip {{ $statusClass }}"><i class="bi bi-clock"></i>{{ $statusText }}</span>
+                                <span class="meeting-show-chip"><i class="bi bi-people"></i>{{ __('المدعوون') }}: {{ $inviteesCount }}</span>
+                                <span class="meeting-show-chip"><i class="bi bi-paperclip"></i>{{ __('المرفقات') }}: {{ $attachmentsCount }}</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="panel-body">
-                    <div class="panel panel-info">
-                        <div class="panel-heading">
-                            <h4 class="panel-title">{{ __('معلومات الاجتماع') }}</h4>
-                        </div>
-                        <div class="panel-body">
-                            <div class="row">
-                                <div class="col-md-4">
-                                    <strong>{{ __('رقم الاجتماع') }}:</strong>
-                                </div>
-                                <div class="col-md-8">
-                                    {{ $meeting->id }}
-                                </div>
-                            </div>
-                            <hr>
 
-                            <div class="row">
-                                <div class="col-md-4">
-                                    <strong>{{ __('اسم الاجتماع') }}:</strong>
-                                </div>
-                                <div class="col-md-8">
-                                    {{ $meeting->name }}
-                                </div>
-                            </div>
-                            <hr>
-
-                            <div class="row">
-                                <div class="col-md-4">
-                                    <strong>{{ __('رابط الاجتماع') }}:</strong>
-                                </div>
-                                <div class="col-md-8">
-                                    <a href="{{ $meeting->url }}" target="_blank" class="btn btn-primary btn-sm">
-                                        <i class="fa fa-external-link"></i> {{ __('فتح الرابط') }}
-                                    </a>
-                                    <br><br>
-                                    <code style="word-break: break-all;">{{ $meeting->url }}</code>
-                                </div>
-                            </div>
-                            <hr>
-
-                            <div class="row">
-                                <div class="col-md-4">
-                                    <strong>{{ __('تاريخ ووقت الاجتماع') }}:</strong>
-                                </div>
-                                <div class="col-md-8">
-                                    {{ $meeting->date->format('Y-m-d H:i') }}
-                                    <br>
-                                    <small class="text-muted">
-                                        {{ $meeting->date->diffForHumans() }}
-                                    </small>
-                                </div>
-                            </div>
-                            <hr>
-
-                            <div class="row">
-                                <div class="col-md-4">
-                                    <strong>{{ __('تاريخ الإنشاء') }}:</strong>
-                                </div>
-                                <div class="col-md-8">
-                                    {{ $meeting->created_at->format('Y-m-d H:i:s') }}
-                                </div>
-                            </div>
-                            <hr>
-
-                            <div class="row">
-                                <div class="col-md-4">
-                                    <strong>{{ __('آخر تحديث') }}:</strong>
-                                </div>
-                                <div class="col-md-8">
-                                    {{ $meeting->updated_at->format('Y-m-d H:i:s') }}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    @if($meeting->users->count() > 0)
-                    <div class="panel panel-success">
-                        <div class="panel-heading">
-                            <h4 class="panel-title">
-                                <i class="fa fa-users"></i> {{ __('المستخدمين المدعوين') }} 
-                                <span class="badge">{{ $meeting->users->count() }}</span>
-                            </h4>
-                        </div>
-                        <div class="panel-body">
-                            <div class="table-responsive">
-                                <table class="table table-bordered table-striped">
-                                    <thead>
-                                        <tr>
-                                            <th>{{ __('الاسم') }}</th>
-                                            <th>{{ __('البريد الإلكتروني') }}</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach($meeting->users as $user)
-                                            <tr>
-                                                <td>{{ $user->name }}</td>
-                                                <td>{{ $user->email }}</td>
-                                            </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                    @else
-                    <div class="alert alert-info">
-                        <i class="fa fa-info-circle"></i> {{ __('لم يتم تحديد مستخدمين لهذا الاجتماع') }}
-                    </div>
-                    @endif
-
-                    @if($meeting->attachments->count() > 0)
-                    <div class="panel panel-warning">
-                        <div class="panel-heading">
-                            <h4 class="panel-title">
-                                <i class="fa fa-paperclip"></i> {{ __('مرفقات الاجتماع') }} 
-                                <span class="badge">{{ $meeting->attachments->count() }}</span>
-                            </h4>
-                        </div>
-                        <div class="panel-body">
-                            <div class="table-responsive">
-                                <table class="table table-bordered table-striped">
-                                    <thead>
-                                        <tr>
-                                            <th width="5%">#</th>
-                                            <th width="35%">{{ __('اسم الملف') }}</th>
-                                            <th width="25%">{{ __('الوصف') }}</th>
-                                            <th width="10%">{{ __('الحجم') }}</th>
-                                            <th width="15%">{{ __('رفع بواسطة') }}</th>
-                                            <th width="10%">{{ __('إجراءات') }}</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach($meeting->attachments as $index => $attachment)
-                                            <tr>
-                                                <td>{{ $index + 1 }}</td>
-                                                <td>
-                                                    <i class="fa {{ $attachment->file_icon }} text-primary"></i>
-                                                    {{ $attachment->file_name }}
-                                                </td>
-                                                <td>
-                                                    {{ $attachment->description ?? __('بدون وصف') }}
-                                                </td>
-                                                <td>
-                                                    <small>{{ $attachment->file_size_human }}</small>
-                                                </td>
-                                                <td>
-                                                    @if($attachment->uploader)
-                                                        <small>{{ $attachment->uploader->name }}</small>
-                                                    @else
-                                                        <small class="text-muted">{{ __('غير معروف') }}</small>
-                                                    @endif
-                                                </td>
-                                                <td>
-                                                    <a href="{{ route('meetings.attachments.download', $attachment) }}" 
-                                                       class="btn btn-sm btn-info" title="{{ __('تنزيل') }}">
-                                                        <i class="fa fa-download"></i>
-                                                    </a>
-                                                    <form action="{{ route('meetings.attachments.delete', $attachment) }}" 
-                                                          method="POST" style="display: inline-block;">
-                                                        @csrf
-                                                        @method('DELETE')
-                                                        <button type="submit" class="btn btn-sm btn-danger" 
-                                                                title="{{ __('حذف') }}"
-                                                                onclick="return confirm('{{ __('هل أنت متأكد من حذف هذا المرفق؟') }}')">
-                                                            <i class="fa fa-trash"></i>
-                                                        </button>
-                                                    </form>
-                                                </td>
-                                            </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                    @else
-                    <div class="alert alert-info">
-                        <i class="fa fa-info-circle"></i> {{ __('لا توجد مرفقات لهذا الاجتماع') }}
-                    </div>
-                    @endif
-
-                    <div class="panel-footer">
-                        <a href="{{ route('meetings.edit', $meeting->id) }}" class="btn btn-warning">
-                            <i class="fa fa-edit"></i> {{ __('تعديل') }}
-                        </a>
-                        <a href="{{ route('meetings.index') }}" class="btn btn-default">
-                            <i class="fa fa-arrow-right"></i> {{ __('رجوع') }}
-                        </a>
-                        <form action="{{ route('meetings.destroy', $meeting) }}" method="POST" style="display: inline-block;" onsubmit="return confirm('{{ __('هل أنت متأكد من حذف هذا الاجتماع؟') }}');">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="btn btn-danger">
-                                <i class="fa fa-trash"></i> {{ __('حذف') }}
-                            </button>
-                        </form>
-                    </div>
+                <div class="meeting-show-actions">
+                    <a href="{{ route('meetings.edit', $meeting) }}" class="meeting-show-btn"><i class="bi bi-pencil-square"></i>{{ __('تعديل الاجتماع') }}</a>
+                    <a href="{{ $meeting->url }}" target="_blank" rel="noopener noreferrer" class="meeting-show-btn-muted"><i class="bi bi-box-arrow-up-right"></i>{{ __('فتح رابط الاجتماع') }}</a>
+                    <a href="{{ route('meetings.index') }}" class="meeting-show-btn-muted"><i class="bi bi-arrow-right-circle"></i>{{ __('العودة للقائمة') }}</a>
+                    <form action="{{ route('meetings.destroy', $meeting) }}" method="POST" onsubmit="return confirm('{{ __('هل أنت متأكد من حذف هذا الاجتماع؟ هذا الإجراء لا يمكن التراجع عنه.') }}');">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="meeting-show-btn-danger"><i class="bi bi-trash3"></i>{{ __('حذف الاجتماع') }}</button>
+                    </form>
                 </div>
             </div>
+        </section>
+
+        <section class="meeting-show-stats">
+            <div class="meeting-show-stat-card">
+                <span class="meeting-show-stat-icon"><i class="bi bi-people-fill"></i></span>
+                <p class="meeting-show-stat-value">{{ $inviteesCount }}</p>
+                <p class="meeting-show-stat-label">{{ __('إجمالي المدعوين') }}</p>
+            </div>
+            <div class="meeting-show-stat-card">
+                <span class="meeting-show-stat-icon"><i class="bi bi-paperclip"></i></span>
+                <p class="meeting-show-stat-value">{{ $attachmentsCount }}</p>
+                <p class="meeting-show-stat-label">{{ __('المرفقات المرفوعة') }}</p>
+            </div>
+            <div class="meeting-show-stat-card">
+                <span class="meeting-show-stat-icon"><i class="bi bi-hourglass-split"></i></span>
+                <p class="meeting-show-stat-value">{{ $daysValue }}</p>
+                <p class="meeting-show-stat-label">{{ $daysLabel }}</p>
+            </div>
+            <div class="meeting-show-stat-card">
+                <span class="meeting-show-stat-icon"><i class="bi bi-clock-history"></i></span>
+                <p class="meeting-show-stat-value">{{ $meeting->updated_at->diffForHumans() }}</p>
+                <p class="meeting-show-stat-label">{{ __('آخر تحديث') }}</p>
+            </div>
+        </section>
+
+        <div class="meeting-show-grid">
+            <section class="meeting-show-card">
+                <div class="meeting-show-card-head">
+                    <h2 class="meeting-show-card-title"><i class="bi bi-info-circle"></i>{{ __('المعلومات الأساسية') }}</h2>
+                    <span class="meeting-show-card-note">{{ __('بيانات الموعد والرابط والحالة الحالية للاجتماع.') }}</span>
+                </div>
+                <div class="meeting-detail-list">
+                    <div class="meeting-detail-item"><span class="meeting-detail-label">{{ __('رقم الاجتماع') }}</span><div class="meeting-detail-value">#{{ $meeting->id }}</div></div>
+                    <div class="meeting-detail-item"><span class="meeting-detail-label">{{ __('اسم الاجتماع') }}</span><div class="meeting-detail-value">{{ $meeting->name }}</div></div>
+                    <div class="meeting-detail-item"><span class="meeting-detail-label">{{ __('تاريخ ووقت الاجتماع') }}</span><div class="meeting-detail-value">{{ $meeting->date->format('Y-m-d H:i') }}</div></div>
+                    <div class="meeting-detail-item"><span class="meeting-detail-label">{{ __('الحالة') }}</span><div class="meeting-detail-value">{{ $statusText }}</div></div>
+                    <div class="meeting-detail-item"><span class="meeting-detail-label">{{ __('تاريخ الإنشاء') }}</span><div class="meeting-detail-value">{{ $meeting->created_at->format('Y-m-d H:i:s') }}</div></div>
+                    <div class="meeting-detail-item"><span class="meeting-detail-label">{{ __('آخر تحديث') }}</span><div class="meeting-detail-value">{{ $meeting->updated_at->format('Y-m-d H:i:s') }}</div></div>
+                </div>
+            </section>
+
+            <section class="meeting-show-card">
+                <div class="meeting-show-card-head">
+                    <h2 class="meeting-show-card-title"><i class="bi bi-link-45deg"></i>{{ __('الرابط والوصول') }}</h2>
+                    <span class="meeting-show-card-note">{{ __('الوصول المباشر للاجتماع مع عرض الرابط كاملًا للمراجعة أو النسخ.') }}</span>
+                </div>
+                <div class="meeting-detail-list">
+                    <div class="meeting-detail-item" style="grid-column: 1 / -1;">
+                        <span class="meeting-detail-label">{{ __('رابط الاجتماع') }}</span>
+                        <div class="meeting-detail-value">
+                            <span class="meeting-detail-code">{{ $meeting->url }}</span>
+                        </div>
+                    </div>
+                    <div class="meeting-detail-item">
+                        <span class="meeting-detail-label">{{ __('فتح الرابط') }}</span>
+                        <div class="meeting-detail-value">
+                            <a href="{{ $meeting->url }}" target="_blank" rel="noopener noreferrer">{{ __('الانتقال للاجتماع الآن') }}</a>
+                        </div>
+                    </div>
+                    <div class="meeting-detail-item">
+                        <span class="meeting-detail-label">{{ __('الوصف الزمني') }}</span>
+                        <div class="meeting-detail-value">{{ $meeting->date->diffForHumans() }}</div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="meeting-show-card full-width">
+                <div class="meeting-show-card-head">
+                    <h2 class="meeting-show-card-title"><i class="bi bi-people"></i>{{ __('المدعوون') }}</h2>
+                    <span class="meeting-show-card-note">{{ __('قائمة المستخدمين المرتبطين بهذا الاجتماع حاليًا.') }}</span>
+                </div>
+                @if ($inviteesCount > 0)
+                    <div class="meeting-users-grid">
+                        @foreach ($meeting->users as $user)
+                            <article class="meeting-user-card">
+                                <span class="meeting-user-avatar">{{ mb_substr($user->name, 0, 1) }}</span>
+                                <div>
+                                    <strong>{{ $user->name }}</strong>
+                                    <span>{{ $user->email }}</span>
+                                </div>
+                            </article>
+                        @endforeach
+                    </div>
+                @else
+                    <div class="meeting-empty-state">
+                        <i class="bi bi-person-x" style="font-size: 2rem; display: inline-block; margin-bottom: 10px; color: var(--primary-color);"></i>
+                        <div>{{ __('لم يتم تحديد مدعوين لهذا الاجتماع حتى الآن.') }}</div>
+                    </div>
+                @endif
+            </section>
+
+            <section class="meeting-show-card full-width">
+                <div class="meeting-show-card-head">
+                    <h2 class="meeting-show-card-title"><i class="bi bi-folder2-open"></i>{{ __('المرفقات والملفات') }}</h2>
+                    <span class="meeting-show-card-note">{{ __('جميع الملفات المرتبطة بالاجتماع مع معلومات الرفع والتنزيل والحذف.') }}</span>
+                </div>
+                @if ($attachmentsCount > 0)
+                    <div class="meeting-attachments-grid">
+                        @foreach ($meeting->attachments as $attachment)
+                            @php
+                                $attachmentIcon = match ($attachment->file_type) {
+                                    'image' => 'bi-image',
+                                    'pdf' => 'bi-filetype-pdf',
+                                    'document' => 'bi-file-earmark-word',
+                                    'spreadsheet' => 'bi-file-earmark-excel',
+                                    'archive' => 'bi-file-earmark-zip',
+                                    default => 'bi-file-earmark-text',
+                                };
+                            @endphp
+                            <article class="meeting-attachment-card">
+                                <div class="meeting-attachment-head">
+                                    <div style="min-width: 0;">
+                                        <span class="meeting-attachment-name">{{ $attachment->file_name }}</span>
+                                        <div class="meeting-attachment-meta">{{ $attachment->file_size_human }} - {{ $attachment->created_at->format('Y-m-d H:i') }}</div>
+                                    </div>
+                                    <span class="meeting-attachment-icon"><i class="bi {{ $attachmentIcon }}"></i></span>
+                                </div>
+
+                                <p class="meeting-attachment-desc">{{ $attachment->description ?: __('لا يوجد وصف مضاف لهذا الملف.') }}</p>
+                                <div class="meeting-attachment-meta">{{ __('رفع بواسطة') }}: {{ optional($attachment->uploader)->name ?: __('غير محدد') }}</div>
+
+                                <div class="meeting-attachment-actions">
+                                    <a href="{{ route('meetings.attachments.download', $attachment) }}">
+                                        <i class="bi bi-download"></i>
+                                        {{ __('تنزيل') }}
+                                    </a>
+                                    <form action="{{ route('meetings.attachments.delete', $attachment) }}" method="POST" style="margin: 0;" onsubmit="return confirm('{{ __('هل أنت متأكد من حذف هذا المرفق؟') }}');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit">
+                                            <i class="bi bi-trash3"></i>
+                                            {{ __('حذف') }}
+                                        </button>
+                                    </form>
+                                </div>
+                            </article>
+                        @endforeach
+                    </div>
+                @else
+                    <div class="meeting-empty-state">
+                        <i class="bi bi-folder2" style="font-size: 2rem; display: inline-block; margin-bottom: 10px; color: var(--primary-color);"></i>
+                        <div>{{ __('لا توجد مرفقات لهذا الاجتماع حتى الآن.') }}</div>
+                    </div>
+                @endif
+            </section>
         </div>
     </div>
 </div>
 @endsection
-

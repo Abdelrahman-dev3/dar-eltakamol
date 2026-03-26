@@ -18,7 +18,10 @@ class MeetingsController extends Controller
      */
     public function index(): View
     {
-        $meetings = Meeting::with('users')->orderBy('date', 'desc')->paginate(15);
+        $meetings = Meeting::with(['users:id,name'])
+            ->withCount(['users', 'attachments'])
+            ->orderBy('date', 'desc')
+            ->paginate(15);
         
         return view('meetings.index', compact('meetings'));
     }
@@ -84,7 +87,7 @@ class MeetingsController extends Controller
      */
     public function edit(Meeting $meeting): View
     {
-        $meeting->load('users');
+        $meeting->load(['users', 'attachments.uploader']);
         $users = User::orderBy('name')->get();
         
         return view('meetings.edit', compact('meeting', 'users'));

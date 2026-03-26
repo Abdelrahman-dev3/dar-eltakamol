@@ -31,7 +31,13 @@ class CategoriesController extends Controller
     public function create(Request $request): View
     {
         $companies = Category::companies()->orderBy('name')->get();
-        $permissions = Permission::orderBy('name')->get();
+        $permissions = Permission::query()
+            ->get()
+            ->sortBy(
+                fn (Permission $permission) => $permission->module_display . '|' . $permission->display_name,
+                SORT_NATURAL | SORT_FLAG_CASE
+            )
+            ->values();
         $selectedKind = $request->query('kind', $request->filled('company_id') ? 'department' : 'company');
         $selectedCompanyId = $request->query('company_id');
 
@@ -101,7 +107,13 @@ class CategoriesController extends Controller
             ->when($category->isCompany(), fn ($query) => $query->whereKeyNot($category->id))
             ->orderBy('name')
             ->get();
-        $permissions = Permission::orderBy('name')->get();
+        $permissions = Permission::query()
+            ->get()
+            ->sortBy(
+                fn (Permission $permission) => $permission->module_display . '|' . $permission->display_name,
+                SORT_NATURAL | SORT_FLAG_CASE
+            )
+            ->values();
 
         return view('categories.edit', compact('category', 'companies', 'permissions'));
     }
