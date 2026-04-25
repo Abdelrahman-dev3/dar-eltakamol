@@ -3,6 +3,7 @@
 @section('title', __('لوحة التحكم'))
 
 @php
+    $currentUser = auth()->user();
     $quickLinks = [
         [
             'title' => __('المساهمين'),
@@ -11,6 +12,7 @@
             'button' => __('عرض المساهمين'),
             'icon' => 'bi-people-fill',
             'accent' => 'gold',
+            'permission_routes' => ['contributors.index'],
         ],
         [
             'title' => __('عروض البيع'),
@@ -19,6 +21,7 @@
             'button' => __('عرض العروض'),
             'icon' => 'bi-bag-check-fill',
             'accent' => 'emerald',
+            'permission_routes' => ['sell-shares.index'],
         ],
         [
             'title' => __('معاملات الأسهم'),
@@ -27,8 +30,14 @@
             'button' => __('عرض المعاملات'),
             'icon' => 'bi-arrow-left-right',
             'accent' => 'sky',
+            'permission_routes' => ['shares-trans.index'],
         ],
     ];
+
+    $quickLinks = collect($quickLinks)
+        ->filter(fn ($link) => \App\Support\RoutePermissionMap::userCanAccess($currentUser, $link['permission_routes'] ?? []))
+        ->values()
+        ->all();
 
     $stats = [
         [

@@ -2188,27 +2188,34 @@
                     </a>
                 </div>
 
+                @routePermission('contributors.index')
                 <div class="nav-item">
                     <a href="{{ route('contributors.index') }}" class="nav-link {{ request()->routeIs('contributors.*') ? 'active' : '' }}">
                         <i class="bi bi-people-fill nav-icon"></i>
                         <span class="nav-link-label">{{ __('المساهمين') }}</span>
                     </a>
                 </div>
+                @endroutePermission
 
+                @routePermission('shares-trans.index')
                 <div class="nav-item">
                     <a href="{{ route('shares-trans.index') }}" class="nav-link {{ request()->routeIs('shares-trans.*') ? 'active' : '' }}">
                         <i class="bi bi-arrow-left-right nav-icon"></i>
                         <span class="nav-link-label">{{ __('معاملات الأسهم') }}</span>
                     </a>
                 </div>
+                @endroutePermission
 
+                @routePermission('sell-shares.index')
                 <div class="nav-item">
                     <a href="{{ route('sell-shares.index') }}" class="nav-link {{ request()->routeIs('sell-shares.*') ? 'active' : '' }}">
                         <i class="bi bi-megaphone-fill nav-icon"></i>
                         <span class="nav-link-label">{{ __('عروض البيع') }}</span>
                     </a>
                 </div>
+                @endroutePermission
 
+                @routePermission('share-trans-lines.index', 'modify.index', 'payments.index', 'shares-pos.index')
                 <!-- Transactions Dropdown -->
                 <div class="nav-item {{ request()->routeIs('share-trans-lines.*') || request()->routeIs('modify.*') || request()->routeIs('payments.*') || request()->routeIs('shares-pos.*') ? 'has-active-child is-open' : '' }}">
                     <a href="#" class="nav-link dropdown-toggle {{ request()->routeIs('share-trans-lines.*') || request()->routeIs('modify.*') || request()->routeIs('payments.*') || request()->routeIs('shares-pos.*') ? 'active' : '' }}" data-toggle="dropdown" aria-expanded="{{ request()->routeIs('share-trans-lines.*') || request()->routeIs('modify.*') || request()->routeIs('payments.*') || request()->routeIs('shares-pos.*') ? 'true' : 'false' }}">
@@ -2217,13 +2224,23 @@
                         <i class="bi bi-chevron-down nav-arrow" aria-hidden="true"></i>
                     </a>
                     <ul class="dropdown-menu">
+                        @routePermission('share-trans-lines.index')
                         <li><a href="{{ route('share-trans-lines.index') }}" class="{{ request()->routeIs('share-trans-lines.*') ? 'active' : '' }}">{{ __('تفاصيل المعاملات') }}</a></li>
+                        @endroutePermission
+                        @routePermission('modify.index')
                         <li><a href="{{ route('modify.index') }}" class="{{ request()->routeIs('modify.*') ? 'active' : '' }}">{{ __('ملاحظات التعديلات') }}</a></li>
+                        @endroutePermission
+                        @routePermission('payments.index')
                         <li><a href="{{ route('payments.index') }}" class="{{ request()->routeIs('payments.*') ? 'active' : '' }}">{{ __('المدفوعات') }}</a></li>
+                        @endroutePermission
+                        @routePermission('shares-pos.index')
                         <li><a href="{{ route('shares-pos.index') }}" class="{{ request()->routeIs('shares-pos.*') ? 'active' : '' }}">{{ __('طلبات الشراء') }}</a></li>
+                        @endroutePermission
                     </ul>
                 </div>
+                @endroutePermission
 
+                @routePermission('polls.index', 'poll-options.index', 'poll-answers.index')
                 <!-- Polls Dropdown -->
                 <div class="nav-item {{ request()->routeIs('polls.*') || request()->routeIs('poll-options.*') || request()->routeIs('poll-answers.*') ? 'has-active-child is-open' : '' }}">
                     <a href="#" class="nav-link dropdown-toggle {{ request()->routeIs('polls.*') || request()->routeIs('poll-options.*') || request()->routeIs('poll-answers.*') ? 'active' : '' }}" data-toggle="dropdown" aria-expanded="{{ request()->routeIs('polls.*') || request()->routeIs('poll-options.*') || request()->routeIs('poll-answers.*') ? 'true' : 'false' }}">
@@ -2232,12 +2249,20 @@
                         <i class="bi bi-chevron-down nav-arrow" aria-hidden="true"></i>
                     </a>
                     <ul class="dropdown-menu">
+                        @routePermission('polls.index')
                         <li><a href="{{ route('polls.index') }}" class="{{ request()->routeIs('polls.*') ? 'active' : '' }}">{{ __('الاستطلاعات') }}</a></li>
+                        @endroutePermission
+                        @routePermission('poll-options.index')
                         <li><a href="{{ route('poll-options.index') }}" class="{{ request()->routeIs('poll-options.*') ? 'active' : '' }}">{{ __('خيارات الاستطلاعات') }}</a></li>
+                        @endroutePermission
+                        @routePermission('poll-answers.index')
                         <li><a href="{{ route('poll-answers.index') }}" class="{{ request()->routeIs('poll-answers.*') ? 'active' : '' }}">{{ __('إجابات الاستطلاعات') }}</a></li>
+                        @endroutePermission
                     </ul>
                 </div>
+                @endroutePermission
 
+                @routePermission('meetings.index')
                 <!-- Meetings -->
                 <div class="nav-item">
                     <a href="{{ route('meetings.index') }}" class="nav-link {{ request()->routeIs('meetings.*') ? 'active' : '' }}">
@@ -2245,7 +2270,9 @@
                         <span class="nav-link-label">{{ __('الاجتماعات') }}</span>
                     </a>
                 </div>
+                @endroutePermission
 
+                @routePermission('regulations.index')
                 <!-- Regulations -->
                 <div class="nav-item">
                     <a href="{{ route('regulations.index') }}" class="nav-link {{ request()->routeIs('regulations.*') ? 'active' : '' }}">
@@ -2253,7 +2280,9 @@
                         <span class="nav-link-label">{{ __('اللوائح') }}</span>
                     </a>
                 </div>
+                @endroutePermission
 
+                @routePermission('documents.index')
                 <!-- Documents -->
                 <div class="nav-item">
                     <a href="{{ route('documents.index') }}" class="nav-link {{ request()->routeIs('documents.*') ? 'active' : '' }}">
@@ -2261,7 +2290,9 @@
                         <span class="nav-link-label">{{ __('الملفات') }}</span>
                     </a>
                 </div>
+                @endroutePermission
 
+                @routePermission('circulars.index')
                 <!-- Circulars -->
                 <div class="nav-item">
                     <a href="{{ route('circulars.index') }}" class="nav-link {{ request()->routeIs('circulars.*') ? 'active' : '' }}">
@@ -2269,7 +2300,9 @@
                         <span class="nav-link-label">{{ __('التعاميم') }}</span>
                     </a>
                 </div>
+                @endroutePermission
 
+                @routePermission('categories.index')
                 <!-- Categories -->
                 <div class="nav-item">
                     <a href="{{ route('categories.index') }}" class="nav-link {{ request()->routeIs('categories.*') ? 'active' : '' }}">
@@ -2277,7 +2310,9 @@
                         <span class="nav-link-label">{{ __('العضوية') }}</span>
                     </a>
                 </div>
+                @endroutePermission
 
+                @routePermission('users.index')
                 <!-- Users Management -->
                 <div class="nav-item">
                     <a href="{{ route('users.index') }}" class="nav-link {{ request()->routeIs('users.*') ? 'active' : '' }}">
@@ -2285,7 +2320,9 @@
                         <span class="nav-link-label">{{ __('إدارة المستخدمين') }}</span>
                     </a>
                 </div>
+                @endroutePermission
 
+                @routePermission('permissions.index')
                 <!-- Permissions Management -->
                 <div class="nav-item">
                     <a href="{{ route('permissions.index') }}" class="nav-link {{ request()->routeIs('permissions.*') ? 'active' : '' }}">
@@ -2293,7 +2330,9 @@
                         <span class="nav-link-label">{{ __('الصلاحيات') }}</span>
                     </a>
                 </div>
+                @endroutePermission
 
+                @routePermission('servies.index', 'bookings.index', 'servies.create', 'bookings.create')
                 <!-- servies Dropdown -->
                 <div class="nav-item {{ request()->routeIs('servies.*') || request()->routeIs('bookings.*') ? 'has-active-child is-open' : '' }}">
                     <a href="#" class="nav-link dropdown-toggle {{ request()->routeIs('servies.*') || request()->routeIs('bookings.*') ? 'active' : '' }}" data-toggle="dropdown" aria-expanded="{{ request()->routeIs('servies.*') || request()->routeIs('bookings.*') ? 'true' : 'false' }}">
@@ -2302,18 +2341,29 @@
                         <i class="bi bi-chevron-down nav-arrow" aria-hidden="true"></i>
                     </a>
                     <ul class="dropdown-menu">
+                        @routePermission('servies.index')
                         <li><a href="{{ route('servies.index') }}" class="{{ request()->routeIs('servies.index') || request()->routeIs('servies.edit') ? 'active' : '' }}">{{ __('كل الخدمات') }}</a></li>
+                        @endroutePermission
+                        @routePermission('servies.create')
                         <li><a href="{{ route('servies.create') }}" class="{{ request()->routeIs('servies.create') ? 'active' : '' }}">{{ __('اضافة خدمة') }}</a></li>
+                        @endroutePermission
+                        @routePermission('bookings.index')
                         <li><a href="{{ route('bookings.index') }}" class="{{ request()->routeIs('bookings.index') || request()->routeIs('bookings.edit') ? 'active' : '' }}">{{ __('كل الحجوزات') }}</a></li>
+                        @endroutePermission
+                        @routePermission('bookings.create')
                         <li><a href="{{ route('bookings.create') }}" class="{{ request()->routeIs('bookings.create') ? 'active' : '' }}">{{ __('اضافة حجز') }}</a></li>
+                        @endroutePermission
                 </ul>
                 </div>
+                @endroutePermission
+                @routePermission('settings.index')
                 <div class="nav-item">
                     <a href="{{ route('settings.index') }}" class="nav-link {{ request()->routeIs('settings.*') ? 'active' : '' }}">
                         <i class="bi bi-sliders2 nav-icon"></i>
                         <span class="nav-link-label">{{ __('الاعدادات الرئيسية') }}</span>
                     </a>
                 </div>
+                @endroutePermission
             </nav>
         </div>
 

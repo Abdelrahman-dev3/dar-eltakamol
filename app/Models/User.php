@@ -196,6 +196,25 @@ class User extends Authenticatable
     }
 
     /**
+     * Check whether the user has at least one of the provided permissions.
+     */
+    public function hasAnyPermission(string|array $slugs): bool
+    {
+        $slugs = collect(is_array($slugs) ? $slugs : [$slugs])
+            ->filter(fn ($slug) => is_string($slug) && $slug !== '')
+            ->unique()
+            ->values();
+
+        if ($slugs->isEmpty()) {
+            return true;
+        }
+
+        return $this->effective_permissions->contains(function (Permission $permission) use ($slugs) {
+            return $slugs->contains($permission->slug);
+        });
+    }
+
+    /**
      * Get direct permission names as a readable string.
      */
     public function getDirectPermissionNamesAttribute(): string

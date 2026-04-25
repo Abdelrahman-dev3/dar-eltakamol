@@ -26,6 +26,7 @@ use App\Http\Controllers\CircularsController;
 use App\Http\Controllers\CategoriesController;
 use App\Http\Controllers\UsersController;
 use App\Http\Controllers\PermissionsController;
+use App\Http\Middleware\AuthorizeRoutePermission;
 
 /*
 |--------------------------------------------------------------------------
@@ -47,7 +48,7 @@ Route::get('/', function () {
 Auth::routes();
 
 // Protected routes
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', AuthorizeRoutePermission::class])->group(function () {
     // Dashboard
     Route::get('/dashboard', [HomeController::class, 'index'])->name('dashboard');
     
@@ -101,7 +102,8 @@ Route::middleware('auth')->group(function () {
     Route::get('bookings/{id}/edit', [BookingsController::class, 'edit'])->name('bookings.edit');
     Route::put('bookings/{id}/update', [BookingsController::class, 'update'])->name('bookings.update');
     Route::delete('bookings/{id}/destroy', [BookingsController::class, 'destroy'])->name('bookings.destroy');
-    Route::put('/bookings/{bookingId}/status', [BookingsController::class, 'update_status']);
+    Route::put('/bookings/{bookingId}/status', [BookingsController::class, 'update_status'])
+        ->name('bookings.update-status');
     
 
     // Additional routes
@@ -164,5 +166,6 @@ Route::middleware('auth')->group(function () {
     Route::post('/profile/password', [ProfileController::class, 'changePassword'])->name('profile.password');
 
     // API routes
-    Route::get('/contributors/share/{userId}', [SellSharesController::class, 'getusershares']);
+    Route::get('/contributors/share/{userId}', [SellSharesController::class, 'getusershares'])
+        ->name('contributors.share');
 });
