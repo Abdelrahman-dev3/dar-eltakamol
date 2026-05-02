@@ -10,6 +10,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
@@ -50,11 +51,18 @@ class ContributorsController extends Controller
             'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'share_count_cr' => 'nullable|numeric|min:0',
             'is_board_member' => 'boolean',
+            'committee_memberships' => 'nullable|array',
+            'committee_memberships.*' => ['string', Rule::in(Contributor::committeeMembershipOptions())],
             'company_id' => 'nullable|exists:categories,id',
             'department_ids' => 'nullable|array',
             'department_ids.*' => 'exists:categories,id',
             'documents.*' => 'nullable|file|max:10240',
         ]);
+
+        $validated['committee_memberships'] = $this->normalizeCommitteeMemberships(
+            $validated['committee_memberships'] ?? []
+        );
+        $validated['is_board_member'] = (bool) ($validated['is_board_member'] ?? false);
 
         $departmentIds = $this->validateContributorDepartments(
             $validated['company_id'] ?? null,
@@ -127,12 +135,19 @@ class ContributorsController extends Controller
             'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'share_count_cr' => 'nullable|numeric|min:0',
             'is_board_member' => 'boolean',
+            'committee_memberships' => 'nullable|array',
+            'committee_memberships.*' => ['string', Rule::in(Contributor::committeeMembershipOptions())],
             'company_id' => 'nullable|exists:categories,id',
             'department_ids' => 'nullable|array',
             'department_ids.*' => 'exists:categories,id',
             'line_notes' => 'required|string',
             'documents.*' => 'nullable|file|max:10240',
         ]);
+
+        $validated['committee_memberships'] = $this->normalizeCommitteeMemberships(
+            $validated['committee_memberships'] ?? []
+        );
+        $validated['is_board_member'] = (bool) ($validated['is_board_member'] ?? false);
 
         $departmentIds = $this->validateContributorDepartments(
             $validated['company_id'] ?? null,
@@ -241,6 +256,17 @@ class ContributorsController extends Controller
         $departments = Category::departments()->with('parent')->orderBy('name')->get();
 
         return [$companies, $departments];
+    }
+
+    private function normalizeCommitteeMemberships(array $committeeMemberships): array
+    {
+        return collect($committeeMemberships)
+            ->filter()
+            ->map(fn ($membership) => trim((string) $membership))
+            ->filter(fn ($membership) => in_array($membership, Contributor::committeeMembershipOptions(), true))
+            ->unique()
+            ->values()
+            ->all();
     }
 
     private function validateContributorDepartments(?int $companyId, array $departmentIds): array

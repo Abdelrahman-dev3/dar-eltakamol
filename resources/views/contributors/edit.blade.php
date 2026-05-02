@@ -105,8 +105,8 @@
                             <span>{{ __('عدد الوثائق المرفوعة') }}</span>
                         </div>
                         <div class="contributor-stat-box">
-                            <strong>{{ $contributor->is_board_member ? __('نعم') : __('لا') }}</strong>
-                            <span>{{ __('حالة مجلس الإدارة') }}</span>
+                            <strong>{{ collect($contributor->membership_labels)->count() }}</strong>
+                            <span>{{ __('عدد العضويات الإشرافية') }}</span>
                         </div>
                     </div>
                 </section>

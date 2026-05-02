@@ -382,6 +382,11 @@
         color: var(--success-color);
     }
 
+    .contributor-badge.committee {
+        background: rgba(37, 99, 235, 0.10);
+        color: #1d4ed8;
+    }
+
     .contributor-field {
         display: flex;
         flex-direction: column;
@@ -723,6 +728,7 @@
                         @php
                             $companyNames = $contributor->departments->pluck('parent.name')->filter()->unique()->values();
                             $departmentNames = $contributor->departments->pluck('name')->filter()->values();
+                            $membershipLabels = collect($contributor->membership_labels);
                             $searchableText = implode(' ', [
                                 $contributor->name,
                                 $contributor->id_number,
@@ -730,6 +736,7 @@
                                 $contributor->phone_num,
                                 $companyNames->implode(' '),
                                 $departmentNames->implode(' '),
+                                $membershipLabels->implode(' '),
                             ]);
                         @endphp
 
@@ -760,12 +767,12 @@
                                                 {{ $companyNames->implode('، ') }}
                                             </span>
                                         @endif
-                                        @if($contributor->is_board_member)
-                                            <span class="contributor-badge board">
-                                                <i class="bi bi-patch-check-fill"></i>
-                                                {{ __('عضو مجلس إدارة') }}
+                                        @foreach($membershipLabels as $membershipLabel)
+                                            <span class="contributor-badge {{ $membershipLabel === \App\Models\Contributor::BOARD_MEMBERSHIP_LABEL ? 'board' : 'committee' }}">
+                                                <i class="bi {{ $membershipLabel === \App\Models\Contributor::BOARD_MEMBERSHIP_LABEL ? 'bi-patch-check-fill' : 'bi-people-fill' }}"></i>
+                                                {{ __($membershipLabel) }}
                                             </span>
-                                        @endif
+                                        @endforeach
                                     </div>
                                 </div>
                             </div>

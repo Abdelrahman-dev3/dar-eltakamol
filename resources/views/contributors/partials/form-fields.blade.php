@@ -7,6 +7,10 @@
     $currentInitials = $contributor ? $contributor->initials : 'م';
     $selectedDepartmentIds = old('department_ids', $contributor?->departments?->pluck('id')->toArray() ?? []);
     $selectedCompanyId = old('company_id', $contributor?->primary_company?->id);
+    $selectedCommitteeMemberships = collect(old('committee_memberships', $contributor?->committee_memberships ?? []))
+        ->filter()
+        ->values()
+        ->all();
 @endphp
 
 <div class="contributor-section">
@@ -92,15 +96,34 @@
             </div>
         </div>
         <div class="col-md-12">
-            <label>{{ __('حالة العضوية') }}</label>
-            <div class="contributor-toggle">
-                <input type="checkbox" name="is_board_member" id="is_board_member" value="1"
-                    {{ old('is_board_member', $contributor->is_board_member ?? false) ? 'checked' : '' }}>
-                <div>
-                    <strong>{{ __('عضو مجلس إدارة') }}</strong>
-                    <span>{{ __('فعّل هذا الخيار إذا كان المساهم ضمن مجلس الإدارة أو له صفة إشرافية.') }}</span>
+            <label>{{ __('العضويات الإشرافية') }}</label>
+            <div class="contributor-toggle-list">
+                <div class="contributor-toggle">
+                    <input type="checkbox" name="is_board_member" id="is_board_member" value="1"
+                        {{ old('is_board_member', $contributor->is_board_member ?? false) ? 'checked' : '' }}>
+                    <div>
+                        <strong>{{ __('عضو مجلس إدارة') }}</strong>
+                        <span>{{ __('فعّل هذا الخيار إذا كان المساهم ضمن مجلس الإدارة.') }}</span>
+                    </div>
                 </div>
+
+                @foreach(\App\Models\Contributor::committeeMembershipOptions() as $index => $membership)
+                    <div class="contributor-toggle">
+                        <input type="checkbox" name="committee_memberships[]" id="committee_membership_{{ $index }}" value="{{ $membership }}"
+                            {{ in_array($membership, $selectedCommitteeMemberships, true) ? 'checked' : '' }}>
+                        <div>
+                            <strong>{{ __($membership) }}</strong>
+                            <span>{{ __('فعّل هذا الخيار إذا كان المساهم ضمن هذه اللجنة.') }}</span>
+                        </div>
+                    </div>
+                @endforeach
             </div>
+            @error('committee_memberships')
+                <span class="help-block">{{ $message }}</span>
+            @enderror
+            @error('committee_memberships.*')
+                <span class="help-block">{{ $message }}</span>
+            @enderror
         </div>
     </div>
 </div>

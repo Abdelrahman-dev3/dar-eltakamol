@@ -11,6 +11,7 @@
     $hasProfilePicture = !empty($contributor->profile_picture);
     $companyNames = $contributor->departments->pluck('parent.name')->filter()->unique()->values();
     $departmentNames = $contributor->departments->pluck('name')->filter()->values();
+    $membershipLabels = collect($contributor->membership_labels);
 @endphp
 
 @section('title', __('عرض تفاصيل المساهم'))
@@ -67,6 +68,7 @@
         color: var(--text-primary);
     }
     .contributor-show-chip.board { background: rgba(5, 150, 105, 0.10); color: var(--success-color); border-color: rgba(5, 150, 105, 0.18); }
+    .contributor-show-chip.committee { background: rgba(37, 99, 235, 0.10); color: #1d4ed8; border-color: rgba(37, 99, 235, 0.18); }
     .contributor-show-actions { display: flex; flex-direction: column; gap: 12px; }
     .contributor-show-btn,
     .contributor-show-btn-muted,
@@ -184,7 +186,11 @@
                                 <span class="contributor-show-chip"><i class="bi bi-credit-card-2-front"></i>{{ __('رقم الهوية') }}: {{ $contributor->id_number ?? __('غير محدد') }}</span>
                                 <span class="contributor-show-chip"><i class="bi bi-telephone"></i>{{ $contributor->phone_num ?: __('لا يوجد رقم هاتف') }}</span>
                                 <span class="contributor-show-chip"><i class="bi bi-building"></i>{{ $companyNames->isNotEmpty() ? $companyNames->implode('، ') : __('بدون شركة مرتبطة') }}</span>
-                                <span class="contributor-show-chip {{ $contributor->is_board_member ? 'board' : '' }}"><i class="bi {{ $contributor->is_board_member ? 'bi-patch-check-fill' : 'bi-person-dash' }}"></i>{{ $contributor->is_board_member ? __('عضو مجلس إدارة') : __('ليس عضو مجلس إدارة') }}</span>
+                                @forelse($membershipLabels as $membershipLabel)
+                                    <span class="contributor-show-chip {{ $membershipLabel === \App\Models\Contributor::BOARD_MEMBERSHIP_LABEL ? 'board' : 'committee' }}"><i class="bi {{ $membershipLabel === \App\Models\Contributor::BOARD_MEMBERSHIP_LABEL ? 'bi-patch-check-fill' : 'bi-people-fill' }}"></i>{{ __($membershipLabel) }}</span>
+                                @empty
+                                    <span class="contributor-show-chip"><i class="bi bi-person-dash"></i>{{ __('لا توجد عضويات إشرافية') }}</span>
+                                @endforelse
                             </div>
                         </div>
                     </div>
@@ -224,7 +230,7 @@
                     <div class="contributor-detail-item"><span class="contributor-detail-label">{{ __('المنصب') }}</span><div class="contributor-detail-value">{{ $contributor->position ?: __('غير محدد') }}</div></div>
                     <div class="contributor-detail-item"><span class="contributor-detail-label">{{ __('الشركة') }}</span><div class="contributor-detail-value">{{ $companyNames->isNotEmpty() ? $companyNames->implode('، ') : __('غير محددة') }}</div></div>
                     <div class="contributor-detail-item"><span class="contributor-detail-label">{{ __('الإدارات') }}</span><div class="contributor-detail-value">{{ $departmentNames->isNotEmpty() ? $departmentNames->implode('، ') : __('غير مرتبط بإدارات بعد') }}</div></div>
-                    <div class="contributor-detail-item"><span class="contributor-detail-label">{{ __('حالة مجلس الإدارة') }}</span><div class="contributor-detail-value">{{ $contributor->is_board_member ? __('عضو مجلس إدارة') : __('غير عضو مجلس إدارة') }}</div></div>
+                    <div class="contributor-detail-item"><span class="contributor-detail-label">{{ __('العضويات الإشرافية') }}</span><div class="contributor-detail-value">{{ $membershipLabels->isNotEmpty() ? $membershipLabels->implode('، ') : __('لا توجد عضويات إشرافية') }}</div></div>
                 </div>
             </section>
 

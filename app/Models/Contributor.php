@@ -12,6 +12,14 @@ class Contributor extends Model
 {
     use HasFactory;
 
+    public const BOARD_MEMBERSHIP_LABEL = 'عضو مجلس إدارة';
+
+    public const COMMITTEE_MEMBERSHIP_OPTIONS = [
+        'عضو لجنة استثمار',
+        'عضو لجنة مراجعة',
+        'عضو لجنة المكافآت والترشيحات',
+    ];
+
     protected $fillable = [
         'name',
         'id_number',
@@ -24,12 +32,19 @@ class Contributor extends Model
         'profile_picture',
         'share_count_cr',
         'is_board_member',
+        'committee_memberships',
     ];
 
     protected $casts = [
         'is_board_member' => 'boolean',
         'share_count_cr' => 'float',
+        'committee_memberships' => 'array',
     ];
+
+    public static function committeeMembershipOptions(): array
+    {
+        return self::COMMITTEE_MEMBERSHIP_OPTIONS;
+    }
 
     /**
      * Get the user that owns the contributor.
@@ -143,5 +158,24 @@ class Contributor extends Model
     public function getPrimaryCompanyAttribute(): ?Category
     {
         return $this->companies->first();
+    }
+
+    /**
+     * Get the formatted governance memberships for display.
+     */
+    public function getMembershipLabelsAttribute(): array
+    {
+        $memberships = collect($this->committee_memberships ?? [])
+            ->filter()
+            ->values();
+
+        if ($this->is_board_member) {
+            $memberships->prepend(self::BOARD_MEMBERSHIP_LABEL);
+        }
+
+        return $memberships
+            ->unique()
+            ->values()
+            ->all();
     }
 }

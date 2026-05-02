@@ -303,6 +303,12 @@
         border: 1px solid rgba(170, 134, 63, 0.12);
     }
 
+    .contributor-toggle-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 12px;
+    }
+
     .contributor-toggle input {
         width: 18px;
         height: 18px;
