@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', __('إجابات الاستطلاعات'))
+@section('title', __('التصويتات'))
 
 @include('polls.partials.ui-styles')
 
@@ -21,15 +21,15 @@
                 <div>
                     <span class="poll-badge">
                         <i class="bi bi-check2-square"></i>
-                        {{ __('إدارة إجابات الاستطلاعات') }}
+                        {{ __('إدارة التصويتات') }}
                     </span>
-                    <h1 class="poll-title">{{ __('إجابات الاستطلاعات') }}</h1>
+                    <h1 class="poll-title">{{ __('التصويتات') }}</h1>
                 </div>
 
                 <div class="poll-hero-actions">
                     <a href="{{ route('poll-answers.create') }}" class="poll-btn">
                         <i class="bi bi-plus-circle-fill"></i>
-                        {{ __('إضافة إجابة جديدة') }}
+                        {{ __('إضافة تصويت جديد') }}
                     </a>
                     <a href="{{ route('polls.index') }}" class="poll-btn-muted">
                         <i class="bi bi-ui-radios-grid"></i>
@@ -43,7 +43,7 @@
             <article class="poll-stat-card" style="animation-delay: 0.05s;">
                 <div class="poll-stat-icon"><i class="bi bi-collection-fill"></i></div>
                 <p class="poll-stat-value">{{ number_format($totalAnswers) }}</p>
-                <p class="poll-stat-label">{{ __('إجمالي الإجابات') }}</p>
+                <p class="poll-stat-label">{{ __('إجمالي التصويتات') }}</p>
             </article>
             <article class="poll-stat-card" style="animation-delay: 0.11s;">
                 <div class="poll-stat-icon"><i class="bi bi-people-fill"></i></div>
@@ -58,7 +58,7 @@
             <article class="poll-stat-card" style="animation-delay: 0.23s;">
                 <div class="poll-stat-icon"><i class="bi bi-bar-chart-steps"></i></div>
                 <p class="poll-stat-value">{{ number_format($averageAnswers, 1) }}</p>
-                <p class="poll-stat-label">{{ __('متوسط الإجابات لكل مستخدم') }}</p>
+                <p class="poll-stat-label">{{ __('متوسط التصويتات لكل مستخدم') }}</p>
             </article>
         </section>
 
@@ -115,14 +115,14 @@
                             </div>
 
                             <div class="poll-table-field">
-                                <span class="poll-table-label">{{ __('تاريخ الإجابة') }}</span>
+                                <span class="poll-table-label">{{ __('تاريخ التصويت') }}</span>
                                 <span class="poll-table-value">{{ optional($pollAnswer->answer_date)->format('Y-m-d H:i') ?? __('غير متوفر') }}</span>
                             </div>
 
                             <div class="poll-table-actions">
                                 <a href="{{ route('poll-answers.show', $pollAnswer) }}" class="poll-icon-btn" title="{{ __('عرض') }}"><i class="bi bi-eye-fill"></i></a>
                                 <a href="{{ route('poll-answers.edit', $pollAnswer) }}" class="poll-icon-btn" title="{{ __('تعديل') }}"><i class="bi bi-pencil-square"></i></a>
-                                <form action="{{ route('poll-answers.destroy', $pollAnswer) }}" method="POST" style="display: inline-flex;" onsubmit="return confirm('{{ __('هل أنت متأكد من حذف هذه الإجابة؟') }}');">
+                                <form action="{{ route('poll-answers.destroy', $pollAnswer) }}" method="POST" style="display: inline-flex;" onsubmit="return confirm('{{ __('هل أنت متأكد من حذف هذا التصويت؟') }}');">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="poll-icon-btn" title="{{ __('حذف') }}" style="color: var(--danger-color);">
@@ -146,12 +146,12 @@
             @else
                 <div class="poll-empty-state" style="margin: 12px;">
                     <i class="bi bi-check2-square"></i>
-                    <h3>{{ __('لا توجد إجابات بعد') }}</h3>
-                    <p>{{ __('ابدأ بإضافة أول إجابة يدويًا أو انتظر تسجيل التصويتات لتظهر هنا ضمن قائمة منظمة.') }}</p>
+                    <h3>{{ __('لا توجد تصويتات بعد') }}</h3>
+                    <p>{{ __('ابدأ بإضافة أول تصويت يدويًا أو انتظر تسجيل التصويتات لتظهر هنا ضمن قائمة منظمة.') }}</p>
                     <div style="margin-top: 18px;">
                         <a href="{{ route('poll-answers.create') }}" class="poll-btn">
                             <i class="bi bi-plus-circle-fill"></i>
-                            {{ __('إضافة إجابة جديدة') }}
+                            {{ __('إضافة تصويت جديد') }}
                         </a>
                     </div>
                 </div>

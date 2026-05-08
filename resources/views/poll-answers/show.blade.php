@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', __('عرض إجابة الاستطلاع') . ' - ' . ($pollAnswer->user->name ?? __('غير معروف')))
+@section('title', __('عرض التصويت') . ' - ' . ($pollAnswer->user->name ?? __('غير معروف')))
 
 @include('polls.partials.ui-styles')
 
@@ -24,7 +24,7 @@
                 <div>
                     <span class="poll-badge">
                         <i class="bi bi-check2-square"></i>
-                        {{ __('تفاصيل إجابة الاستطلاع') }} #{{ $pollAnswer->id }}
+                        {{ __('تفاصيل التصويت') }} #{{ $pollAnswer->id }}
                     </span>
                     <h1 class="poll-title">{{ $user?->name ?? __('مستخدم غير معروف') }}</h1>
                     <div class="poll-meta-row">
@@ -51,7 +51,7 @@
             <article class="poll-stat-card" style="animation-delay: 0.05s;">
                 <div class="poll-stat-icon"><i class="bi bi-hash"></i></div>
                 <p class="poll-stat-value">#{{ $pollAnswer->id }}</p>
-                <p class="poll-stat-label">{{ __('رقم الإجابة') }}</p>
+                <p class="poll-stat-label">{{ __('رقم التصويت') }}</p>
             </article>
             <article class="poll-stat-card" style="animation-delay: 0.11s;">
                 <div class="poll-stat-icon"><i class="bi bi-bar-chart-fill"></i></div>
@@ -66,7 +66,7 @@
             <article class="poll-stat-card" style="animation-delay: 0.23s;">
                 <div class="poll-stat-icon"><i class="bi bi-people-fill"></i></div>
                 <p class="poll-stat-value">{{ number_format($selectedOptionAnswers->count()) }}</p>
-                <p class="poll-stat-label">{{ __('إجابات على نفس الخيار') }}</p>
+                <p class="poll-stat-label">{{ __('تصويتات على نفس الخيار') }}</p>
             </article>
         </section>
 
@@ -76,8 +76,8 @@
                     <div class="poll-card-title-wrap">
                         <span class="poll-card-icon"><i class="bi bi-person-badge-fill"></i></span>
                         <div>
-                            <h2 class="poll-card-title">{{ __('بيانات المستخدم والإجابة') }}</h2>
-                            <p class="poll-card-note">{{ __('المعلومات الأساسية المرتبطة بهذه الإجابة مع التواريخ الرئيسية الخاصة بها.') }}</p>
+                            <h2 class="poll-card-title">{{ __('بيانات المستخدم والتصويت') }}</h2>
+                            <p class="poll-card-note">{{ __('المعلومات الأساسية المرتبطة بهذا التصويت مع التواريخ الرئيسية الخاصة به.') }}</p>
                         </div>
                     </div>
                 </div>
@@ -92,7 +92,7 @@
                         <div class="poll-detail-value">{{ $user?->email ?? __('غير متوفر') }}</div>
                     </div>
                     <div class="poll-detail-item">
-                        <span class="poll-detail-label">{{ __('تاريخ الإجابة') }}</span>
+                        <span class="poll-detail-label">{{ __('تاريخ التصويت') }}</span>
                         <div class="poll-detail-value">{{ optional($pollAnswer->answer_date)->format('Y-m-d H:i') ?? __('غير متوفر') }}</div>
                     </div>
                     <div class="poll-detail-item">
@@ -203,7 +203,7 @@
                     <div class="poll-empty-state">
                         <i class="bi bi-bar-chart-line-fill"></i>
                         <h3>{{ __('تعذر تحميل إحصائيات هذا السجل') }}</h3>
-                        <p>{{ __('بعض العلاقات المرتبطة بهذه الإجابة غير متوفرة حاليًا، لذلك لا يمكن عرض مقارنة الأداء بشكل كامل.') }}</p>
+                        <p>{{ __('بعض العلاقات المرتبطة بهذا التصويت غير متوفرة حاليًا، لذلك لا يمكن عرض مقارنة الأداء بشكل كامل.') }}</p>
                     </div>
                 @endif
             </section>
@@ -213,7 +213,7 @@
                     <div class="poll-card-title-wrap">
                         <span class="poll-card-icon"><i class="bi bi-clock-history"></i></span>
                         <div>
-                            <h2 class="poll-card-title">{{ __('آخر الإجابات داخل الاستطلاع') }}</h2>
+                            <h2 class="poll-card-title">{{ __('آخر التصويتات داخل الاستطلاع') }}</h2>
                             <p class="poll-card-note">{{ __('نظرة سريعة على أحدث المشاركات داخل نفس الاستطلاع لتسهيل المتابعة والمراجعة.') }}</p>
                         </div>
                     </div>
@@ -225,7 +225,7 @@
                             <tr>
                                 <th>{{ __('المستخدم') }}</th>
                                 <th>{{ __('الخيار') }}</th>
-                                <th>{{ __('تاريخ الإجابة') }}</th>
+                                <th>{{ __('تاريخ التصويت') }}</th>
                                 <th>{{ __('الإجراء') }}</th>
                             </tr>
                         </thead>
@@ -238,7 +238,7 @@
                                     <td>
                                         <a href="{{ route('poll-answers.show', $answer) }}" class="poll-btn-muted" style="min-height: 40px; padding: 8px 14px;">
                                             <i class="bi bi-eye-fill"></i>
-                                            {{ __('عرض الإجابة') }}
+                                            {{ __('عرض التصويت') }}
                                         </a>
                                     </td>
                                 </tr>
@@ -248,7 +248,7 @@
                 @else
                     <div class="poll-empty-state">
                         <i class="bi bi-inboxes-fill"></i>
-                        <h3>{{ __('لا توجد إجابات أخرى لعرضها') }}</h3>
+                        <h3>{{ __('لا توجد تصويتات أخرى لعرضها') }}</h3>
                         <p>{{ __('هذه الصفحة لا تحتوي حاليًا على سجل حديث إضافي داخل نفس الاستطلاع.') }}</p>
                     </div>
                 @endif

@@ -75,7 +75,7 @@ class PollAnswersController extends Controller
         $pollOption->increment('votes');
 
         return redirect()->route('poll-answers.index')
-            ->with('success', 'تمت إضافة إجابة الاستطلاع بنجاح');
+            ->with('success', 'تمت إضافة التصويت بنجاح');
     }
 
     /**
@@ -139,7 +139,7 @@ class PollAnswersController extends Controller
 
         if ($existingAnswer) {
             return redirect()->back()
-                ->with('error', 'يوجد بالفعل إجابة أخرى لهذا المستخدم داخل الاستطلاع نفسه.')
+                ->with('error', 'يوجد بالفعل تصويت آخر لهذا المستخدم داخل الاستطلاع نفسه.')
                 ->withInput();
         }
 
@@ -160,7 +160,7 @@ class PollAnswersController extends Controller
         ]);
 
         return redirect()->route('poll-answers.index')
-            ->with('success', 'تم تحديث إجابة الاستطلاع بنجاح');
+            ->with('success', 'تم تحديث التصويت بنجاح');
     }
 
     /**
@@ -176,7 +176,7 @@ class PollAnswersController extends Controller
         $pollAnswer->delete();
 
         return redirect()->route('poll-answers.index')
-            ->with('success', 'تم حذف إجابة الاستطلاع بنجاح');
+            ->with('success', 'تم حذف التصويت بنجاح');
     }
 
     /**

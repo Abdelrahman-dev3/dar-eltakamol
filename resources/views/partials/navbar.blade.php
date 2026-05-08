@@ -25,7 +25,7 @@
         <ul class="dropdown-menu">
             <li><a href="{{ route('polls.index') }}">{{ __('الاستطلاعات') }}</a></li>
             <li><a href="{{ route('poll-options.index') }}">{{ __('خيارات الاستطلاعات') }}</a></li>
-            <li><a href="{{ route('poll-answers.index') }}">{{ __('إجابات الاستطلاعات') }}</a></li>
+            <li><a href="{{ route('poll-answers.index') }}">{{ __('التصويتات') }}</a></li>
         </ul>
     </li>
     <li><a href="{{ route('shares-trans.index') }}">{{ __('معاملات الأسهم') }}</a></li>

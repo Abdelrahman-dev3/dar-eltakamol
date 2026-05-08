@@ -2256,7 +2256,7 @@
                         <li><a href="{{ route('poll-options.index') }}" class="{{ request()->routeIs('poll-options.*') ? 'active' : '' }}">{{ __('خيارات الاستطلاعات') }}</a></li>
                         @endroutePermission
                         @routePermission('poll-answers.index')
-                        <li><a href="{{ route('poll-answers.index') }}" class="{{ request()->routeIs('poll-answers.*') ? 'active' : '' }}">{{ __('إجابات الاستطلاعات') }}</a></li>
+                        <li><a href="{{ route('poll-answers.index') }}" class="{{ request()->routeIs('poll-answers.*') ? 'active' : '' }}">{{ __('التصويتات') }}</a></li>
                         @endroutePermission
                     </ul>
                 </div>

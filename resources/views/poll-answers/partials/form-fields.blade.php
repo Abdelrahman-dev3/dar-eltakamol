@@ -53,7 +53,7 @@
 <section class="poll-form-section">
     <h2 class="poll-section-title">
         <i class="bi bi-person-check-fill"></i>
-        {{ __('بيانات الإجابة') }}
+        {{ __('بيانات التصويت') }}
     </h2>
 
     <div class="poll-field {{ $errors->has('user_id') ? 'has-error' : '' }}">
@@ -75,7 +75,7 @@
     </div>
 
     <div class="poll-field {{ $errors->has('answer_date') ? 'has-error' : '' }}">
-        <label for="answer_date">{{ __('تاريخ الإجابة') }}</label>
+        <label for="answer_date">{{ __('تاريخ التصويت') }}</label>
         <input
             type="datetime-local"
             name="answer_date"

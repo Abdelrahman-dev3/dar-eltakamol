@@ -200,9 +200,9 @@ class Permission extends Model
             'meetings.attachments' => 'مرفقات الاجتماعات',
             'polls' => 'الاستطلاعات',
             'poll.options' => 'خيارات الاستطلاع',
-            'poll.answers' => 'إجابات الاستطلاع',
+            'poll.answers' => 'التصويتات',
             'poll-options' => 'خيارات الاستطلاع',
-            'poll-answers' => 'إجابات الاستطلاع',
+            'poll-answers' => 'التصويتات',
             'shares' => 'الأسهم',
             'sell.shares' => 'بيع الأسهم',
             'sell-shares' => 'بيع الأسهم',
@@ -282,8 +282,8 @@ class Permission extends Model
             'polls' => 'الاستطلاعات',
             'option' => 'خيار',
             'options' => 'الخيارات',
-            'answer' => 'إجابة',
-            'answers' => 'الإجابات',
+            'answer' => 'تصويت',
+            'answers' => 'التصويتات',
             'profile' => 'الملف الشخصي',
         ];
 

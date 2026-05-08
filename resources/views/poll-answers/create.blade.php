@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', __('إضافة إجابة استطلاع جديدة'))
+@section('title', __('إضافة تصويت جديد'))
 
 @include('polls.partials.ui-styles')
 
@@ -12,15 +12,15 @@
                 <div>
                     <span class="poll-badge">
                         <i class="bi bi-plus-circle-fill"></i>
-                        {{ __('إضافة إجابة استطلاع جديدة') }}
+                        {{ __('إضافة تصويت جديد') }}
                     </span>
-                    <h1 class="poll-title">{{ __('سجّل إجابة جديدة داخل الاستطلاع المناسب') }}</h1>
+                    <h1 class="poll-title">{{ __('سجّل تصويتًا جديدًا داخل الاستطلاع المناسب') }}</h1>
                 </div>
 
                 <div class="poll-hero-actions">
                     <a href="{{ route('poll-answers.index') }}" class="poll-btn-muted">
                         <i class="bi bi-arrow-right-circle"></i>
-                        {{ __('العودة للإجابات') }}
+                        {{ __('العودة للتصويتات') }}
                     </a>
                 </div>
             </div>
@@ -32,8 +32,8 @@
                     <div class="poll-card-title-wrap">
                         <span class="poll-card-icon"><i class="bi bi-pencil-square"></i></span>
                         <div>
-                            <h2 class="poll-card-title">{{ __('نموذج إضافة الإجابة') }}</h2>
-                            <p class="poll-card-note">{{ __('الحقول مرتبة بشكل مباشر: الاستطلاع أولًا، ثم الخيار التابع له، ثم المستخدم ووقت الإجابة.') }}</p>
+                            <h2 class="poll-card-title">{{ __('نموذج إضافة التصويت') }}</h2>
+                            <p class="poll-card-note">{{ __('الحقول مرتبة بشكل مباشر: الاستطلاع أولًا، ثم الخيار التابع له، ثم المستخدم ووقت التصويت.') }}</p>
                         </div>
                     </div>
                 </div>
@@ -46,7 +46,7 @@
                     <div class="poll-footer-actions" style="margin-top: 22px;">
                         <button type="submit" class="poll-btn">
                             <i class="bi bi-check2-circle"></i>
-                            {{ __('حفظ الإجابة') }}
+                            {{ __('حفظ التصويت') }}
                         </button>
                         <a href="{{ route('poll-answers.index') }}" class="poll-btn-muted">
                             <i class="bi bi-x-circle"></i>
@@ -75,10 +75,10 @@
                         </div>
                         <div class="poll-mini-stat">
                             <span class="poll-mini-label">{{ __('تصويت واحد لكل مستخدم') }}</span>
-                            <div class="poll-mini-value">{{ __('النظام يتحقق من عدم تكرار إجابة نفس المستخدم داخل نفس الاستطلاع.') }}</div>
+                            <div class="poll-mini-value">{{ __('النظام يتحقق من عدم تكرار تصويت نفس المستخدم داخل نفس الاستطلاع.') }}</div>
                         </div>
                         <div class="poll-mini-stat">
-                            <span class="poll-mini-label">{{ __('تاريخ الإجابة') }}</span>
+                            <span class="poll-mini-label">{{ __('تاريخ التصويت') }}</span>
                             <div class="poll-mini-value">{{ __('يمكنك إبقاء الوقت الحالي أو إدخال تاريخ سابق عند ترحيل بيانات أو تصحيح سجلات قديمة.') }}</div>
                         </div>
                     </div>

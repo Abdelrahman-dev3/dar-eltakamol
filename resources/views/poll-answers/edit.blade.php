@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', __('تعديل إجابة الاستطلاع') . ' - ' . ($pollAnswer->user->name ?? __('غير معروف')))
+@section('title', __('تعديل التصويت') . ' - ' . ($pollAnswer->user->name ?? __('غير معروف')))
 
 @include('polls.partials.ui-styles')
 
@@ -18,7 +18,7 @@
                 <div>
                     <span class="poll-badge">
                         <i class="bi bi-pencil-fill"></i>
-                        {{ __('تعديل إجابة الاستطلاع') }} #{{ $pollAnswer->id }}
+                        {{ __('تعديل التصويت') }} #{{ $pollAnswer->id }}
                     </span>
                     <h1 class="poll-title">{{ $linkedUser?->name ?? __('مستخدم غير معروف') }}</h1>
                     <div class="poll-meta-row">
@@ -47,8 +47,8 @@
                     <div class="poll-card-title-wrap">
                         <span class="poll-card-icon"><i class="bi bi-sliders2"></i></span>
                         <div>
-                            <h2 class="poll-card-title">{{ __('تحديث بيانات الإجابة') }}</h2>
-                            <p class="poll-card-note">{{ __('يمكنك تعديل الاستطلاع أو الخيار أو المستخدم أو وقت الإجابة، مع بقاء التحقق من صحة الربط وتفادي التكرار مفعّلًا.') }}</p>
+                            <h2 class="poll-card-title">{{ __('تحديث بيانات التصويت') }}</h2>
+                            <p class="poll-card-note">{{ __('يمكنك تعديل الاستطلاع أو الخيار أو المستخدم أو وقت التصويت، مع بقاء التحقق من صحة الربط وتفادي التكرار مفعّلًا.') }}</p>
                         </div>
                     </div>
                 </div>
@@ -66,7 +66,7 @@
                         </button>
                         <a href="{{ route('poll-answers.show', $pollAnswer) }}" class="poll-btn-muted">
                             <i class="bi bi-eye"></i>
-                            {{ __('عرض الإجابة') }}
+                            {{ __('عرض التصويت') }}
                         </a>
                     </div>
                 </form>
@@ -118,7 +118,7 @@
                     <div class="poll-mini-stats">
                         <div class="poll-mini-stat">
                             <span class="poll-mini-label">{{ __('قبل الحفظ') }}</span>
-                            <div class="poll-mini-value">{{ __('راجع أن الخيار المحدد يتبع الاستطلاع نفسه، وأن المستخدم المقصود لم يُسجل إجابة أخرى داخل نفس الاستطلاع.') }}</div>
+                            <div class="poll-mini-value">{{ __('راجع أن الخيار المحدد يتبع الاستطلاع نفسه، وأن المستخدم المقصود لم يُسجل تصويتًا آخر داخل نفس الاستطلاع.') }}</div>
                         </div>
                     </div>
 
