@@ -8,6 +8,8 @@ use App\Models\Setting;
 use App\Models\SellShares;
 use App\Models\SharesPO;
 use Illuminate\Http\Request;
+use App\Services\BuyerPenaltyService;
+use App\Services\TradingWindowService;
 
 class SharesPOController extends Controller
 {
@@ -50,8 +52,10 @@ class SharesPOController extends Controller
         $sellShares = SellShares::with('seller')->orderByDesc('insert_date')->get();
         $stock = Setting::getValue('base_price', 0);
         $stats = $this->buildStats();
+        $currentPeriod = app(TradingWindowService::class)->currentPeriod();
+        $currentPhase = app(TradingWindowService::class)->currentPhase();
 
-        return view('shares-pos.create', compact('contributors', 'sellShares', 'stock', 'stats'));
+        return view('shares-pos.create', compact('contributors', 'sellShares', 'stock', 'stats', 'currentPeriod', 'currentPhase'));
     }
 
     /**
@@ -59,17 +63,27 @@ class SharesPOController extends Controller
      */
     public function store(Request $request)
     {
+        app(TradingWindowService::class)->assertMarketEntryAllowed('لا يمكن إنشاء طلب شراء خارج مراحل العرض والصفقات الخاصة.');
         $basePrice = Setting::getValue('base_price', 0);
 
         $request->validate([
             'user_id' => 'required|exists:contributors,id',
-            'sale_number' => 'nullable|string|max:50',
+            'sale_number' => 'required|exists:sell_shares,id',
             'count' => 'required|numeric|min:0',
             'amount_per_share' => 'required|numeric|min:0',
             'accept' => 'boolean',
             'insert_date' => 'required|date',
             'po_status' => 'required|integer|between:0,2',
         ]);
+        $buyer = Contributor::findOrFail($request->user_id);
+        app(BuyerPenaltyService::class)->assertCanTrade($buyer);
+        $offer = SellShares::findOrFail($request->sale_number);
+
+        if ((int) $offer->user_id === (int) $buyer->id) {
+            return redirect()->back()->withInput()->withErrors([
+                'user_id' => 'لا يمكن للبائع إنشاء طلب شراء على عرضه.',
+            ]);
+        }
 
         if ($request->amount_per_share < $basePrice) {
             return redirect()->back()->withInput()->withErrors([
@@ -131,7 +145,7 @@ class SharesPOController extends Controller
 
         $request->validate([
             'user_id' => 'required|exists:contributors,id',
-            'sale_number' => 'nullable|string|max:50',
+            'sale_number' => 'required|exists:sell_shares,id',
             'count' => 'required|numeric|min:0',
             'amount_per_share' => 'required|numeric|min:0',
             'accept' => 'boolean',
@@ -139,6 +153,8 @@ class SharesPOController extends Controller
             'po_status' => 'required|integer|between:0,2',
             'line_notes' => 'required|string',
         ]);
+        $buyer = Contributor::findOrFail($request->user_id);
+        app(BuyerPenaltyService::class)->assertCanTrade($buyer);
 
         if ($request->amount_per_share < $basePrice) {
             return redirect()->back()->withInput()->withErrors([
@@ -193,5 +209,13 @@ class SharesPOController extends Controller
             'success' => true,
             'accept' => $shares_po->accept,
         ]);
+    }
+
+    public function markDefault(SharesPO $shares_po)
+    {
+        app(BuyerPenaltyService::class)->registerDefault($shares_po->load('contributor'), auth()->id());
+        $shares_po->update(['defaulted_at' => now()]);
+
+        return redirect()->back()->with('success', 'تم تسجيل إخلال المشتري وتطبيق الإنذار/الحظر حسب سجله.');
     }
 }

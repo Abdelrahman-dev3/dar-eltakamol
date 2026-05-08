@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class SellShares extends Model
 {
@@ -49,6 +50,21 @@ class SellShares extends Model
     public function sharesPOs(): HasMany
     {
         return $this->hasMany(SharesPO::class, 'sale_number');
+    }
+
+    public function settlement(): HasOne
+    {
+        return $this->hasOne(SellShareSettlement::class, 'sell_share_id');
+    }
+
+    public function allocations(): HasMany
+    {
+        return $this->hasMany(SellShareAllocation::class, 'sell_share_id');
+    }
+
+    public function companyPurchaseObligations(): HasMany
+    {
+        return $this->hasMany(CompanyPurchaseObligation::class, 'sell_share_id');
     }
 
     /**

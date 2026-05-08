@@ -75,7 +75,7 @@
                                 <input type="text" name="shares_po_number" id="shares_po_number" class="st-input" value="{{ old('shares_po_number', $payment->shares_po_number) }}" list="paymentOrderNumbers" placeholder="{{ __('اكتب رقم الطلب أو اختره من الاقتراحات') }}">
                                 <datalist id="paymentOrderNumbers">
                                     @foreach($sharesPOs as $sharesPO)
-                                        <option value="{{ $sharesPO->sale_number }}">{{ $sharesPO->contributor->name ?? __('مساهم غير معروف') }}</option>
+                                        <option value="{{ $sharesPO->id }}">{{ __('طلب') }} #{{ $sharesPO->id }} - {{ __('عرض') }} #{{ $sharesPO->sale_number }} - {{ $sharesPO->contributor->name ?? __('مساهم غير معروف') }}</option>
                                     @endforeach
                                 </datalist>
                                 @error('shares_po_number')
@@ -190,7 +190,7 @@
                                 <div class="st-info-item">
                                     <span class="st-info-label">{{ __('رقم الطلب') }}</span>
                                     <div class="st-info-value">
-                                        {{ $sharesPO->sale_number }}
+                                        {{ $sharesPO->id }}
                                         <span class="st-help" style="display: block;">{{ $sharesPO->contributor->name ?? __('مساهم غير معروف') }}</span>
                                     </div>
                                 </div>

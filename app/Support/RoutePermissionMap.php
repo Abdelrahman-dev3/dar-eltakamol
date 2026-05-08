@@ -34,6 +34,18 @@ class RoutePermissionMap
             'share-trans-lines.toggle-posted' => self::buildPermissionCandidates('share-trans-lines', 'toggle-posted'),
             'payments.toggle-confirmed' => self::buildPermissionCandidates('payments', 'toggle-confirmed'),
             'shares-pos.toggle-accept' => self::buildPermissionCandidates('shares-pos', 'toggle-accept'),
+            'shares-pos.mark-default' => self::buildPermissionCandidates('shares-pos', 'update'),
+            'sell-shares.settle' => self::buildPermissionCandidates('sell-shares', 'edit'),
+            'trading-periods.index' => ['settings.view', 'settings.edit'],
+            'trading-periods.create' => ['settings.edit'],
+            'trading-periods.store' => ['settings.edit'],
+            'trading-periods.edit' => ['settings.edit'],
+            'trading-periods.update' => ['settings.edit'],
+            'trading-periods.destroy' => ['settings.edit'],
+            'company-purchase-obligations.index' => ['sell-shares.view', 'sell-shares.edit'],
+            'company-purchase-obligations.show' => ['sell-shares.view', 'sell-shares.edit'],
+            'company-purchase-obligations.edit' => ['sell-shares.edit'],
+            'company-purchase-obligations.update' => ['sell-shares.edit'],
             'bookings.update-status' => self::buildPermissionCandidates('bookings', 'update'),
             'contributors.share' => self::buildPermissionCandidates('sell-shares', 'create'),
         ];
@@ -147,6 +159,8 @@ class RoutePermissionMap
             'users.profits' => ['users-profits', 'profits'],
             'contributors.documents' => ['documents'],
             'meetings.attachments' => ['documents'],
+            'trading-periods' => ['settings'],
+            'company-purchase-obligations' => ['sell-shares', 'transactions'],
         ];
 
         if (array_key_exists($resource, $map)) {

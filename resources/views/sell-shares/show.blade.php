@@ -45,6 +45,13 @@
                             <i class="bi bi-printer-fill"></i>
                             {{ __('طباعة') }}
                         </a>
+                        <form action="{{ route('sell-shares.settle', $sellShare) }}" method="POST" style="display: inline-flex;">
+                            @csrf
+                            <button type="submit" class="ss-btn ss-btn-primary" data-confirm="سيتم توزيع العرض آلياً على طلبات الشراء المقبولة بالتساوي. هل تريد المتابعة؟">
+                                <i class="bi bi-diagram-3-fill"></i>
+                                تسوية العرض
+                            </button>
+                        </form>
                         <a href="{{ route('sell-shares.index') }}" class="ss-btn ss-btn-secondary">
                             <i class="bi bi-arrow-right-circle"></i>
                             {{ __('العودة للعروض') }}
@@ -74,6 +81,72 @@
                     <p class="ss-summary-value">{{ number_format($pendingOrders) }}</p>
                     <p class="ss-summary-label">{{ __('طلبات الشراء قيد الانتظار') }}</p>
                 </article>
+            </section>
+
+            <section class="ss-card" style="margin-bottom: 1rem;">
+                <div class="ss-card-header">
+                    <div class="ss-card-title-wrap">
+                        <span class="ss-card-icon"><i class="bi bi-diagram-3-fill"></i></span>
+                        <div>
+                            <h2 class="ss-card-title">تسوية المادة السادسة</h2>
+                            <p class="ss-card-subtitle">ملخص حد البيع السنوي والتوزيع الآلي والتزامات شراء الشركة.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="ss-grid-three">
+                    <div class="ss-info-item">
+                        <span class="ss-info-label">المتاح السنوي بعد استثناء هذا العرض</span>
+                        <div class="ss-info-value">{{ number_format((float) $annualRemaining, 2) }} سهم</div>
+                    </div>
+                    <div class="ss-info-item">
+                        <span class="ss-info-label">حالة التسوية</span>
+                        <div class="ss-info-value">{{ $sellShare->settlement->status ?? 'لم تتم التسوية' }}</div>
+                    </div>
+                    <div class="ss-info-item">
+                        <span class="ss-info-label">الأسهم المنقولة</span>
+                        <div class="ss-info-value">{{ number_format((float) optional($sellShare->settlement)->transferred_count, 2) }} سهم</div>
+                    </div>
+                </div>
+
+                @if($sellShare->settlement && $sellShare->settlement->allocations->count())
+                    <div class="ss-table-wrap" style="margin-top: 1rem;">
+                        <div class="ss-table-scroll">
+                            <table class="ss-table">
+                                <thead>
+                                    <tr>
+                                        <th>المشتري</th>
+                                        <th class="ss-text-center">المخصص</th>
+                                        <th class="ss-text-center">المدفوع</th>
+                                        <th class="ss-text-center">المنقول</th>
+                                        <th class="ss-text-center">الحالة</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($sellShare->settlement->allocations as $allocation)
+                                        <tr>
+                                            <td>{{ $allocation->buyer->name ?? 'الشركة' }}</td>
+                                            <td class="ss-text-center">{{ number_format((float) $allocation->shares_count, 2) }}</td>
+                                            <td class="ss-text-center">{{ number_format((float) $allocation->paid_amount, 2) }}</td>
+                                            <td class="ss-text-center">{{ number_format((float) $allocation->transferred_count, 2) }}</td>
+                                            <td class="ss-text-center">{{ $allocation->status }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                @endif
+
+                @if($sellShare->companyPurchaseObligations->count())
+                    <div class="ss-note-box warning" style="margin-top: 1rem;">
+                        <i class="bi bi-building-fill"></i>
+                        <div>
+                            يوجد {{ $sellShare->companyPurchaseObligations->count() }} التزام شراء على الشركة لهذا العرض.
+                            <a href="{{ route('company-purchase-obligations.index') }}">عرض الالتزامات</a>
+                        </div>
+                    </div>
+                @endif
             </section>
 
             <div class="ss-grid-two">

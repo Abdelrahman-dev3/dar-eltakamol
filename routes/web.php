@@ -26,6 +26,8 @@ use App\Http\Controllers\CircularsController;
 use App\Http\Controllers\CategoriesController;
 use App\Http\Controllers\UsersController;
 use App\Http\Controllers\PermissionsController;
+use App\Http\Controllers\TradingPeriodsController;
+use App\Http\Controllers\CompanyPurchaseObligationsController;
 use App\Http\Middleware\AuthorizeRoutePermission;
 
 /*
@@ -90,6 +92,8 @@ Route::middleware(['auth', AuthorizeRoutePermission::class])->group(function () 
     Route::resource('categories', CategoriesController::class);
     Route::resource('users', UsersController::class);
     Route::resource('permissions', PermissionsController::class);
+    Route::resource('trading-periods', TradingPeriodsController::class)->except(['show']);
+    Route::resource('company-purchase-obligations', CompanyPurchaseObligationsController::class)->only(['index', 'show', 'edit', 'update']);
     
     // seetings route
     Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');
@@ -113,6 +117,8 @@ Route::middleware(['auth', AuthorizeRoutePermission::class])->group(function () 
     
     Route::get('sell-shares/{sellShare}/print', [SellSharesController::class, 'print'])
         ->name('sell-shares.print');
+    Route::post('sell-shares/{sellShare}/settle', [SellSharesController::class, 'settle'])
+        ->name('sell-shares.settle');
     
     // Poll voting route
     Route::post('polls/{poll}/vote', [PollAnswersController::class, 'vote'])
@@ -145,6 +151,8 @@ Route::middleware(['auth', AuthorizeRoutePermission::class])->group(function () 
     // Toggle shares PO accept status
     Route::post('shares-pos/{sharesPO}/toggle-accept', [SharesPOController::class, 'toggleAccept'])
         ->name('shares-pos.toggle-accept');
+    Route::post('shares-pos/{sharesPO}/mark-default', [SharesPOController::class, 'markDefault'])
+        ->name('shares-pos.mark-default');
 
     // Download routes for file features
     Route::get('regulations/{regulation}/download', [RegulationsController::class, 'download'])

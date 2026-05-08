@@ -30,6 +30,17 @@ class Payment extends Model
      */
     public function sharesPO(): BelongsTo
     {
-        return $this->belongsTo(SharesPO::class, 'shares_po_number', 'sale_number');
+        return $this->belongsTo(SharesPO::class, 'shares_po_number');
+    }
+
+    public function getTransferableSharesAttribute(): float
+    {
+        $order = $this->relationLoaded('sharesPO') ? $this->sharesPO : $this->sharesPO()->first();
+
+        if (!$order || (float) $order->amount_per_share <= 0) {
+            return 0;
+        }
+
+        return (float) $this->amount / (float) $order->amount_per_share;
     }
 }

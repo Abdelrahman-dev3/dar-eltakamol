@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Meeting;
 use App\Models\User;
 use App\Models\MeetingAttachment;
+use App\Models\Category;
+use App\Services\ParticipantAudienceResolver;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -29,27 +31,41 @@ class MeetingsController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create(): View
+    public function create(ParticipantAudienceResolver $audienceResolver): View
     {
         $users = User::orderBy('name')->get();
+        $audienceScopes = $audienceResolver->scopeOptions();
+        $committeeOptions = $audienceResolver->committeeOptions();
+        $companies = Category::companies()->orderBy('name')->get();
+        $departments = Category::departments()->with('parent')->orderBy('name')->get();
         
-        return view('meetings.create', compact('users'));
+        return view('meetings.create', compact('users', 'audienceScopes', 'committeeOptions', 'companies', 'departments'));
     }
 
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request, ParticipantAudienceResolver $audienceResolver): RedirectResponse
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'url' => 'required|url|max:500',
             'date' => 'required|date',
+            'audience_scope' => 'nullable|in:manual,all_users,all_contributors,board_members,committee,company,department',
+            'audience_committee' => 'nullable|required_if:audience_scope,committee|string|max:255',
+            'audience_category_id' => 'nullable|required_if:audience_scope,company,department|exists:categories,id',
             'user_ids' => 'nullable|array',
             'user_ids.*' => 'exists:users,id',
             'attachments.*' => 'nullable|file|max:20480', // 20MB max per file
             'attachment_descriptions' => 'nullable|array',
         ]);
+
+        $userIds = $audienceResolver->resolve(
+            $request->input('audience_scope', ParticipantAudienceResolver::SCOPE_MANUAL),
+            $request->input('user_ids', []),
+            $request->integer('audience_category_id') ?: null,
+            $request->input('audience_committee')
+        );
 
         $meeting = Meeting::create([
             'name' => $validated['name'],
@@ -57,10 +73,7 @@ class MeetingsController extends Controller
             'date' => $validated['date'],
         ]);
 
-        // Attach selected users to the meeting
-        if (!empty($validated['user_ids'])) {
-            $meeting->users()->attach($validated['user_ids']);
-        }
+        $meeting->users()->sync($userIds);
 
         // Handle file uploads
         if ($request->hasFile('attachments')) {
@@ -85,28 +98,42 @@ class MeetingsController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Meeting $meeting): View
+    public function edit(Meeting $meeting, ParticipantAudienceResolver $audienceResolver): View
     {
         $meeting->load(['users', 'attachments.uploader']);
         $users = User::orderBy('name')->get();
+        $audienceScopes = $audienceResolver->scopeOptions();
+        $committeeOptions = $audienceResolver->committeeOptions();
+        $companies = Category::companies()->orderBy('name')->get();
+        $departments = Category::departments()->with('parent')->orderBy('name')->get();
         
-        return view('meetings.edit', compact('meeting', 'users'));
+        return view('meetings.edit', compact('meeting', 'users', 'audienceScopes', 'committeeOptions', 'companies', 'departments'));
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Meeting $meeting): RedirectResponse
+    public function update(Request $request, Meeting $meeting, ParticipantAudienceResolver $audienceResolver): RedirectResponse
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'url' => 'required|url|max:500',
             'date' => 'required|date',
+            'audience_scope' => 'nullable|in:manual,all_users,all_contributors,board_members,committee,company,department',
+            'audience_committee' => 'nullable|required_if:audience_scope,committee|string|max:255',
+            'audience_category_id' => 'nullable|required_if:audience_scope,company,department|exists:categories,id',
             'user_ids' => 'nullable|array',
             'user_ids.*' => 'exists:users,id',
             'attachments.*' => 'nullable|file|max:20480', // 20MB max per file
             'attachment_descriptions' => 'nullable|array',
         ]);
+
+        $userIds = $audienceResolver->resolve(
+            $request->input('audience_scope', ParticipantAudienceResolver::SCOPE_MANUAL),
+            $request->input('user_ids', []),
+            $request->integer('audience_category_id') ?: null,
+            $request->input('audience_committee')
+        );
 
         $meeting->update([
             'name' => $validated['name'],
@@ -114,8 +141,7 @@ class MeetingsController extends Controller
             'date' => $validated['date'],
         ]);
 
-        // Sync selected users (this will remove old and add new ones)
-        $meeting->users()->sync($validated['user_ids'] ?? []);
+        $meeting->users()->sync($userIds);
 
         // Handle file uploads
         if ($request->hasFile('attachments')) {

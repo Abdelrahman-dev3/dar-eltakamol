@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Poll;
 use App\Models\ZoomMeeting;
 use App\Models\User;
+use App\Models\Category;
+use App\Services\ParticipantAudienceResolver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
@@ -26,18 +28,29 @@ class PollsController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
+    public function create(ParticipantAudienceResolver $audienceResolver)
     {
         $zoomMeetings = ZoomMeeting::orderBy('meeting_date', 'desc')->get();
         $users = User::orderBy('name')->get();
+        $audienceScopes = $audienceResolver->scopeOptions();
+        $committeeOptions = $audienceResolver->committeeOptions();
+        $companies = Category::companies()->orderBy('name')->get();
+        $departments = Category::departments()->with('parent')->orderBy('name')->get();
 
-        return view('polls.create', compact('zoomMeetings', 'users'));
+        return view('polls.create', compact(
+            'zoomMeetings',
+            'users',
+            'audienceScopes',
+            'committeeOptions',
+            'companies',
+            'departments'
+        ));
     }
 
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(Request $request, ParticipantAudienceResolver $audienceResolver)
     {
         $request->validate([
             'question' => 'required|string|max:500',
@@ -45,6 +58,9 @@ class PollsController extends Controller
             'end_date' => 'required|date|after:start_date',
             'is_active' => 'boolean',
             'zoom_meeting_id' => 'nullable|exists:zoom_meetings,id',
+            'audience_scope' => 'nullable|in:manual,all_users,all_contributors,board_members,committee,company,department',
+            'audience_committee' => 'nullable|required_if:audience_scope,committee|string|max:255',
+            'audience_category_id' => 'nullable|required_if:audience_scope,company,department|exists:categories,id',
             'referenced_users' => 'nullable|array',
             'referenced_users.*' => 'exists:users,id',
             'options' => 'required|array',
@@ -63,6 +79,13 @@ class PollsController extends Controller
                 ->withInput();
         }
 
+        $referencedUserIds = $audienceResolver->resolve(
+            $request->input('audience_scope', ParticipantAudienceResolver::SCOPE_MANUAL),
+            $request->input('referenced_users', []),
+            $request->integer('audience_category_id') ?: null,
+            $request->input('audience_committee')
+        );
+
         $poll = Poll::create([
             'title' => Str::limit($request->question, 255, ''),
             'question' => $request->question,
@@ -74,9 +97,7 @@ class PollsController extends Controller
             'zoom_meeting_id' => $request->zoom_meeting_id,
         ]);
 
-        if ($request->has('referenced_users') && is_array($request->referenced_users)) {
-            $poll->referencedUsers()->sync($request->referenced_users);
-        }
+        $poll->referencedUsers()->sync($referencedUserIds);
 
         foreach ($options as $optionText) {
             $poll->pollOptions()->create([
@@ -110,7 +131,7 @@ class PollsController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Poll $poll)
+    public function edit(Poll $poll, ParticipantAudienceResolver $audienceResolver)
     {
         $poll->load([
             'zoomMeeting',
@@ -121,14 +142,26 @@ class PollsController extends Controller
         ]);
         $zoomMeetings = ZoomMeeting::orderBy('meeting_date', 'desc')->get();
         $users = User::orderBy('name')->get();
+        $audienceScopes = $audienceResolver->scopeOptions();
+        $committeeOptions = $audienceResolver->committeeOptions();
+        $companies = Category::companies()->orderBy('name')->get();
+        $departments = Category::departments()->with('parent')->orderBy('name')->get();
 
-        return view('polls.edit', compact('poll', 'zoomMeetings', 'users'));
+        return view('polls.edit', compact(
+            'poll',
+            'zoomMeetings',
+            'users',
+            'audienceScopes',
+            'committeeOptions',
+            'companies',
+            'departments'
+        ));
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Poll $poll)
+    public function update(Request $request, Poll $poll, ParticipantAudienceResolver $audienceResolver)
     {
         $request->validate([
             'question' => 'required|string|max:500',
@@ -136,9 +169,19 @@ class PollsController extends Controller
             'end_date' => 'required|date|after:start_date',
             'is_active' => 'boolean',
             'zoom_meeting_id' => 'nullable|exists:zoom_meetings,id',
+            'audience_scope' => 'nullable|in:manual,all_users,all_contributors,board_members,committee,company,department',
+            'audience_committee' => 'nullable|required_if:audience_scope,committee|string|max:255',
+            'audience_category_id' => 'nullable|required_if:audience_scope,company,department|exists:categories,id',
             'referenced_users' => 'nullable|array',
             'referenced_users.*' => 'exists:users,id',
         ]);
+
+        $referencedUserIds = $audienceResolver->resolve(
+            $request->input('audience_scope', ParticipantAudienceResolver::SCOPE_MANUAL),
+            $request->input('referenced_users', []),
+            $request->integer('audience_category_id') ?: null,
+            $request->input('audience_committee')
+        );
 
         $poll->update([
             'title' => Str::limit($request->question, 255, ''),
@@ -149,11 +192,7 @@ class PollsController extends Controller
             'zoom_meeting_id' => $request->zoom_meeting_id,
         ]);
 
-        if ($request->has('referenced_users') && is_array($request->referenced_users)) {
-            $poll->referencedUsers()->sync($request->referenced_users);
-        } else {
-            $poll->referencedUsers()->sync([]);
-        }
+        $poll->referencedUsers()->sync($referencedUserIds);
 
         return redirect()->route('polls.index')
             ->with('success', 'تم تحديث الاستطلاع بنجاح');

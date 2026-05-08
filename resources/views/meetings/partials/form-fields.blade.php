@@ -7,6 +7,13 @@
     $attachmentRowsCount = max(1, count($attachmentDescriptions));
     $existingAttachments = $meeting?->attachments ?? collect();
     $dateValue = old('date', $meeting?->date?->format('Y-m-d H:i'));
+    $audienceScopes = $audienceScopes ?? ['manual' => 'اختيار مستخدمين محددين'];
+    $committeeOptions = $committeeOptions ?? [];
+    $companies = $companies ?? collect();
+    $departments = $departments ?? collect();
+    $selectedAudienceScope = old('audience_scope', 'manual');
+    $selectedAudienceCommittee = old('audience_committee');
+    $selectedAudienceCategory = old('audience_category_id');
 @endphp
 
 <div class="meeting-section">
@@ -76,7 +83,68 @@
         <span class="meeting-section-chip" id="selectedUsersCount">{{ count($selectedUserIds) }}</span>
     </h3>
 
-    <div class="meeting-attendees-grid">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="form-group meeting-field @error('audience_scope') has-error @enderror">
+                <label for="meeting_audience_scope">{{ __('نطاق المدعوين') }}</label>
+                <select name="audience_scope" id="meeting_audience_scope" class="form-control meeting-input" data-audience-scope>
+                    @foreach($audienceScopes as $value => $label)
+                        <option value="{{ $value }}" {{ $selectedAudienceScope === $value ? 'selected' : '' }}>{{ $label }}</option>
+                    @endforeach
+                </select>
+                <p class="meeting-inline-note">{{ __('اختر التصنيف المطلوب، وسيتم ربط المستخدمين المطابقين بالاجتماع عند الحفظ.') }}</p>
+                @error('audience_scope')
+                    <span class="help-block">{{ $message }}</span>
+                @enderror
+            </div>
+        </div>
+
+        <div class="col-md-12" data-audience-panel="committee">
+            <div class="form-group meeting-field @error('audience_committee') has-error @enderror">
+                <label for="meeting_audience_committee">{{ __('اللجنة') }}</label>
+                <select name="audience_committee" id="meeting_audience_committee" class="form-control meeting-input">
+                    <option value="">{{ __('اختر اللجنة') }}</option>
+                    @foreach($committeeOptions as $committee)
+                        <option value="{{ $committee }}" {{ $selectedAudienceCommittee === $committee ? 'selected' : '' }}>{{ $committee }}</option>
+                    @endforeach
+                </select>
+                @error('audience_committee')
+                    <span class="help-block">{{ $message }}</span>
+                @enderror
+            </div>
+        </div>
+
+        <div class="col-md-12" data-audience-panel="company">
+            <div class="form-group meeting-field @error('audience_category_id') has-error @enderror">
+                <label for="meeting_audience_company">{{ __('الشركة أو العضوية الرئيسية') }}</label>
+                <select name="audience_category_id" id="meeting_audience_company" class="form-control meeting-input">
+                    <option value="">{{ __('اختر الشركة أو العضوية') }}</option>
+                    @foreach($companies as $company)
+                        <option value="{{ $company->id }}" {{ (string) $selectedAudienceCategory === (string) $company->id ? 'selected' : '' }}>{{ $company->name }}</option>
+                    @endforeach
+                </select>
+                @error('audience_category_id')
+                    <span class="help-block">{{ $message }}</span>
+                @enderror
+            </div>
+        </div>
+
+        <div class="col-md-12" data-audience-panel="department">
+            <div class="form-group meeting-field @error('audience_category_id') has-error @enderror">
+                <label for="meeting_audience_department">{{ __('الإدارة أو التصنيف الفرعي') }}</label>
+                <select name="audience_category_id" id="meeting_audience_department" class="form-control meeting-input">
+                    <option value="">{{ __('اختر الإدارة أو التصنيف') }}</option>
+                    @foreach($departments as $department)
+                        <option value="{{ $department->id }}" {{ (string) $selectedAudienceCategory === (string) $department->id ? 'selected' : '' }}>
+                            {{ $department->full_name }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div class="meeting-attendees-grid" data-audience-panel="manual">
         <div class="form-group meeting-field @error('user_ids') has-error @enderror" style="margin-bottom: 0;">
             <label for="user_ids">{{ __('اختر المستخدمين') }}</label>
             <select name="user_ids[]" id="user_ids" class="form-control meeting-input" multiple size="10" data-users-select>

@@ -425,7 +425,49 @@
                 font-weight: 800;
                 border-bottom: 1px solid rgba(170, 134, 63, 0.12);
             }
+            .ss-list-card .ss-list-head { display: none; }
             .ss-list-body { padding: 0.75rem 0.75rem 1rem; }
+            #sellSharesList {
+                display: grid;
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+                gap: 1rem;
+                padding: 1rem;
+            }
+            #sellSharesList .ss-row {
+                display: flex;
+                flex-direction: column;
+                align-items: stretch;
+                gap: 1rem;
+                min-height: 100%;
+                margin: 0;
+                padding: 1.2rem;
+            }
+            #sellSharesList .ss-row-main {
+                display: grid;
+                grid-template-columns: auto minmax(0, 1fr);
+                align-items: center;
+            }
+            #sellSharesList .ss-row-title {
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+            #sellSharesList .ss-row .ss-actions {
+                margin-top: auto;
+                padding-top: 0.95rem;
+                border-top: 1px solid rgba(170, 134, 63, 0.12);
+                justify-content: flex-start;
+            }
+            #sellSharesList .ss-field {
+                padding: 0.85rem 0.95rem;
+                border-radius: 1rem;
+                background: rgba(248, 245, 237, 0.62);
+                border: 1px solid rgba(170, 134, 63, 0.1);
+            }
+            #sellSharesList .ss-field[style] {
+                grid-column: auto !important;
+            }
+            #sellSharesList .ss-row.is-hidden { display: none; }
             .ss-row {
                 margin: 0.75rem 0.75rem 0;
                 padding: 1.2rem;
@@ -675,6 +717,7 @@
                 .ss-grid-two,
                 .ss-grid-three { grid-template-columns: 1fr; }
                 .ss-list-head { display: none; }
+                #sellSharesList { grid-template-columns: repeat(2, minmax(0, 1fr)); }
                 .ss-row {
                     grid-template-columns: 1fr 1fr;
                     align-items: flex-start;
@@ -699,6 +742,11 @@
                 .ss-chip-row { width: 100%; }
                 .ss-chip { flex: 1 1 100%; justify-content: center; }
                 .ss-list-body { padding: 0.5rem; }
+                #sellSharesList {
+                    grid-template-columns: 1fr;
+                    padding: 0.75rem;
+                    gap: 0.75rem;
+                }
                 .ss-row {
                     grid-template-columns: 1fr;
                     padding: 1rem;

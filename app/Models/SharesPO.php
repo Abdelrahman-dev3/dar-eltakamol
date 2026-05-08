@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class SharesPO extends Model
 {
@@ -24,6 +25,8 @@ class SharesPO extends Model
         'accept',
         'insert_date',
         'po_status',
+        'transferred_count',
+        'defaulted_at',
     ];
 
     protected $casts = [
@@ -31,6 +34,8 @@ class SharesPO extends Model
         'amount_per_share' => 'decimal:2',
         'accept' => 'boolean',
         'insert_date' => 'datetime',
+        'transferred_count' => 'decimal:2',
+        'defaulted_at' => 'datetime',
     ];
 
     /**
@@ -47,6 +52,11 @@ class SharesPO extends Model
     public function sellShare(): BelongsTo
     {
         return $this->belongsTo(SellShares::class, 'sale_number', 'id');
+    }
+
+    public function allocations(): HasMany
+    {
+        return $this->hasMany(SellShareAllocation::class, 'shares_po_id');
     }
 
     /**

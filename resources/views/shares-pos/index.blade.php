@@ -157,6 +157,12 @@
                                             <i class="bi {{ $order->accept ? 'bi-ban-fill' : 'bi-check-circle-fill' }}"></i>
                                         </button>
                                     </form>
+                                    <form action="{{ route('shares-pos.mark-default', $order) }}" method="POST" style="display: inline-flex;">
+                                        @csrf
+                                        <button type="submit" class="st-icon-btn st-icon-btn-danger" title="تسجيل إخلال" data-confirm="سيتم تسجيل إخلال على المشتري، والتكرار يؤدي إلى حظر سنة. هل تريد المتابعة؟">
+                                            <i class="bi bi-exclamation-triangle-fill"></i>
+                                        </button>
+                                    </form>
                                 </div>
 
                                 <div class="st-field">

@@ -4,6 +4,13 @@
         'referenced_users',
         $pollModel ? $pollModel->referencedUsers->pluck('id')->all() : []
     ))->map(fn ($id) => (string) $id)->all();
+    $audienceScopes = $audienceScopes ?? ['manual' => 'اختيار مستخدمين محددين'];
+    $committeeOptions = $committeeOptions ?? [];
+    $companies = $companies ?? collect();
+    $departments = $departments ?? collect();
+    $selectedAudienceScope = old('audience_scope', 'manual');
+    $selectedAudienceCommittee = old('audience_committee');
+    $selectedAudienceCategory = old('audience_category_id');
 @endphp
 
 <section class="poll-form-section">
@@ -106,7 +113,58 @@
         @enderror
     </div>
 
-    <div class="poll-field {{ $errors->has('referenced_users') ? 'has-error' : '' }}">
+    <div class="poll-field {{ $errors->has('audience_scope') ? 'has-error' : '' }}">
+        <label for="poll_audience_scope">{{ __('نطاق المشاركين') }}</label>
+        <select name="audience_scope" id="poll_audience_scope" class="poll-select" data-audience-scope>
+            @foreach($audienceScopes as $value => $label)
+                <option value="{{ $value }}" {{ $selectedAudienceScope === $value ? 'selected' : '' }}>{{ $label }}</option>
+            @endforeach
+        </select>
+        <div class="poll-help-text">{{ __('اختر التصنيف المطلوب، وسيتم ربط المستخدمين المطابقين بالاستطلاع عند الحفظ.') }}</div>
+        @error('audience_scope')
+            <div class="poll-error">{{ $message }}</div>
+        @enderror
+    </div>
+
+    <div class="poll-field {{ $errors->has('audience_committee') ? 'has-error' : '' }}" data-audience-panel="committee">
+        <label for="poll_audience_committee">{{ __('اللجنة') }}</label>
+        <select name="audience_committee" id="poll_audience_committee" class="poll-select">
+            <option value="">{{ __('اختر اللجنة') }}</option>
+            @foreach($committeeOptions as $committee)
+                <option value="{{ $committee }}" {{ $selectedAudienceCommittee === $committee ? 'selected' : '' }}>{{ $committee }}</option>
+            @endforeach
+        </select>
+        @error('audience_committee')
+            <div class="poll-error">{{ $message }}</div>
+        @enderror
+    </div>
+
+    <div class="poll-field {{ $errors->has('audience_category_id') ? 'has-error' : '' }}" data-audience-panel="company">
+        <label for="poll_audience_company">{{ __('الشركة أو العضوية الرئيسية') }}</label>
+        <select name="audience_category_id" id="poll_audience_company" class="poll-select">
+            <option value="">{{ __('اختر الشركة أو العضوية') }}</option>
+            @foreach($companies as $company)
+                <option value="{{ $company->id }}" {{ (string) $selectedAudienceCategory === (string) $company->id ? 'selected' : '' }}>{{ $company->name }}</option>
+            @endforeach
+        </select>
+        @error('audience_category_id')
+            <div class="poll-error">{{ $message }}</div>
+        @enderror
+    </div>
+
+    <div class="poll-field {{ $errors->has('audience_category_id') ? 'has-error' : '' }}" data-audience-panel="department">
+        <label for="poll_audience_department">{{ __('الإدارة أو التصنيف الفرعي') }}</label>
+        <select name="audience_category_id" id="poll_audience_department" class="poll-select">
+            <option value="">{{ __('اختر الإدارة أو التصنيف') }}</option>
+            @foreach($departments as $department)
+                <option value="{{ $department->id }}" {{ (string) $selectedAudienceCategory === (string) $department->id ? 'selected' : '' }}>
+                    {{ $department->full_name }}
+                </option>
+            @endforeach
+        </select>
+    </div>
+
+    <div class="poll-field {{ $errors->has('referenced_users') ? 'has-error' : '' }}" data-audience-panel="manual">
         <label for="referenced_users">{{ __('المستخدمون المشاركون') }}</label>
         <select name="referenced_users[]" id="referenced_users" class="poll-select" multiple>
             @forelse($users as $user)
@@ -117,7 +175,7 @@
                 <option value="" disabled>{{ __('لا يوجد مستخدمون متاحون') }}</option>
             @endforelse
         </select>
-        <div class="poll-help-text">{{ __('يمكنك اختيار أكثر من مستخدم لتخصيص الاستطلاع لهم. استخدم Ctrl أو Cmd للاختيار المتعدد.') }}</div>
+        <div class="poll-help-text">{{ __('يستخدم هذا الحقل فقط عند اختيار "اختيار مستخدمين محددين".') }}</div>
         @error('referenced_users')
             <div class="poll-error">{{ $message }}</div>
         @enderror
@@ -126,3 +184,29 @@
         @enderror
     </div>
 </section>
+
+@once
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('[data-audience-scope]').forEach(function (scopeSelect) {
+            const form = scopeSelect.closest('form');
+            const syncAudiencePanels = function () {
+                const selectedScope = scopeSelect.value || 'manual';
+
+                form.querySelectorAll('[data-audience-panel]').forEach(function (panel) {
+                    const isActive = panel.dataset.audiencePanel === selectedScope;
+                    panel.style.display = isActive ? '' : 'none';
+                    panel.querySelectorAll('select, input, textarea').forEach(function (input) {
+                        input.disabled = !isActive;
+                    });
+                });
+            };
+
+            scopeSelect.addEventListener('change', syncAudiencePanels);
+            syncAudiencePanels();
+        });
+    });
+</script>
+@endpush
+@endonce

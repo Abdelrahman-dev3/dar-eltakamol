@@ -2356,6 +2356,14 @@
                 </ul>
                 </div>
                 @endroutePermission
+                @routePermission('trading-periods.index')
+                <div class="nav-item">
+                    <a href="{{ route('trading-periods.index') }}" class="nav-link {{ request()->routeIs('trading-periods.*') ? 'active' : '' }}">
+                        <i class="bi bi-calendar-range-fill nav-icon"></i>
+                        <span class="nav-link-label">{{ __('فترات التداول') }}</span>
+                    </a>
+                </div>
+                @endroutePermission
                 @routePermission('settings.index')
                 <div class="nav-item">
                     <a href="{{ route('settings.index') }}" class="nav-link {{ request()->routeIs('settings.*') ? 'active' : '' }}">

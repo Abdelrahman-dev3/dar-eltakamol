@@ -19,6 +19,23 @@
         const addAttachmentRowButton = document.getElementById('addAttachmentRow');
         const dateInput = document.querySelector('[data-date-picker]');
         const dateTrigger = document.querySelector('[data-date-trigger]');
+        const audienceScopeSelect = form.querySelector('[data-audience-scope]');
+
+        function syncAudiencePanels() {
+            if (!audienceScopeSelect) {
+                return;
+            }
+
+            const selectedScope = audienceScopeSelect.value || 'manual';
+
+            form.querySelectorAll('[data-audience-panel]').forEach(function (panel) {
+                const isActive = panel.dataset.audiencePanel === selectedScope;
+                panel.style.display = isActive ? '' : 'none';
+                panel.querySelectorAll('select, input, textarea').forEach(function (input) {
+                    input.disabled = !isActive;
+                });
+            });
+        }
 
         if (dateInput && typeof flatpickr === 'function') {
             const appTheme = document.documentElement.getAttribute('data-theme') || 'light';
@@ -190,6 +207,11 @@
         if (usersSelect) {
             usersSelect.addEventListener('change', updateSelectedUsersPreview);
             updateSelectedUsersPreview();
+        }
+
+        if (audienceScopeSelect) {
+            audienceScopeSelect.addEventListener('change', syncAudiencePanels);
+            syncAudiencePanels();
         }
 
         if (urlInput) {

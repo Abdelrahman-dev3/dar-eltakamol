@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Payment;
 use App\Models\SharesPO;
+use App\Services\PaymentShareTransferService;
 use Illuminate\Http\Request;
 
 class PaymentsController extends Controller
@@ -61,13 +62,13 @@ class PaymentsController extends Controller
         $request->validate([
             'date' => 'required|date',
             'amount' => 'required|numeric|min:0',
-            'shares_po_number' => 'nullable|string|max:50',
+            'shares_po_number' => 'required|exists:shares_poes,id',
             'bank_info' => 'nullable|string|max:500',
             'confirmed' => 'boolean',
             'transfer_document' => 'nullable|string|max:255',
         ]);
 
-        Payment::create([
+        $payment = Payment::create([
             'date' => $request->date,
             'amount' => $request->amount,
             'shares_po_number' => $request->shares_po_number,
@@ -75,6 +76,7 @@ class PaymentsController extends Controller
             'confirmed' => $request->has('confirmed'),
             'transfer_document' => $request->transfer_document,
         ]);
+        app(PaymentShareTransferService::class)->applyConfirmedPayment($payment);
 
         return redirect()->route('payments.index')
             ->with('success', 'تم إضافة الدفعة بنجاح');
@@ -113,7 +115,7 @@ class PaymentsController extends Controller
         $request->validate([
             'date' => 'required|date',
             'amount' => 'required|numeric|min:0',
-            'shares_po_number' => 'nullable|string|max:50',
+            'shares_po_number' => 'required|exists:shares_poes,id',
             'bank_info' => 'nullable|string|max:500',
             'confirmed' => 'boolean',
             'transfer_document' => 'nullable|string|max:255',
@@ -127,6 +129,7 @@ class PaymentsController extends Controller
             'confirmed' => $request->has('confirmed'),
             'transfer_document' => $request->transfer_document,
         ]);
+        app(PaymentShareTransferService::class)->applyConfirmedPayment($payment->refresh());
 
         return redirect()->route('payments.index')
             ->with('success', 'تم تحديث بيانات الدفعة بنجاح');
@@ -151,6 +154,7 @@ class PaymentsController extends Controller
         $payment->update([
             'confirmed' => !$payment->confirmed,
         ]);
+        app(PaymentShareTransferService::class)->applyConfirmedPayment($payment->refresh());
 
         if (!request()->expectsJson()) {
             return redirect()->back()->with(

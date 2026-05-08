@@ -73,6 +73,11 @@
                     <p class="st-summary-value">{{ $payment->confirmed ? __('مؤكد') : __('مراجعة') }}</p>
                     <p class="st-summary-label">{{ __('حالة الدفعة') }}</p>
                 </article>
+                <article class="st-summary-card" style="animation-delay: 0.33s;">
+                    <div class="st-summary-icon"><i class="bi bi-arrow-left-right"></i></div>
+                    <p class="st-summary-value">{{ number_format((float) $payment->transferable_shares, 2) }}</p>
+                    <p class="st-summary-label">الأسهم القابلة للنقل من هذه الدفعة</p>
+                </article>
             </section>
 
             <div class="st-grid-two">
