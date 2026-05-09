@@ -49,7 +49,10 @@ class SharesPOController extends Controller
     public function create()
     {
         $contributors = Contributor::orderBy('name')->get();
-        $sellShares = SellShares::with('seller')->orderByDesc('insert_date')->get();
+        $sellShares = SellShares::with('seller')
+            ->where('ad_status', '!=', SellShares::AD_STATUS_CANCELLED)
+            ->orderByDesc('insert_date')
+            ->get();
         $stock = Setting::getValue('base_price', 0);
         $stats = $this->buildStats();
         $currentPeriod = app(TradingWindowService::class)->currentPeriod();
@@ -78,6 +81,12 @@ class SharesPOController extends Controller
         $buyer = Contributor::findOrFail($request->user_id);
         app(BuyerPenaltyService::class)->assertCanTrade($buyer);
         $offer = SellShares::findOrFail($request->sale_number);
+
+        if ((int) $offer->ad_status === SellShares::AD_STATUS_CANCELLED) {
+            return redirect()->back()->withInput()->withErrors([
+                'sale_number' => 'عرض البيع المحدد مغلق ومؤرشف ولا يقبل طلبات شراء جديدة.',
+            ]);
+        }
 
         if ((int) $offer->user_id === (int) $buyer->id) {
             return redirect()->back()->withInput()->withErrors([
@@ -123,7 +132,14 @@ class SharesPOController extends Controller
         $shares_po->load(['contributor', 'sellShare.seller']);
 
         $contributors = Contributor::orderBy('name')->get();
-        $sellShares = SellShares::with('seller')->orderByDesc('insert_date')->get();
+        $sellShares = SellShares::with('seller')
+            ->where(function ($query) use ($shares_po): void {
+                $query
+                    ->where('ad_status', '!=', SellShares::AD_STATUS_CANCELLED)
+                    ->orWhere('id', $shares_po->sale_number);
+            })
+            ->orderByDesc('insert_date')
+            ->get();
         $stock = Setting::getValue('base_price', 0);
         $stats = $this->buildStats();
 
@@ -155,6 +171,13 @@ class SharesPOController extends Controller
         ]);
         $buyer = Contributor::findOrFail($request->user_id);
         app(BuyerPenaltyService::class)->assertCanTrade($buyer);
+        $offer = SellShares::findOrFail($request->sale_number);
+
+        if ((int) $offer->ad_status === SellShares::AD_STATUS_CANCELLED && (int) $shares_po->sale_number !== (int) $offer->id) {
+            return redirect()->back()->withInput()->withErrors([
+                'sale_number' => 'عرض البيع المحدد مغلق ومؤرشف ولا يقبل طلبات شراء جديدة.',
+            ]);
+        }
 
         if ($request->amount_per_share < $basePrice) {
             return redirect()->back()->withInput()->withErrors([

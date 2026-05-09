@@ -214,6 +214,25 @@ class User extends Authenticatable
         });
     }
 
+    public function isAdmin(): bool
+    {
+        if ($this->email === 'admin@board.com') {
+            return true;
+        }
+
+        $rolesCount = AppRole::query()->count();
+
+        if ($rolesCount === 0) {
+            return false;
+        }
+
+        return $this->groups()
+            ->whereHas('roles', function ($query): void {
+                $query->where('app_group_roles.group_permission', true);
+            }, '=', $rolesCount)
+            ->exists();
+    }
+
     /**
      * Get direct permission names as a readable string.
      */

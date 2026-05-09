@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Category;
 use App\Models\Contributor;
 use App\Models\ContributorDocument;
+use App\Models\ContributorMovement;
 use App\Models\Modification;
+use App\Models\Setting;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -106,6 +108,59 @@ class ContributorsController extends Controller
         ]);
 
         return view('contributors.show', compact('contributor'));
+    }
+
+    public function statement(Contributor $contributor): View
+    {
+        $contributor->load([
+            'user',
+            'departments.parent',
+        ]);
+
+        $currentShares = (float) ($contributor->share_count_cr ?? 0);
+        $totalShares = (float) Contributor::query()->sum('share_count_cr');
+        $ownershipPercentage = $totalShares > 0 ? round(($currentShares / $totalShares) * 100, 4) : 0;
+        $currentSharePrice = (float) Setting::getValue('base_price', 0);
+
+        $sellShares = $contributor->sellShares()
+            ->with(['sharesPOs.contributor'])
+            ->latest('insert_date')
+            ->latest()
+            ->get();
+
+        $purchaseOrders = $contributor->sharesPOs()
+            ->with(['sellShare.seller'])
+            ->latest('insert_date')
+            ->latest()
+            ->get();
+
+        $movements = ContributorMovement::query()
+            ->with(['fromContributor', 'toContributor', 'sharesTrans'])
+            ->where(function ($query) use ($contributor): void {
+                $query
+                    ->where('from_contributor_id', $contributor->id)
+                    ->orWhere('to_contributor_id', $contributor->id);
+            })
+            ->latest('date')
+            ->latest()
+            ->get();
+
+        $shareTransLines = $contributor->shareTransLines()
+            ->with('sharesTrans')
+            ->latest()
+            ->get();
+
+        return view('contributors.statement', compact(
+            'contributor',
+            'currentShares',
+            'totalShares',
+            'ownershipPercentage',
+            'currentSharePrice',
+            'sellShares',
+            'purchaseOrders',
+            'movements',
+            'shareTransLines'
+        ));
     }
 
     /**

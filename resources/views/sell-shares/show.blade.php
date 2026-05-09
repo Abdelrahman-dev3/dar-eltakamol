@@ -5,7 +5,11 @@
 @include('sell-shares.partials.styles')
 
 @php
-    $sellerName = $sellShare->seller->name ?? $sellShare->seller->user->name ?? __('غير معروف');
+    $realSellerName = $sellShare->seller->name ?? $sellShare->seller->user->name ?? __('غير معروف');
+    $hideSellerName = app(\App\Services\TradingWindowService::class)->currentPhase() === \App\Models\TradingPeriod::PHASE_OFFER
+        && !auth()->user()?->isAdmin()
+        && (int) optional(auth()->user()->contributor)->id !== (int) $sellShare->user_id;
+    $sellerName = $hideSellerName ? __('مساهم') : $realSellerName;
     $orders = $sellShare->sharesPOs;
     $acceptedOrders = $orders->where('accept', true)->count();
     $pendingOrders = $orders->where('accept', false)->count();
@@ -37,6 +41,7 @@
                     </div>
 
                     <div class="ss-actions">
+                        @if($canEditSellShare)
                         <a href="{{ route('sell-shares.edit', $sellShare) }}" class="ss-btn ss-btn-warning">
                             <i class="bi bi-pencil-square"></i>
                             {{ __('تعديل') }}
@@ -45,6 +50,7 @@
                             <i class="bi bi-printer-fill"></i>
                             {{ __('طباعة') }}
                         </a>
+                        @endif
                         <form action="{{ route('sell-shares.settle', $sellShare) }}" method="POST" style="display: inline-flex;">
                             @csrf
                             <button type="submit" class="ss-btn ss-btn-primary" data-confirm="سيتم توزيع العرض آلياً على طلبات الشراء المقبولة بالتساوي. هل تريد المتابعة؟">
@@ -52,6 +58,15 @@
                                 تسوية العرض
                             </button>
                         </form>
+                        @if(auth()->user()?->isAdmin() && (int) $sellShare->ad_status !== \App\Models\SellShares::AD_STATUS_CANCELLED)
+                            <form action="{{ route('sell-shares.close', $sellShare) }}" method="POST" style="display: inline-flex;">
+                                @csrf
+                                <button type="submit" class="ss-btn ss-btn-danger" data-confirm="{{ __('هل تريد إغلاق عرض البيع وأرشفته؟ لن يظهر للآخرين ولن يقبل طلبات شراء جديدة.') }}">
+                                    <i class="bi bi-archive-fill"></i>
+                                    {{ __('إغلاق العرض') }}
+                                </button>
+                            </form>
+                        @endif
                         <a href="{{ route('sell-shares.index') }}" class="ss-btn ss-btn-secondary">
                             <i class="bi bi-arrow-right-circle"></i>
                             {{ __('العودة للعروض') }}
@@ -325,10 +340,12 @@
                         </div>
 
                         <div class="ss-inline-actions" style="width: 100%;">
+                            @if($canEditSellShare)
                             <a href="{{ route('sell-shares.edit', $sellShare) }}" class="ss-btn ss-btn-warning">
                                 <i class="bi bi-pencil-square"></i>
                                 {{ __('تعديل العرض') }}
                             </a>
+                            @endif
                             <a href="{{ route('sell-shares.print', $sellShare) }}" class="ss-btn ss-btn-info">
                                 <i class="bi bi-printer-fill"></i>
                                 {{ __('طباعة العرض') }}

@@ -3,6 +3,9 @@
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\ContributorsController;
+use App\Http\Controllers\ContributorMovementsController;
+use App\Http\Controllers\ContributorPortalController;
+use App\Http\Controllers\IndependentPurchaseOrdersController;
 use App\Http\Controllers\SellSharesController;
 use App\Http\Controllers\SharesTransController;
 use App\Http\Controllers\ServiesController;
@@ -53,6 +56,24 @@ Auth::routes();
 Route::middleware(['auth', AuthorizeRoutePermission::class])->group(function () {
     // Dashboard
     Route::get('/dashboard', [HomeController::class, 'index'])->name('dashboard');
+
+    Route::prefix('my')->name('contributor.')->group(function () {
+        Route::get('dashboard', [ContributorPortalController::class, 'dashboard'])->name('dashboard');
+        Route::get('statement', [ContributorPortalController::class, 'statement'])->name('statement');
+        Route::get('sell-offers', [ContributorPortalController::class, 'sellOffers'])->name('sell-offers');
+        Route::get('sell-offers/create', [ContributorPortalController::class, 'createSellOffer'])->name('sell-offers.create');
+        Route::post('sell-offers', [ContributorPortalController::class, 'storeSellOffer'])->name('sell-offers.store');
+        Route::get('sell-offers/{sellShare}/edit', [ContributorPortalController::class, 'editSellOffer'])->name('sell-offers.edit');
+        Route::put('sell-offers/{sellShare}', [ContributorPortalController::class, 'updateSellOffer'])->name('sell-offers.update');
+        Route::get('purchase-orders', [ContributorPortalController::class, 'purchaseOrders'])->name('purchase-orders');
+        Route::get('purchase-orders/create', [ContributorPortalController::class, 'createPurchaseOrder'])->name('purchase-orders.create');
+        Route::post('purchase-orders', [ContributorPortalController::class, 'storePurchaseOrder'])->name('purchase-orders.store');
+        Route::post('purchase-orders/independent', [ContributorPortalController::class, 'storeIndependentPurchaseOrder'])->name('purchase-orders.independent.store');
+        Route::get('polls', [ContributorPortalController::class, 'polls'])->name('polls');
+        Route::get('polls/{poll}', [ContributorPortalController::class, 'showPoll'])->name('polls.show');
+        Route::post('polls/{poll}/vote', [ContributorPortalController::class, 'votePoll'])->name('polls.vote');
+        Route::get('meetings', [ContributorPortalController::class, 'meetings'])->name('meetings');
+    });
     
     // Chart routes
     Route::get('/goals-chart', function () {
@@ -67,6 +88,9 @@ Route::middleware(['auth', AuthorizeRoutePermission::class])->group(function () 
     
     // Resource routes
     Route::resource('contributors', ContributorsController::class);
+    Route::get('contributors/{contributor}/statement', [ContributorsController::class, 'statement'])
+        ->name('contributors.statement');
+    Route::resource('contributor-movements', ContributorMovementsController::class)->only(['index', 'create', 'store']);
     
     // Contributor document routes
     Route::get('contributors/documents/{document}/download', [ContributorsController::class, 'downloadDocument'])
@@ -77,6 +101,7 @@ Route::middleware(['auth', AuthorizeRoutePermission::class])->group(function () 
     Route::resource('sell-shares', SellSharesController::class);
     Route::resource('shares-trans', SharesTransController::class);
     Route::resource('shares-pos', SharesPOController::class);
+    Route::resource('independent-purchase-orders', IndependentPurchaseOrdersController::class)->only(['index', 'show', 'update']);
     Route::resource('payments', PaymentsController::class);
     Route::resource('polls', PollsController::class);
     Route::resource('poll-options', PollOptionsController::class);
@@ -119,6 +144,8 @@ Route::middleware(['auth', AuthorizeRoutePermission::class])->group(function () 
         ->name('sell-shares.print');
     Route::post('sell-shares/{sellShare}/settle', [SellSharesController::class, 'settle'])
         ->name('sell-shares.settle');
+    Route::post('sell-shares/{sellShare}/close', [SellSharesController::class, 'close'])
+        ->name('sell-shares.close');
     
     // Poll voting route
     Route::post('polls/{poll}/vote', [PollAnswersController::class, 'vote'])

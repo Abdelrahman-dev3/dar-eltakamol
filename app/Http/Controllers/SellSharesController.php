@@ -22,9 +22,14 @@ class SellSharesController extends Controller
      */
     public function index(): View
     {
-        $sellShares = SellShares::with(['seller.user', 'sharesPOs.contributor', 'settlement.allocations.buyer'])
-            ->latest('insert_date')
-            ->paginate(12);
+        $sellSharesQuery = SellShares::with(['seller.user', 'sharesPOs.contributor', 'settlement.allocations.buyer'])
+            ->latest('insert_date');
+
+        if (!auth()->user()?->isAdmin()) {
+            $sellSharesQuery->where('ad_status', '!=', SellShares::AD_STATUS_CANCELLED);
+        }
+
+        $sellShares = $sellSharesQuery->paginate(12);
         $tradingWindow = app(TradingWindowService::class);
         $canCreate = $this->canCreateSellShare();
         $currentPeriod = $tradingWindow->currentPeriod();
@@ -84,12 +89,17 @@ class SellSharesController extends Controller
      */
     public function show(SellShares $sellShare): View
     {
+        if ((int) $sellShare->ad_status === SellShares::AD_STATUS_CANCELLED && !auth()->user()?->isAdmin()) {
+            abort(404);
+        }
+
         $sellShare->load(['seller.user', 'sharesPOs.contributor', 'settlement.allocations.buyer', 'companyPurchaseObligations']);
+        $canEditSellShare = $this->canEditSellShare($sellShare);
         $annualRemaining = $sellShare->seller
             ? app(SellShareAnnualLimitService::class)->remaining($sellShare->seller, $sellShare)
             : 0;
         
-        return view('sell-shares.show', compact('sellShare', 'annualRemaining'));
+        return view('sell-shares.show', compact('sellShare', 'annualRemaining', 'canEditSellShare'));
     }
 
     /**
@@ -97,11 +107,11 @@ class SellSharesController extends Controller
      */
     public function edit(SellShares $sellShare): View
     {
-        if (!app(TradingWindowService::class)->canChangePrice()) {
-            abort(403, 'لا يمكن تعديل السعر أو بيانات العرض إلا في مرحلة العرض والصفقات الخاصة.');
+        if (!$this->canEditSellShare($sellShare)) {
+            abort(403, $this->sellShareEditBlockedMessage($sellShare));
         }
 
-        $sellShare->load('seller.user');
+        $sellShare->load('seller.user', 'sharesPOs');
         return view('sell-shares.edit', compact('sellShare'));
     }
 
@@ -110,9 +120,9 @@ class SellSharesController extends Controller
      */
     public function update(Request $request, SellShares $sellShare): RedirectResponse
     {
-        if (!app(TradingWindowService::class)->canChangePrice()) {
+        if (!$this->canEditSellShare($sellShare)) {
             throw ValidationException::withMessages([
-                'amount_per_share' => 'لا يمكن تعديل السعر أو العرض إلا في مرحلة العرض والصفقات الخاصة.',
+                'amount_per_share' => $this->sellShareEditBlockedMessage($sellShare),
             ]);
         }
 
@@ -156,6 +166,10 @@ class SellSharesController extends Controller
      */
     public function print(SellShares $sellShare): View
     {
+        if ((int) $sellShare->ad_status === SellShares::AD_STATUS_CANCELLED && !auth()->user()?->isAdmin()) {
+            abort(404);
+        }
+
         $sellShare->load(['seller.user', 'sharesPOs.contributor']);
         
         return view('sell-shares.print', compact('sellShare'));
@@ -169,13 +183,59 @@ class SellSharesController extends Controller
         return app(TradingWindowService::class)->canCreateMarketEntry();
     }
 
+    private function canEditSellShare(SellShares $sellShare): bool
+    {
+        if (!app(TradingWindowService::class)->canChangePrice()) {
+            return false;
+        }
+
+        if (in_array((int) $sellShare->ad_status, [SellShares::AD_STATUS_COMPLETED, SellShares::AD_STATUS_CANCELLED], true)) {
+            return false;
+        }
+
+        return !$sellShare->sharesPOs()->exists();
+    }
+
+    private function sellShareEditBlockedMessage(SellShares $sellShare): string
+    {
+        if (!app(TradingWindowService::class)->canChangePrice()) {
+            return 'لا يمكن تعديل السعر أو كمية الأسهم إلا خلال الفترة الأولى من العرض.';
+        }
+
+        if ($sellShare->sharesPOs()->exists()) {
+            return 'لا يمكن تعديل السعر أو كمية الأسهم بعد وجود طلبات شراء مرتبطة بهذا العرض.';
+        }
+
+        return 'لا يمكن تعديل هذا العرض في حالته الحالية.';
+    }
+
     public function settle(SellShares $sellShare): RedirectResponse
     {
+        if ((int) $sellShare->ad_status === SellShares::AD_STATUS_CANCELLED) {
+            return redirect()->back()->with('error', 'لا يمكن تسوية عرض بيع مغلق ومؤرشف.');
+        }
+
         $settlement = app(SellShareSettlementService::class)->settle($sellShare, auth()->id());
 
         return redirect()->route('sell-shares.show', $sellShare)
             ->with('success', 'تمت تسوية عرض البيع بعدد تخصيصات: ' . $settlement->allocations()->count());
     }
+    public function close(SellShares $sellShare): RedirectResponse
+    {
+        abort_unless(auth()->user()?->isAdmin(), 403, 'هذا الإجراء متاح لحساب الادمن فقط.');
+
+        if ((int) $sellShare->ad_status === SellShares::AD_STATUS_CANCELLED) {
+            return redirect()->back()->with('success', 'عرض البيع مغلق ومؤرشف مسبقًا.');
+        }
+
+        $sellShare->update([
+            'ad_status' => SellShares::AD_STATUS_CANCELLED,
+        ]);
+
+        return redirect()->route('sell-shares.index')
+            ->with('success', 'تم إغلاق عرض البيع وأرشفته بنجاح. لن يظهر للآخرين ولن يقبل طلبات شراء جديدة.');
+    }
+
     public function getusershares($userId)
     {
         $contributor = Contributor::find($userId);

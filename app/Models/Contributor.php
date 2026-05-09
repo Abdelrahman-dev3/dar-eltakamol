@@ -70,12 +70,27 @@ class Contributor extends Model
         return $this->hasMany(SharesPO::class, 'user_id');
     }
 
+    public function independentPurchaseOrders(): HasMany
+    {
+        return $this->hasMany(IndependentPurchaseOrder::class, 'contributor_id');
+    }
+
     /**
      * Get the share transaction lines for the contributor.
      */
     public function shareTransLines(): HasMany
     {
         return $this->hasMany(ShareTransLine::class, 'contributor_id');
+    }
+
+    public function movementsFrom(): HasMany
+    {
+        return $this->hasMany(ContributorMovement::class, 'from_contributor_id');
+    }
+
+    public function movementsTo(): HasMany
+    {
+        return $this->hasMany(ContributorMovement::class, 'to_contributor_id');
     }
 
     /**

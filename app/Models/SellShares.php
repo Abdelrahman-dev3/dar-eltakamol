@@ -76,7 +76,7 @@ class SellShares extends Model
             self::AD_STATUS_INITIAL => 'مبدئي',
             self::AD_STATUS_ACTIVE => 'نشط',
             self::AD_STATUS_COMPLETED => 'مكتمل',
-            self::AD_STATUS_CANCELLED => 'ملغي',
+            self::AD_STATUS_CANCELLED => 'مغلق',
             default => 'غير محدد',
         };
     }

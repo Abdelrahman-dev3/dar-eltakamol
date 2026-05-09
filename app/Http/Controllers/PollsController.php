@@ -9,6 +9,7 @@ use App\Models\Category;
 use App\Services\ParticipantAudienceResolver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class PollsController extends Controller
@@ -52,6 +53,8 @@ class PollsController extends Controller
      */
     public function store(Request $request, ParticipantAudienceResolver $audienceResolver)
     {
+        $this->normalizeReferencedUsersInput($request);
+
         $request->validate([
             'question' => 'required|string|max:500',
             'start_date' => 'required|date',
@@ -86,25 +89,27 @@ class PollsController extends Controller
             $request->input('audience_committee')
         );
 
-        $poll = Poll::create([
-            'title' => Str::limit($request->question, 255, ''),
-            'question' => $request->question,
-            'start_date' => $request->start_date,
-            'end_date' => $request->end_date,
-            'is_active' => $request->has('is_active'),
-            'created_date' => now(),
-            'created_by' => Auth::id(),
-            'zoom_meeting_id' => $request->zoom_meeting_id,
-        ]);
-
-        $poll->referencedUsers()->sync($referencedUserIds);
-
-        foreach ($options as $optionText) {
-            $poll->pollOptions()->create([
-                'option_text' => $optionText,
-                'votes' => 0,
+        DB::transaction(function () use ($request, $referencedUserIds, $options): void {
+            $poll = Poll::create([
+                'title' => Str::limit($request->question, 255, ''),
+                'question' => $request->question,
+                'start_date' => $request->start_date,
+                'end_date' => $request->end_date,
+                'is_active' => $request->has('is_active'),
+                'created_date' => now(),
+                'created_by' => Auth::id(),
+                'zoom_meeting_id' => $request->zoom_meeting_id,
             ]);
-        }
+
+            $poll->referencedUsers()->sync($referencedUserIds);
+
+            foreach ($options as $optionText) {
+                $poll->pollOptions()->create([
+                    'option_text' => $optionText,
+                    'votes' => 0,
+                ]);
+            }
+        });
 
         return redirect()->route('polls.index')
             ->with('success', 'تم إنشاء الاستطلاع بنجاح');
@@ -163,6 +168,8 @@ class PollsController extends Controller
      */
     public function update(Request $request, Poll $poll, ParticipantAudienceResolver $audienceResolver)
     {
+        $this->normalizeReferencedUsersInput($request);
+
         $request->validate([
             'question' => 'required|string|max:500',
             'start_date' => 'required|date',
@@ -183,16 +190,18 @@ class PollsController extends Controller
             $request->input('audience_committee')
         );
 
-        $poll->update([
-            'title' => Str::limit($request->question, 255, ''),
-            'question' => $request->question,
-            'start_date' => $request->start_date,
-            'end_date' => $request->end_date,
-            'is_active' => $request->has('is_active'),
-            'zoom_meeting_id' => $request->zoom_meeting_id,
-        ]);
+        DB::transaction(function () use ($poll, $request, $referencedUserIds): void {
+            $poll->update([
+                'title' => Str::limit($request->question, 255, ''),
+                'question' => $request->question,
+                'start_date' => $request->start_date,
+                'end_date' => $request->end_date,
+                'is_active' => $request->has('is_active'),
+                'zoom_meeting_id' => $request->zoom_meeting_id,
+            ]);
 
-        $poll->referencedUsers()->sync($referencedUserIds);
+            $poll->referencedUsers()->sync($referencedUserIds);
+        });
 
         return redirect()->route('polls.index')
             ->with('success', 'تم تحديث الاستطلاع بنجاح');
@@ -231,5 +240,33 @@ class PollsController extends Controller
         ]);
 
         return view('polls.results', compact('poll'));
+    }
+
+    private function normalizeReferencedUsersInput(Request $request): void
+    {
+        if (!$request->has('referenced_users')) {
+            return;
+        }
+
+        $referencedUsers = collect((array) $request->input('referenced_users'))
+            ->map(function ($userId) {
+                if (is_numeric($userId)) {
+                    return (int) $userId;
+                }
+
+                if (is_string($userId) && preg_match('/^user[_:-]?(\d+)$/i', trim($userId), $matches)) {
+                    return (int) $matches[1];
+                }
+
+                return $userId;
+            })
+            ->filter(fn ($userId) => $userId !== null && $userId !== '')
+            ->unique()
+            ->values()
+            ->all();
+
+        $request->merge([
+            'referenced_users' => $referencedUsers,
+        ]);
     }
 }

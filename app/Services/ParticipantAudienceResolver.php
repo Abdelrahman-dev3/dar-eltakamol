@@ -44,15 +44,17 @@ class ParticipantAudienceResolver
     ): array {
         $scope = $scope ?: self::SCOPE_MANUAL;
 
-        return match ($scope) {
-            self::SCOPE_ALL_USERS => User::query()->pluck('id')->all(),
-            self::SCOPE_ALL_CONTRIBUTORS => $this->contributorsQuery()->pluck('user_id')->all(),
-            self::SCOPE_BOARD_MEMBERS => $this->contributorsQuery()->where('is_board_member', true)->pluck('user_id')->all(),
+        $userIds = match ($scope) {
+            self::SCOPE_ALL_USERS => $this->normalizeIds(User::query()->pluck('id')->all())->all(),
+            self::SCOPE_ALL_CONTRIBUTORS => $this->normalizeIds($this->contributorsQuery()->pluck('user_id')->all())->all(),
+            self::SCOPE_BOARD_MEMBERS => $this->normalizeIds($this->contributorsQuery()->where('is_board_member', true)->pluck('user_id')->all())->all(),
             self::SCOPE_COMMITTEE => $this->committeeUserIds($committee),
             self::SCOPE_COMPANY => $this->categoryUserIds($categoryId, true),
             self::SCOPE_DEPARTMENT => $this->categoryUserIds($categoryId, false),
             default => $this->normalizeIds($manualUserIds)->all(),
         };
+
+        return $this->existingUserIds($userIds);
     }
 
     private function contributorsQuery()
@@ -72,8 +74,7 @@ class ParticipantAudienceResolver
             ->get(['user_id', 'committee_memberships'])
             ->filter(fn (Contributor $contributor) => in_array($committee, $contributor->committee_memberships ?? [], true))
             ->pluck('user_id')
-            ->unique()
-            ->values()
+            ->pipe(fn ($ids) => $this->normalizeIds($ids->all()))
             ->all();
     }
 
@@ -102,9 +103,39 @@ class ParticipantAudienceResolver
     {
         return collect($ids)
             ->filter()
-            ->map(fn ($id) => (int) $id)
+            ->map(function ($id) {
+                if (is_numeric($id)) {
+                    return (int) $id;
+                }
+
+                if (is_string($id) && preg_match('/^user[_:-]?(\d+)$/i', trim($id), $matches)) {
+                    return (int) $matches[1];
+                }
+
+                return 0;
+            })
             ->filter(fn ($id) => $id > 0)
             ->unique()
             ->values();
+    }
+
+    private function existingUserIds(array $ids): array
+    {
+        $normalizedIds = $this->normalizeIds($ids);
+
+        if ($normalizedIds->isEmpty()) {
+            return [];
+        }
+
+        $existingIds = User::query()
+            ->whereIn('id', $normalizedIds->all())
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
+        return $normalizedIds
+            ->intersect($existingIds)
+            ->values()
+            ->all();
     }
 }

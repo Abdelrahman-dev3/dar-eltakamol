@@ -2188,12 +2188,37 @@
                     </a>
                 </div>
 
+                @if(Auth::user()?->contributor && !Auth::user()?->isAdmin())
+                <div class="nav-item {{ request()->routeIs('contributor.*') ? 'has-active-child is-open' : '' }}">
+                    <a href="#" class="nav-link dropdown-toggle {{ request()->routeIs('contributor.*') ? 'active' : '' }}" data-toggle="dropdown" aria-expanded="{{ request()->routeIs('contributor.*') ? 'true' : 'false' }}">
+                        <i class="bi bi-person-badge-fill nav-icon"></i>
+                        <span class="nav-link-label">{{ __('بوابة المساهم') }}</span>
+                        <i class="bi bi-chevron-down nav-arrow" aria-hidden="true"></i>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a href="{{ route('contributor.dashboard') }}" class="{{ request()->routeIs('contributor.dashboard') ? 'active' : '' }}">{{ __('داشبورد المساهم') }}</a></li>
+                        <li><a href="{{ route('contributor.statement') }}" class="{{ request()->routeIs('contributor.statement') ? 'active' : '' }}">{{ __('كشف الحساب') }}</a></li>
+                        <li><a href="{{ route('contributor.sell-offers') }}" class="{{ request()->routeIs('contributor.sell-offers*') ? 'active' : '' }}">{{ __('عروض البيع') }}</a></li>
+                        <li><a href="{{ route('contributor.purchase-orders') }}" class="{{ request()->routeIs('contributor.purchase-orders*') ? 'active' : '' }}">{{ __('طلبات الشراء') }}</a></li>
+                        <li><a href="{{ route('contributor.polls') }}" class="{{ request()->routeIs('contributor.polls') ? 'active' : '' }}">{{ __('الاستطلاعات') }}</a></li>
+                        <li><a href="{{ route('contributor.meetings') }}" class="{{ request()->routeIs('contributor.meetings') ? 'active' : '' }}">{{ __('الاجتماعات') }}</a></li>
+                    </ul>
+                </div>
+                @endif
+
                 @routePermission('contributors.index')
-                <div class="nav-item">
-                    <a href="{{ route('contributors.index') }}" class="nav-link {{ request()->routeIs('contributors.*') ? 'active' : '' }}">
+                <div class="nav-item {{ request()->routeIs('contributors.*') || request()->routeIs('contributor-movements.*') ? 'has-active-child is-open' : '' }}">
+                    <a href="#" class="nav-link dropdown-toggle {{ request()->routeIs('contributors.*') || request()->routeIs('contributor-movements.*') ? 'active' : '' }}" data-toggle="dropdown" aria-expanded="{{ request()->routeIs('contributors.*') || request()->routeIs('contributor-movements.*') ? 'true' : 'false' }}">
                         <i class="bi bi-people-fill nav-icon"></i>
                         <span class="nav-link-label">{{ __('المساهمين') }}</span>
+                        <i class="bi bi-chevron-down nav-arrow" aria-hidden="true"></i>
                     </a>
+                    <ul class="dropdown-menu">
+                        <li><a href="{{ route('contributors.index') }}" class="{{ request()->routeIs('contributors.*') ? 'active' : '' }}">{{ __('إدارة المساهمين') }}</a></li>
+                        @if(Auth::user()?->isAdmin())
+                            <li><a href="{{ route('contributor-movements.index') }}" class="{{ request()->routeIs('contributor-movements.*') ? 'active' : '' }}">{{ __('حركات المساهمين') }}</a></li>
+                        @endif
+                    </ul>
                 </div>
                 @endroutePermission
 
@@ -2215,10 +2240,10 @@
                 </div>
                 @endroutePermission
 
-                @routePermission('share-trans-lines.index', 'modify.index', 'payments.index', 'shares-pos.index')
+                @routePermission('share-trans-lines.index', 'modify.index', 'payments.index', 'shares-pos.index', 'independent-purchase-orders.index')
                 <!-- Transactions Dropdown -->
-                <div class="nav-item {{ request()->routeIs('share-trans-lines.*') || request()->routeIs('modify.*') || request()->routeIs('payments.*') || request()->routeIs('shares-pos.*') ? 'has-active-child is-open' : '' }}">
-                    <a href="#" class="nav-link dropdown-toggle {{ request()->routeIs('share-trans-lines.*') || request()->routeIs('modify.*') || request()->routeIs('payments.*') || request()->routeIs('shares-pos.*') ? 'active' : '' }}" data-toggle="dropdown" aria-expanded="{{ request()->routeIs('share-trans-lines.*') || request()->routeIs('modify.*') || request()->routeIs('payments.*') || request()->routeIs('shares-pos.*') ? 'true' : 'false' }}">
+                <div class="nav-item {{ request()->routeIs('share-trans-lines.*') || request()->routeIs('modify.*') || request()->routeIs('payments.*') || request()->routeIs('shares-pos.*') || request()->routeIs('independent-purchase-orders.*') ? 'has-active-child is-open' : '' }}">
+                    <a href="#" class="nav-link dropdown-toggle {{ request()->routeIs('share-trans-lines.*') || request()->routeIs('modify.*') || request()->routeIs('payments.*') || request()->routeIs('shares-pos.*') || request()->routeIs('independent-purchase-orders.*') ? 'active' : '' }}" data-toggle="dropdown" aria-expanded="{{ request()->routeIs('share-trans-lines.*') || request()->routeIs('modify.*') || request()->routeIs('payments.*') || request()->routeIs('shares-pos.*') || request()->routeIs('independent-purchase-orders.*') ? 'true' : 'false' }}">
                         <i class="bi bi-diagram-3-fill nav-icon"></i>
                         <span class="nav-link-label">{{ __('المعاملات') }}</span>
                         <i class="bi bi-chevron-down nav-arrow" aria-hidden="true"></i>
@@ -2235,6 +2260,9 @@
                         @endroutePermission
                         @routePermission('shares-pos.index')
                         <li><a href="{{ route('shares-pos.index') }}" class="{{ request()->routeIs('shares-pos.*') ? 'active' : '' }}">{{ __('طلبات الشراء') }}</a></li>
+                        @endroutePermission
+                        @routePermission('independent-purchase-orders.index')
+                        <li><a href="{{ route('independent-purchase-orders.index') }}" class="{{ request()->routeIs('independent-purchase-orders.*') ? 'active' : '' }}">{{ __('طلبات شراء مستقلة') }}</a></li>
                         @endroutePermission
                     </ul>
                 </div>

@@ -26,6 +26,10 @@ class HomeController extends Controller
      */
     public function index()
     {
+        if (auth()->user()?->contributor && !auth()->user()?->isAdmin()) {
+            return redirect()->route('contributor.dashboard');
+        }
+
         $contributorsCount = Contributor::count();
         $sellSharesCount = SellShares::count();
         $transactionsCount = SharesTrans::count();

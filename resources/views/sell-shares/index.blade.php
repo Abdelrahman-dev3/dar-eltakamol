@@ -96,10 +96,14 @@
                     <div class="ss-list-body" id="sellSharesList">
                         @foreach($sellShares as $sellShare)
                             @php
-                                $sellerName = $sellShare->seller->name ?? $sellShare->seller->user->name ?? __('غير معروف');
+                                $realSellerName = $sellShare->seller->name ?? $sellShare->seller->user->name ?? __('غير معروف');
+                                $hideSellerName = $currentPhase === \App\Models\TradingPeriod::PHASE_OFFER
+                                    && !auth()->user()?->isAdmin()
+                                    && (int) optional(auth()->user()->contributor)->id !== (int) $sellShare->user_id;
+                                $sellerName = $hideSellerName ? __('مساهم') : $realSellerName;
                                 $searchableText = implode(' ', [
                                     $sellShare->id,
-                                    $sellerName,
+                                    $hideSellerName ? '' : $sellerName,
                                     $sellShare->notes,
                                     $sellShare->getAdStatusText(),
                                     $sellShare->end_date?->format('Y-m-d'),
@@ -144,15 +148,31 @@
                                         <i class="bi bi-eye-fill"></i>
                                     </a>
 
-                                    @if($sellShare->ad_status == \App\Models\SellShares::AD_STATUS_INITIAL)
+                                    @if(
+                                        $currentPhase === \App\Models\TradingPeriod::PHASE_OFFER
+                                        && !in_array((int) $sellShare->ad_status, [\App\Models\SellShares::AD_STATUS_COMPLETED, \App\Models\SellShares::AD_STATUS_CANCELLED], true)
+                                        && $sellShare->sharesPOs->isEmpty()
+                                    )
                                         <a href="{{ route('sell-shares.edit', $sellShare) }}" class="ss-icon-btn ss-icon-btn-warning" title="{{ __('تعديل') }}">
                                             <i class="bi bi-pencil-square"></i>
                                         </a>
+                                    @endif
+
+                                    @if($sellShare->ad_status == \App\Models\SellShares::AD_STATUS_INITIAL)
                                         <form action="{{ route('sell-shares.destroy', $sellShare) }}" method="POST" style="display: inline-flex;">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="ss-icon-btn ss-icon-btn-danger" title="{{ __('حذف') }}" data-confirm="{{ __('هل أنت متأكد من الحذف؟') }}">
                                                 <i class="bi bi-trash3-fill"></i>
+                                            </button>
+                                        </form>
+                                    @endif
+
+                                    @if(auth()->user()?->isAdmin() && (int) $sellShare->ad_status !== \App\Models\SellShares::AD_STATUS_CANCELLED)
+                                        <form action="{{ route('sell-shares.close', $sellShare) }}" method="POST" style="display: inline-flex;">
+                                            @csrf
+                                            <button type="submit" class="ss-icon-btn ss-icon-btn-danger" title="{{ __('إغلاق وأرشفة عرض البيع') }}" data-confirm="{{ __('هل تريد إغلاق عرض البيع وأرشفته؟ لن يظهر للآخرين ولن يقبل طلبات شراء جديدة.') }}">
+                                                <i class="bi bi-archive-fill"></i>
                                             </button>
                                         </form>
                                     @endif

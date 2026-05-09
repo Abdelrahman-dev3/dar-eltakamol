@@ -799,6 +799,9 @@
                             </div>
 
                             <div class="contributor-actions">
+                                <a href="{{ route('contributors.statement', $contributor) }}" class="contributor-action-btn view" title="{{ __('كشف حساب للمساهم') }}">
+                                    <i class="bi bi-file-earmark-text-fill"></i>
+                                </a>
                                 <a href="{{ route('contributors.show', $contributor) }}" class="contributor-action-btn view" title="{{ __('تفاصيل') }}">
                                     <i class="bi bi-eye-fill"></i>
                                 </a>

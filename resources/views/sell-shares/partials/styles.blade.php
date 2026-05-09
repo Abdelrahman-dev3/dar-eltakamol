@@ -434,38 +434,93 @@
                 padding: 1rem;
             }
             #sellSharesList .ss-row {
-                display: flex;
-                flex-direction: column;
+                display: grid;
+                grid-template-columns: repeat(3, minmax(0, 1fr));
                 align-items: stretch;
-                gap: 1rem;
+                gap: 0.7rem;
                 min-height: 100%;
                 margin: 0;
-                padding: 1.2rem;
+                padding: 0.95rem;
+                border-radius: 1.15rem;
+                box-shadow: 0 0.65rem 1.35rem rgba(15, 23, 42, 0.055);
             }
             #sellSharesList .ss-row-main {
                 display: grid;
                 grid-template-columns: auto minmax(0, 1fr);
                 align-items: center;
+                gap: 0.75rem;
+                grid-column: 1 / -1;
             }
             #sellSharesList .ss-row-title {
                 overflow: hidden;
                 text-overflow: ellipsis;
                 white-space: nowrap;
+                font-size: 1rem;
             }
             #sellSharesList .ss-row .ss-actions {
-                margin-top: auto;
-                padding-top: 0.95rem;
-                border-top: 1px solid rgba(170, 134, 63, 0.12);
+                margin-top: 0;
+                padding-top: 0.6rem;
+                border-top: 1px solid rgba(170, 134, 63, 0.10);
                 justify-content: flex-start;
+                gap: 0.45rem;
+                grid-column: 1 / -1;
             }
             #sellSharesList .ss-field {
-                padding: 0.85rem 0.95rem;
-                border-radius: 1rem;
-                background: rgba(248, 245, 237, 0.62);
-                border: 1px solid rgba(170, 134, 63, 0.1);
+                padding: 0.65rem 0.7rem;
+                border-radius: 0.8rem;
+                background: rgba(248, 245, 237, 0.46);
+                border: 1px solid rgba(170, 134, 63, 0.08);
+                gap: 0.2rem;
             }
             #sellSharesList .ss-field[style] {
-                grid-column: auto !important;
+                grid-column: 1 / -1 !important;
+                padding: 0.7rem 0 0;
+                border: 0;
+                border-top: 1px solid rgba(170, 134, 63, 0.08);
+                border-radius: 0;
+                background: transparent;
+            }
+            #sellSharesList .ss-row-avatar {
+                width: 2.8rem;
+                height: 2.8rem;
+                border-radius: 0.85rem;
+                font-size: 0.95rem;
+                box-shadow: 0 0.65rem 1.1rem rgba(170, 134, 63, 0.14);
+            }
+            #sellSharesList .ss-row-meta {
+                margin-top: 0.25rem;
+                gap: 0.35rem;
+            }
+            #sellSharesList .ss-chip {
+                min-height: 2.15rem;
+                padding: 0.45rem 0.65rem;
+                font-size: 0.82rem;
+            }
+            #sellSharesList .ss-pill {
+                padding: 0.4rem 0.62rem;
+                font-size: 0.78rem;
+            }
+            #sellSharesList .ss-field-label {
+                font-size: 0.76rem;
+            }
+            #sellSharesList .ss-field-value {
+                font-size: 0.9rem;
+                line-height: 1.45;
+            }
+            #sellSharesList .ss-help {
+                font-size: 0.8rem;
+                line-height: 1.55;
+            }
+            #sellSharesList .ss-icon-btn {
+                min-width: 2.35rem;
+                min-height: 2.35rem;
+                padding: 0.55rem 0.65rem;
+                border-radius: 0.75rem;
+                font-size: 0.85rem;
+            }
+            #sellSharesList .ss-row:hover {
+                transform: translateY(-0.1rem);
+                box-shadow: 0 0.85rem 1.55rem rgba(15, 23, 42, 0.075);
             }
             #sellSharesList .ss-row.is-hidden { display: none; }
             .ss-row {
@@ -746,6 +801,11 @@
                     grid-template-columns: 1fr;
                     padding: 0.75rem;
                     gap: 0.75rem;
+                }
+                #sellSharesList .ss-row {
+                    grid-template-columns: 1fr;
+                    padding: 0.85rem;
+                    gap: 0.6rem;
                 }
                 .ss-row {
                     grid-template-columns: 1fr;

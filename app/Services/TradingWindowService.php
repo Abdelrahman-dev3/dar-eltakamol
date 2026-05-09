@@ -53,7 +53,7 @@ class TradingWindowService
 
     public function canChangePrice(?CarbonInterface $date = null): bool
     {
-        return $this->canCreateMarketEntry($date);
+        return $this->currentPhase($date) === TradingPeriod::PHASE_OFFER;
     }
 
     public function assertMarketEntryAllowed(string $message = 'لا يمكن تنفيذ العملية خارج مراحل العرض والصفقات الخاصة.'): void

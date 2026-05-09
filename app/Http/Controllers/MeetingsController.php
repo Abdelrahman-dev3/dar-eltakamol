@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 class MeetingsController extends Controller
@@ -47,6 +48,8 @@ class MeetingsController extends Controller
      */
     public function store(Request $request, ParticipantAudienceResolver $audienceResolver): RedirectResponse
     {
+        $this->normalizeUserIdsInput($request);
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'url' => 'required|url|max:500',
@@ -67,13 +70,17 @@ class MeetingsController extends Controller
             $request->input('audience_committee')
         );
 
-        $meeting = Meeting::create([
-            'name' => $validated['name'],
-            'url' => $validated['url'],
-            'date' => $validated['date'],
-        ]);
+        $meeting = DB::transaction(function () use ($validated, $userIds): Meeting {
+            $meeting = Meeting::create([
+                'name' => $validated['name'],
+                'url' => $validated['url'],
+                'date' => $validated['date'],
+            ]);
 
-        $meeting->users()->sync($userIds);
+            $meeting->users()->sync($userIds);
+
+            return $meeting;
+        });
 
         // Handle file uploads
         if ($request->hasFile('attachments')) {
@@ -115,6 +122,8 @@ class MeetingsController extends Controller
      */
     public function update(Request $request, Meeting $meeting, ParticipantAudienceResolver $audienceResolver): RedirectResponse
     {
+        $this->normalizeUserIdsInput($request);
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'url' => 'required|url|max:500',
@@ -135,13 +144,15 @@ class MeetingsController extends Controller
             $request->input('audience_committee')
         );
 
-        $meeting->update([
-            'name' => $validated['name'],
-            'url' => $validated['url'],
-            'date' => $validated['date'],
-        ]);
+        DB::transaction(function () use ($meeting, $validated, $userIds): void {
+            $meeting->update([
+                'name' => $validated['name'],
+                'url' => $validated['url'],
+                'date' => $validated['date'],
+            ]);
 
-        $meeting->users()->sync($userIds);
+            $meeting->users()->sync($userIds);
+        });
 
         // Handle file uploads
         if ($request->hasFile('attachments')) {
@@ -244,6 +255,34 @@ class MeetingsController extends Controller
 
         return redirect()->route('meetings.show', $meetingId)
             ->with('success', 'تم حذف المرفق بنجاح');
+    }
+
+    private function normalizeUserIdsInput(Request $request): void
+    {
+        if (!$request->has('user_ids')) {
+            return;
+        }
+
+        $userIds = collect((array) $request->input('user_ids'))
+            ->map(function ($userId) {
+                if (is_numeric($userId)) {
+                    return (int) $userId;
+                }
+
+                if (is_string($userId) && preg_match('/^user[_:-]?(\d+)$/i', trim($userId), $matches)) {
+                    return (int) $matches[1];
+                }
+
+                return $userId;
+            })
+            ->filter(fn ($userId) => $userId !== null && $userId !== '')
+            ->unique()
+            ->values()
+            ->all();
+
+        $request->merge([
+            'user_ids' => $userIds,
+        ]);
     }
 }
 
