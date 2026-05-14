@@ -54,6 +54,11 @@
                         'isEdit' => false,
                         'document' => null,
                         'meetings' => $meetings,
+                        'users' => $users,
+                        'audienceScopes' => $audienceScopes,
+                        'committeeOptions' => $committeeOptions,
+                        'companies' => $companies,
+                        'departments' => $departments,
                     ])
 
                     <div class="doc-form-footer">

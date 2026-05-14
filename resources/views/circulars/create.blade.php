@@ -2,10 +2,6 @@
 
 @section('title', __('إضافة تعميم جديد'))
 
-@php
-    $meetingsCount = $meetings->count();
-@endphp
-
 @include('circulars.partials.form-styles')
 
 @section('content')
@@ -18,7 +14,7 @@
                         <i class="bi bi-megaphone-fill"></i>
                         {{ __('إضافة تعميم جديد') }}
                     </span>
-                    <h1 class="cir-form-title">{{ __('أنشئ التعميمات واربطها باجتماعاتك من شاشة أوضح وأكثر تنظيمًا') }}</h1>
+                    <h1 class="cir-form-title">{{ __('أنشئ التعميمات وحدد جمهورها من شاشة أوضح وأكثر تنظيمًا') }}</h1>
                 </div>
 
                 <div class="cir-form-actions">
@@ -37,7 +33,7 @@
                         <span class="cir-panel-icon"><i class="bi bi-cloud-arrow-up"></i></span>
                         <div>
                             <h2 class="cir-panel-title">{{ __('رفع التعميمات') }}</h2>
-                            <p class="cir-panel-subtitle">{{ __('النموذج الحالي يدعم رفع أكثر من ملف مع تعيين اسم عام وربط اختياري باجتماع لسهولة الأرشفة والرجوع.') }}</p>
+                            <p class="cir-panel-subtitle">{{ __('النموذج الحالي يدعم رفع أكثر من ملف مع تعيين اسم عام وتحديد الجمهور المستهدف للتعميم.') }}</p>
                         </div>
                     </div>
                 </div>
@@ -53,7 +49,11 @@
                     @include('circulars.partials.form-fields', [
                         'isEdit' => false,
                         'circular' => null,
-                        'meetings' => $meetings,
+                        'users' => $users,
+                        'audienceScopes' => $audienceScopes,
+                        'committeeOptions' => $committeeOptions,
+                        'companies' => $companies,
+                        'departments' => $departments,
                     ])
 
                     <div class="cir-form-footer">
@@ -88,7 +88,7 @@
                         </div>
                         <div class="cir-tip-item">
                             <i class="bi bi-2-circle"></i>
-                            <div>{{ __('ربط التعميم باجتماع مناسب يساعد في الوصول السريع إليه من شاشة الاجتماع أو من قائمة التعميمات.') }}</div>
+                            <div>{{ __('حدد الجمهور المستهدف حتى يظهر التعميم منظما حسب المستخدمين أو المساهمين أو اللجان أو الشركات.') }}</div>
                         </div>
                         <div class="cir-tip-item">
                             <i class="bi bi-3-circle"></i>
@@ -108,8 +108,8 @@
                             <span>{{ __('الحد الأقصى لكل ملف') }}</span>
                         </div>
                         <div class="cir-stat-box">
-                            <strong>{{ $meetingsCount }}</strong>
-                            <span>{{ __('عدد الاجتماعات المتاحة للربط') }}</span>
+                            <strong>{{ $users->count() }}</strong>
+                            <span>{{ __('عدد المستخدمين المتاحين للاختيار') }}</span>
                         </div>
                         <div class="cir-stat-box">
                             <strong>{{ __('متعدد') }}</strong>

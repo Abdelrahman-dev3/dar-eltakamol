@@ -92,11 +92,27 @@ class ParticipantAudienceResolver
             ]);
         }
 
-        return $this->normalizeIds(
-            $category->users()->pluck('users.id')
-                ->merge($category->contributors()->whereNotNull('contributors.user_id')->pluck('contributors.user_id'))
-                ->all()
-        )->all();
+        $userIds = $category->users()->pluck('users.id')
+            ->merge($category->contributors()->whereNotNull('contributors.user_id')->pluck('contributors.user_id'));
+
+        if ($company) {
+            $departmentIds = $category->children()->pluck('id')->all();
+
+            if (!empty($departmentIds)) {
+                $departmentUserIds = Category::query()
+                    ->whereIn('id', $departmentIds)
+                    ->with(['users:id', 'contributors:id,user_id'])
+                    ->get()
+                    ->flatMap(function (Category $department) {
+                        return $department->users->pluck('id')
+                            ->merge($department->contributors->pluck('user_id'));
+                    });
+
+                $userIds = $userIds->merge($departmentUserIds);
+            }
+        }
+
+        return $this->normalizeIds($userIds->all())->all();
     }
 
     private function normalizeIds(array $ids): Collection

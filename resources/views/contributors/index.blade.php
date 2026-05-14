@@ -728,6 +728,7 @@
                         @php
                             $companyNames = $contributor->departments->pluck('parent.name')->filter()->unique()->values();
                             $departmentNames = $contributor->departments->pluck('name')->filter()->values();
+                            $managedCompanyNames = $contributor->managedCompanies->pluck('name')->filter()->values();
                             $membershipLabels = collect($contributor->membership_labels);
                             $searchableText = implode(' ', [
                                 $contributor->name,
@@ -736,6 +737,7 @@
                                 $contributor->phone_num,
                                 $companyNames->implode(' '),
                                 $departmentNames->implode(' '),
+                                $managedCompanyNames->implode(' '),
                                 $membershipLabels->implode(' '),
                             ]);
                         @endphp

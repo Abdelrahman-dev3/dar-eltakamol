@@ -15,6 +15,9 @@ class Meeting extends Model
         'name',
         'url',
         'date',
+        'audience_scope',
+        'audience_committee',
+        'audience_category_id',
     ];
 
     protected $casts = [

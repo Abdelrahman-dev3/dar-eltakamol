@@ -5,8 +5,8 @@
     $fileType = $circular->file_type ?: __('غير محدد');
     $uploadedAt = $circular->created_at;
     $updatedAt = $circular->updated_at;
-    $meetingName = optional($circular->meeting)->name;
-    $meetingDate = optional($circular->meeting?->date)->format('Y-m-d');
+    $recipientsCount = $circular->recipients->count();
+    $recipientNames = $circular->recipients->pluck('name')->filter()->values();
 @endphp
 
 @section('title', __('عرض تفاصيل التعميم'))
@@ -452,7 +452,7 @@
                                 <span class="cir-show-chip"><i class="bi bi-file-earmark-text"></i>{{ $extension }}</span>
                                 <span class="cir-show-chip"><i class="bi bi-hdd"></i>{{ $circular->file_size_human }}</span>
                                 <span class="cir-show-chip"><i class="bi bi-calendar-check"></i>{{ $uploadedAt->format('Y-m-d H:i') }}</span>
-                                <span class="cir-show-chip"><i class="bi bi-people"></i>{{ $meetingName ?: __('بدون اجتماع') }}</span>
+                                <span class="cir-show-chip"><i class="bi bi-people"></i>{{ number_format($recipientsCount) }} {{ __('مستلم') }}</span>
                             </div>
                         </div>
                     </div>
@@ -501,8 +501,8 @@
             </div>
             <div class="cir-show-stat-card">
                 <span class="cir-show-stat-icon"><i class="bi bi-people-fill"></i></span>
-                <p class="cir-show-stat-value">{{ $meetingName ?: __('لا يوجد') }}</p>
-                <p class="cir-show-stat-label">{{ __('الاجتماع المرتبط') }}</p>
+                <p class="cir-show-stat-value">{{ number_format($recipientsCount) }}</p>
+                <p class="cir-show-stat-label">{{ __('المستلمون') }}</p>
             </div>
         </section>
 
@@ -543,18 +543,18 @@
 
             <section class="cir-show-card">
                 <div class="cir-show-card-head">
-                    <h2 class="cir-show-card-title"><i class="bi bi-link-45deg"></i>{{ __('الربط والوصول') }}</h2>
-                    <span class="cir-show-card-note">{{ __('معلومات الربط الحالية ومسار التخزين للوصول الإداري والتنظيم الأفضل.') }}</span>
+                    <h2 class="cir-show-card-title"><i class="bi bi-people"></i>{{ __('الجمهور والوصول') }}</h2>
+                    <span class="cir-show-card-note">{{ __('معلومات الجمهور المستهدف ومسار التخزين للوصول الإداري والتنظيم الأفضل.') }}</span>
                 </div>
 
                 <div class="cir-detail-list">
                     <div class="cir-detail-item">
-                        <span class="cir-detail-label">{{ __('الاجتماع المرتبط') }}</span>
-                        <div class="cir-detail-value">{{ $meetingName ?: __('بدون اجتماع') }}</div>
+                        <span class="cir-detail-label">{{ __('عدد المستلمين') }}</span>
+                        <div class="cir-detail-value">{{ number_format($recipientsCount) }}</div>
                     </div>
                     <div class="cir-detail-item">
-                        <span class="cir-detail-label">{{ __('تاريخ الاجتماع') }}</span>
-                        <div class="cir-detail-value">{{ $meetingDate ?: __('غير متوفر') }}</div>
+                        <span class="cir-detail-label">{{ __('المستلمون') }}</span>
+                        <div class="cir-detail-value">{{ $recipientNames->isNotEmpty() ? $recipientNames->take(8)->implode('، ') : __('لم يتم اختيار مستلمين') }}</div>
                     </div>
                     <div class="cir-detail-item">
                         <span class="cir-detail-label">{{ __('الامتداد') }}</span>
@@ -591,9 +591,9 @@
                                 {{ __('نوع الملف') }}: {{ $fileType }}<br>
                                 {{ __('الامتداد') }}: {{ $extension }}<br>
                                 {{ __('الحجم') }}: {{ $circular->file_size_human }}<br>
-                                {{ __('الاجتماع') }}: {{ $meetingName ?: __('بدون اجتماع') }}
+                                {{ __('المستلمون') }}: {{ number_format($recipientsCount) }}
                             </p>
-                            <p class="cir-file-card-desc">{{ __('يمكنك تنزيل الملف مباشرة أو الانتقال إلى صفحة التعديل لتحديث الاسم أو استبدال الملف أو تعديل الارتباط بالاجتماع.') }}</p>
+                            <p class="cir-file-card-desc">{{ __('يمكنك تنزيل الملف مباشرة أو الانتقال إلى صفحة التعديل لتحديث الاسم أو استبدال الملف أو تعديل الجمهور المستهدف.') }}</p>
                         </div>
                     </div>
 

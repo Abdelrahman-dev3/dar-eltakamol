@@ -21,7 +21,7 @@
                     return;
                 }
 
-                this.value = Math.random().toString(36).slice(2, 8);
+                this.value = Math.random().toString(36).slice(2, 12);
             });
         }
 

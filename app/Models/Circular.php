@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Facades\Storage;
 
 class Circular extends Model
@@ -26,6 +27,15 @@ class Circular extends Model
     public function meeting(): BelongsTo
     {
         return $this->belongsTo(Meeting::class);
+    }
+
+    /**
+     * Get the users targeted by this circular.
+     */
+    public function recipients(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'circular_user')
+            ->withTimestamps();
     }
 
     /**

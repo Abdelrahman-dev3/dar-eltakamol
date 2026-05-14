@@ -11,9 +11,9 @@
     $committeeOptions = $committeeOptions ?? [];
     $companies = $companies ?? collect();
     $departments = $departments ?? collect();
-    $selectedAudienceScope = old('audience_scope', 'manual');
-    $selectedAudienceCommittee = old('audience_committee');
-    $selectedAudienceCategory = old('audience_category_id');
+    $selectedAudienceScope = old('audience_scope', $meeting?->audience_scope ?? 'manual');
+    $selectedAudienceCommittee = old('audience_committee', $meeting?->audience_committee);
+    $selectedAudienceCategory = old('audience_category_id', $meeting?->audience_category_id);
 @endphp
 
 <div class="meeting-section">

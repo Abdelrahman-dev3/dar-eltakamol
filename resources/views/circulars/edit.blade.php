@@ -18,9 +18,9 @@
                         <i class="bi bi-pencil-fill"></i>
                         {{ __('تعديل التعميم') }} #{{ $circular->id }}
                     </span>
-                    <h1 class="cir-form-title">{{ __('حدّث اسم التعميم أو استبدل ملفه مع الحفاظ على وضوح الربط والسياق') }}</h1>
+                    <h1 class="cir-form-title">{{ __('حدّث اسم التعميم أو استبدل ملفه مع الحفاظ على وضوح الجمهور المستهدف') }}</h1>
                     <p class="cir-form-subtitle">
-                        {{ __('يمكنك تعديل الاسم المعروض، مراجعة الملف الحالي، وربط التعميم باجتماع مناسب أو استبداله بملف أحدث من نفس الشاشة.') }}
+                        {{ __('يمكنك تعديل الاسم المعروض، مراجعة الملف الحالي، وتحديث الجمهور المستهدف أو استبداله بملف أحدث من نفس الشاشة.') }}
                     </p>
                 </div>
 
@@ -44,7 +44,7 @@
                         <span class="cir-panel-icon"><i class="bi bi-sliders2"></i></span>
                         <div>
                             <h2 class="cir-panel-title">{{ __('تحديث بيانات التعميم') }}</h2>
-                            <p class="cir-panel-subtitle">{{ __('احتفظ بالملف الحالي أو استبدله، وحدّث الاسم والارتباط بالاجتماع من نفس الواجهة.') }}</p>
+                            <p class="cir-panel-subtitle">{{ __('احتفظ بالملف الحالي أو استبدله، وحدّث الاسم والجمهور المستهدف من نفس الواجهة.') }}</p>
                         </div>
                     </div>
                 </div>
@@ -61,7 +61,11 @@
                     @include('circulars.partials.form-fields', [
                         'isEdit' => true,
                         'circular' => $circular,
-                        'meetings' => $meetings,
+                        'users' => $users,
+                        'audienceScopes' => $audienceScopes,
+                        'committeeOptions' => $committeeOptions,
+                        'companies' => $companies,
+                        'departments' => $departments,
                     ])
 
                     <div class="cir-form-footer">
@@ -115,8 +119,8 @@
 
                 <section class="cir-mini-card">
                     <h3 class="cir-mini-title">
-                        <i class="bi bi-link-45deg"></i>
-                        {{ __('الارتباط الحالي') }}
+                        <i class="bi bi-people"></i>
+                        {{ __('الجمهور الحالي') }}
                     </h3>
                     <div class="cir-meta-list">
                         <div class="cir-meta-item">
@@ -128,8 +132,8 @@
                             <div>{{ __('آخر تحديث') }}: {{ $circular->updated_at->format('Y-m-d H:i') }}</div>
                         </div>
                         <div class="cir-meta-item">
-                            <i class="bi bi-people"></i>
-                            <div>{{ __('الاجتماع المرتبط') }}: {{ optional($circular->meeting)->name ?: __('بدون اجتماع') }}</div>
+                            <i class="bi bi-person-check"></i>
+                            <div>{{ __('عدد المستلمين') }}: {{ $circular->recipients->count() }}</div>
                         </div>
                     </div>
                 </section>

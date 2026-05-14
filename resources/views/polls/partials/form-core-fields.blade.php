@@ -8,9 +8,9 @@
     $committeeOptions = $committeeOptions ?? [];
     $companies = $companies ?? collect();
     $departments = $departments ?? collect();
-    $selectedAudienceScope = old('audience_scope', 'manual');
-    $selectedAudienceCommittee = old('audience_committee');
-    $selectedAudienceCategory = old('audience_category_id');
+    $selectedAudienceScope = old('audience_scope', $pollModel?->audience_scope ?? 'manual');
+    $selectedAudienceCommittee = old('audience_committee', $pollModel?->audience_committee);
+    $selectedAudienceCategory = old('audience_category_id', $pollModel?->audience_category_id);
 @endphp
 
 <section class="poll-form-section">

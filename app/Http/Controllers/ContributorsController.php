@@ -8,9 +8,12 @@ use App\Models\ContributorDocument;
 use App\Models\ContributorMovement;
 use App\Models\Modification;
 use App\Models\Setting;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -23,7 +26,7 @@ class ContributorsController extends Controller
      */
     public function index(): View
     {
-        $contributors = Contributor::with(['departments.parent'])->orderBy('created_at', 'desc')->paginate(15);
+        $contributors = Contributor::with(['departments.parent', 'managedCompanies'])->orderBy('created_at', 'desc')->paginate(15);
 
         return view('contributors.index', compact('contributors'));
     }
@@ -45,8 +48,9 @@ class ContributorsController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:100',
             'id_number' => 'required|string|max:10|unique:contributors',
+            'login_email' => 'required|string|email|max:255|unique:users,email',
             'phone_num' => 'nullable|string|max:15',
-            'temp_password' => 'nullable|string|max:10',
+            'temp_password' => 'required|string|min:8|max:10',
             'iban' => 'nullable|string|max:24',
             'bank_name' => 'nullable|string|max:15',
             'position' => 'nullable|string|max:100',
@@ -58,6 +62,8 @@ class ContributorsController extends Controller
             'company_id' => 'nullable|exists:categories,id',
             'department_ids' => 'nullable|array',
             'department_ids.*' => 'exists:categories,id',
+            'managed_company_ids' => 'nullable|array',
+            'managed_company_ids.*' => 'exists:categories,id',
             'documents.*' => 'nullable|file|max:10240',
         ]);
 
@@ -70,6 +76,7 @@ class ContributorsController extends Controller
             $validated['company_id'] ?? null,
             $validated['department_ids'] ?? []
         );
+        $managedCompanyIds = $this->validateManagedCompanies($validated['managed_company_ids'] ?? []);
 
         if ($request->hasFile('profile_picture')) {
             $file = $request->file('profile_picture');
@@ -78,11 +85,27 @@ class ContributorsController extends Controller
             $validated['profile_picture'] = $filePath;
         }
 
-        unset($validated['company_id'], $validated['department_ids']);
+        $loginEmail = $validated['login_email'];
+        unset($validated['company_id'], $validated['department_ids'], $validated['managed_company_ids'], $validated['login_email']);
 
-        $contributor = Contributor::create($validated);
-        $contributor->departments()->sync($departmentIds);
-        $this->syncLinkedUserDepartments($contributor, $departmentIds);
+        $contributor = DB::transaction(function () use ($validated, $departmentIds, $managedCompanyIds, $loginEmail) {
+            $user = User::create([
+                'name' => $validated['name'],
+                'email' => $loginEmail,
+                'phone' => $validated['phone_num'] ?? null,
+                'id_number' => $validated['id_number'],
+                'password' => Hash::make($validated['temp_password']),
+            ]);
+
+            $validated['user_id'] = $user->id;
+
+            $contributor = Contributor::create($validated);
+            $contributor->departments()->sync($departmentIds);
+            $contributor->managedCompanies()->sync($managedCompanyIds);
+            $this->syncLinkedUserDepartments($contributor, $departmentIds);
+
+            return $contributor;
+        });
 
         if ($request->hasFile('documents')) {
             $this->uploadDocuments($contributor, $request->file('documents'), $request->input('document_descriptions', []));
@@ -105,6 +128,7 @@ class ContributorsController extends Controller
             'userProfits',
             'documents.uploader',
             'departments.parent',
+            'managedCompanies',
         ]);
 
         return view('contributors.show', compact('contributor'));
@@ -168,7 +192,7 @@ class ContributorsController extends Controller
      */
     public function edit(Contributor $contributor): View
     {
-        $contributor->load('departments.parent');
+        $contributor->load('departments.parent', 'managedCompanies', 'user');
         [$companies, $departments] = $this->membershipFormData();
 
         return view('contributors.edit', compact('contributor', 'companies', 'departments'));
@@ -179,11 +203,26 @@ class ContributorsController extends Controller
      */
     public function update(Request $request, Contributor $contributor): RedirectResponse
     {
+        $contributor->loadMissing('user');
+
         $validated = $request->validate([
             'name' => 'required|string|max:100',
             'id_number' => 'required|string|max:10|unique:contributors,id_number,' . $contributor->id,
+            'login_email' => [
+                'required',
+                'string',
+                'email',
+                'max:255',
+                Rule::unique('users', 'email')->ignore($contributor->user?->id),
+            ],
             'phone_num' => 'nullable|string|max:15',
-            'temp_password' => 'nullable|string|max:10',
+            'temp_password' => [
+                Rule::requiredIf(!$contributor->user),
+                'nullable',
+                'string',
+                'min:8',
+                'max:10',
+            ],
             'iban' => 'nullable|string|max:24',
             'bank_name' => 'nullable|string|max:15',
             'position' => 'nullable|string|max:100',
@@ -195,6 +234,8 @@ class ContributorsController extends Controller
             'company_id' => 'nullable|exists:categories,id',
             'department_ids' => 'nullable|array',
             'department_ids.*' => 'exists:categories,id',
+            'managed_company_ids' => 'nullable|array',
+            'managed_company_ids.*' => 'exists:categories,id',
             'line_notes' => 'required|string',
             'documents.*' => 'nullable|file|max:10240',
         ]);
@@ -208,6 +249,7 @@ class ContributorsController extends Controller
             $validated['company_id'] ?? null,
             $validated['department_ids'] ?? []
         );
+        $managedCompanyIds = $this->validateManagedCompanies($validated['managed_company_ids'] ?? []);
 
         if ($request->hasFile('profile_picture')) {
             if ($contributor->profile_picture && Storage::disk('public')->exists($contributor->profile_picture)) {
@@ -221,12 +263,20 @@ class ContributorsController extends Controller
         }
 
         $lineNotes = $validated['line_notes'];
+        $loginEmail = $validated['login_email'];
+        $plainPassword = $validated['temp_password'] ?? null;
 
-        unset($validated['company_id'], $validated['department_ids'], $validated['line_notes']);
+        unset($validated['company_id'], $validated['department_ids'], $validated['managed_company_ids'], $validated['line_notes'], $validated['login_email']);
 
-        $contributor->update($validated);
-        $contributor->departments()->sync($departmentIds);
-        $this->syncLinkedUserDepartments($contributor, $departmentIds);
+        DB::transaction(function () use ($contributor, $validated, $departmentIds, $managedCompanyIds, $loginEmail, $plainPassword): void {
+            $user = $this->syncContributorUser($contributor, $validated, $loginEmail, $plainPassword);
+            $validated['user_id'] = $user->id;
+
+            $contributor->update($validated);
+            $contributor->departments()->sync($departmentIds);
+            $contributor->managedCompanies()->sync($managedCompanyIds);
+            $this->syncLinkedUserDepartments($contributor, $departmentIds);
+        });
 
         $url = url()->previous();
         Modification::logChange($url, $lineNotes, auth()->user()->id);
@@ -384,6 +434,54 @@ class ContributorsController extends Controller
         }
 
         return $departmentIds;
+    }
+
+    private function validateManagedCompanies(array $companyIds): array
+    {
+        $companyIds = collect($companyIds)
+            ->filter()
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
+
+        if (empty($companyIds)) {
+            return [];
+        }
+
+        $companies = Category::whereIn('id', $companyIds)->get();
+
+        if ($companies->count() !== count($companyIds)) {
+            throw ValidationException::withMessages([
+                'managed_company_ids' => 'تعذر التحقق من الشركات المحددة للإدارة.',
+            ]);
+        }
+
+        if ($companies->contains(fn (Category $company) => !$company->isCompany())) {
+            throw ValidationException::withMessages([
+                'managed_company_ids' => 'يمكن اختيار الشركات الرئيسية فقط في حقل مدير شركة.',
+            ]);
+        }
+
+        return $companyIds;
+    }
+
+    private function syncContributorUser(Contributor $contributor, array $validated, string $loginEmail, ?string $plainPassword): User
+    {
+        $user = $contributor->user ?: new User();
+
+        $user->name = $validated['name'];
+        $user->email = $loginEmail;
+        $user->phone = $validated['phone_num'] ?? null;
+        $user->id_number = $validated['id_number'];
+
+        if ($plainPassword) {
+            $user->password = Hash::make($plainPassword);
+        }
+
+        $user->save();
+
+        return $user;
     }
 
     private function syncLinkedUserDepartments(Contributor $contributor, array $departmentIds): void

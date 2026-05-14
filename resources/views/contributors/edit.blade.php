@@ -153,6 +153,12 @@
                                 <div>{{ __('لا يوجد حساب مستخدم مرتبط بهذا المساهم حتى الآن.') }}</div>
                             </div>
                         @endif
+                        @if ($contributor->managedCompanies->isNotEmpty())
+                            <div class="contributor-meta-item">
+                                <i class="bi bi-building-check"></i>
+                                <div>{{ __('مدير شركة') }}: {{ $contributor->managedCompanies->pluck('name')->implode('، ') }}</div>
+                            </div>
+                        @endif
                     </div>
                 </section>
             </aside>

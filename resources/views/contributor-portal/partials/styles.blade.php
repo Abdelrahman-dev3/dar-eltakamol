@@ -24,6 +24,8 @@
             .cp-stat-label { margin: .25rem 0 0; color: var(--text-secondary); font-weight: 700; }
             .cp-card { padding: 1.1rem; }
             .cp-card-title { margin: 0 0 .85rem; color: var(--text-primary); font-size: 1.2rem; font-weight: 900; display: flex; align-items: center; gap: .45rem; }
+            .cp-section-head { display: flex; align-items: center; justify-content: space-between; gap: .75rem; margin-bottom: .85rem; flex-wrap: wrap; }
+            .cp-section-head .cp-card-title { margin: 0; }
             .cp-table-wrap { overflow-x: auto; border: 1px solid rgba(170,134,63,.12); border-radius: 1rem; }
             .cp-table { width: 100%; border-collapse: collapse; }
             .cp-table th, .cp-table td { padding: .85rem; border-bottom: 1px solid rgba(226,232,240,.9); color: var(--text-primary); vertical-align: middle; }
@@ -37,8 +39,25 @@
             .cp-error { color: var(--danger-color); font-weight: 700; display: block; margin-top: .3rem; }
             .cp-empty { padding: 2rem; text-align: center; color: var(--text-secondary); }
             .cp-badge { display: inline-flex; align-items: center; gap: .35rem; padding: .35rem .6rem; border-radius: 999px; background: rgba(170,134,63,.09); color: var(--primary-color); font-weight: 800; white-space: nowrap; }
+            .cp-news-list { display: flex; flex-direction: column; gap: .85rem; }
+            .cp-news-item { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: .85rem; align-items: center; padding: 1rem; border: 1px solid rgba(170,134,63,.12); border-radius: 1rem; background: #fff; }
+            .cp-news-list.compact .cp-news-item { padding: .85rem; }
+            .cp-news-icon { width: 3rem; height: 3rem; display: inline-flex; align-items: center; justify-content: center; border-radius: .9rem; background: rgba(170,134,63,.1); color: var(--primary-color); font-size: 1.2rem; }
+            .cp-news-body { min-width: 0; }
+            .cp-news-title { margin: 0; color: var(--text-primary); font-size: 1.05rem; font-weight: 900; overflow-wrap: anywhere; }
+            .cp-news-meta { display: flex; gap: .75rem; flex-wrap: wrap; margin-top: .35rem; color: var(--text-secondary); font-size: .9rem; font-weight: 700; }
+            .cp-news-meta span { display: inline-flex; align-items: center; gap: .3rem; max-width: 100%; overflow-wrap: anywhere; }
+            .cp-news-content { line-height: 1.9; color: var(--text-secondary); font-weight: 700; }
+            .cp-member-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
+            .cp-member-card { padding: 1rem; border: 1px solid rgba(170,134,63,.12); border-radius: 1rem; background: #fff; }
+            .cp-member-head { display: flex; align-items: center; gap: .75rem; margin-bottom: .85rem; }
+            .cp-avatar { width: 3.2rem; height: 3.2rem; border-radius: 1rem; display: inline-flex; align-items: center; justify-content: center; background: rgba(170,134,63,.12); color: var(--primary-color); font-weight: 900; flex-shrink: 0; overflow: hidden; }
+            .cp-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+            .cp-member-name { margin: 0; color: var(--text-primary); font-size: 1.05rem; font-weight: 900; overflow-wrap: anywhere; }
+            .cp-member-sub { margin-top: .2rem; color: var(--text-secondary); font-weight: 700; overflow-wrap: anywhere; }
             @media (max-width: 1000px) { .cp-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .cp-grid-2 { grid-template-columns: 1fr; } }
-            @media (max-width: 680px) { .cp-grid, .cp-form { grid-template-columns: 1fr; } .cp-hero { align-items: stretch; } .cp-btn { width: 100%; } }
+            @media (max-width: 1000px) { .cp-member-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+            @media (max-width: 680px) { .cp-grid, .cp-form, .cp-member-grid { grid-template-columns: 1fr; } .cp-hero { align-items: stretch; } .cp-btn { width: 100%; } .cp-news-item { grid-template-columns: 1fr; } .cp-news-icon { width: 2.8rem; height: 2.8rem; } }
         </style>
     @endpush
 @endonce

@@ -69,6 +69,34 @@ Route::middleware(['auth', AuthorizeRoutePermission::class])->group(function () 
         Route::get('purchase-orders/create', [ContributorPortalController::class, 'createPurchaseOrder'])->name('purchase-orders.create');
         Route::post('purchase-orders', [ContributorPortalController::class, 'storePurchaseOrder'])->name('purchase-orders.store');
         Route::post('purchase-orders/independent', [ContributorPortalController::class, 'storeIndependentPurchaseOrder'])->name('purchase-orders.independent.store');
+        Route::get('news', [ContributorPortalController::class, 'news'])->name('news');
+        Route::get('news/{circular}', [ContributorPortalController::class, 'showNews'])->name('news.show');
+        Route::get('news/{circular}/download', [ContributorPortalController::class, 'downloadNewsAttachment'])->name('news.download');
+        Route::get('files', [ContributorPortalController::class, 'files'])->name('files');
+        Route::get('files/{document}', [ContributorPortalController::class, 'showFile'])->name('files.show');
+        Route::get('files/{document}/download', [ContributorPortalController::class, 'downloadFile'])->name('files.download');
+        Route::get('regulations', [ContributorPortalController::class, 'regulations'])->name('regulations');
+        Route::get('regulations/{regulation}', [ContributorPortalController::class, 'showRegulation'])->name('regulations.show');
+        Route::get('regulations/{regulation}/download', [ContributorPortalController::class, 'downloadRegulation'])->name('regulations.download');
+        Route::get('services', [ContributorPortalController::class, 'services'])->name('services');
+        Route::get('services/request', [ContributorPortalController::class, 'createServiceRequest'])->name('services.request');
+        Route::post('services/request', [ContributorPortalController::class, 'storeServiceRequest'])->name('services.request.store');
+        Route::prefix('board')->name('board.')->group(function () {
+            Route::get('dashboard', [ContributorPortalController::class, 'boardDashboard'])->name('dashboard');
+            Route::get('polls', [ContributorPortalController::class, 'boardPolls'])->name('polls');
+            Route::get('meetings', [ContributorPortalController::class, 'boardMeetings'])->name('meetings');
+            Route::get('meetings/{meeting}', [ContributorPortalController::class, 'showBoardMeeting'])->name('meetings.show');
+            Route::get('meetings/{meeting}/attachments/{attachment}/download', [ContributorPortalController::class, 'downloadBoardMeetingAttachment'])->name('meetings.attachments.download');
+            Route::get('members', [ContributorPortalController::class, 'boardMembers'])->name('members');
+        });
+        Route::prefix('committees')->name('committees.')->group(function () {
+            Route::get('dashboard', [ContributorPortalController::class, 'committeesDashboard'])->name('dashboard');
+            Route::get('polls', [ContributorPortalController::class, 'committeesPolls'])->name('polls');
+            Route::get('meetings', [ContributorPortalController::class, 'committeesMeetings'])->name('meetings');
+            Route::get('meetings/{meeting}', [ContributorPortalController::class, 'showCommitteesMeeting'])->name('meetings.show');
+            Route::get('meetings/{meeting}/attachments/{attachment}/download', [ContributorPortalController::class, 'downloadCommitteesMeetingAttachment'])->name('meetings.attachments.download');
+            Route::get('members', [ContributorPortalController::class, 'committeesMembers'])->name('members');
+        });
         Route::get('polls', [ContributorPortalController::class, 'polls'])->name('polls');
         Route::get('polls/{poll}', [ContributorPortalController::class, 'showPoll'])->name('polls.show');
         Route::post('polls/{poll}/vote', [ContributorPortalController::class, 'votePoll'])->name('polls.vote');

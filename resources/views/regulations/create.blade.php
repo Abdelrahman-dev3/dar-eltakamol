@@ -52,6 +52,11 @@
                     @include('regulations.partials.form-fields', [
                         'isEdit' => false,
                         'regulation' => null,
+                        'users' => $users,
+                        'audienceScopes' => $audienceScopes,
+                        'committeeOptions' => $committeeOptions,
+                        'companies' => $companies,
+                        'departments' => $departments,
                     ])
 
                     <div class="reg-form-footer">

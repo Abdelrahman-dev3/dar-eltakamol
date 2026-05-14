@@ -7,6 +7,9 @@
     $currentInitials = $contributor ? $contributor->initials : 'م';
     $selectedDepartmentIds = old('department_ids', $contributor?->departments?->pluck('id')->toArray() ?? []);
     $selectedCompanyId = old('company_id', $contributor?->primary_company?->id);
+    $selectedManagedCompanyIds = collect(old('managed_company_ids', $contributor?->managedCompanies?->pluck('id')->toArray() ?? []))
+        ->map(fn ($value) => (string) $value)
+        ->all();
     $selectedCommitteeMemberships = collect(old('committee_memberships', $contributor?->committee_memberships ?? []))
         ->filter()
         ->values()
@@ -37,6 +40,17 @@
                     value="{{ old('name', $contributor->name ?? '') }}" required maxlength="100"
                     placeholder="{{ __('أدخل اسم المساهم') }}">
                 @error('name')
+                    <span class="help-block">{{ $message }}</span>
+                @enderror
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="form-group contributor-field @error('login_email') has-error @enderror">
+                <label for="login_email">{{ __('بريد حساب الدخول') }} <span class="text-danger">*</span></label>
+                <input type="email" name="login_email" id="login_email" class="form-control contributor-input"
+                    value="{{ old('login_email', $contributor?->user?->email ?? '') }}" required maxlength="255"
+                    placeholder="{{ __('name@example.com') }}">
+                @error('login_email')
                     <span class="help-block">{{ $message }}</span>
                 @enderror
             </div>
@@ -76,9 +90,10 @@
             <div class="form-group contributor-field @error('temp_password') has-error @enderror">
                 <label for="temp_password">{{ __('كلمة المرور المؤقتة') }}</label>
                 <input type="text" name="temp_password" id="temp_password" class="form-control contributor-input"
-                    value="{{ old('temp_password', $contributor->temp_password ?? '') }}" maxlength="10"
-                    placeholder="{{ __('أدخل كلمة مرور مؤقتة') }}">
-                <p class="contributor-inline-note">{{ __('يمكن ترك الحقل فارغًا أو النقر عليه لتوليد كلمة مرور سريعة.') }}</p>
+                    value="{{ old('temp_password', $contributor->temp_password ?? '') }}" minlength="8" maxlength="10"
+                    {{ $isEdit && $contributor?->user ? '' : 'required' }}
+                    placeholder="{{ $isEdit && $contributor?->user ? __('اتركه كما هو أو أدخل كلمة جديدة') : __('8 إلى 10 أحرف') }}">
+                <p class="contributor-inline-note">{{ $isEdit ? __('تغيير هذا الحقل يحدّث كلمة مرور حساب الدخول المرتبط.') : __('سيتم إنشاء حساب دخول للمساهم باستخدام البريد وكلمة المرور المؤقتة.') }}</p>
                 @error('temp_password')
                     <span class="help-block">{{ $message }}</span>
                 @enderror
@@ -124,6 +139,73 @@
             @error('committee_memberships.*')
                 <span class="help-block">{{ $message }}</span>
             @enderror
+        </div>
+    </div>
+</div>
+
+<div class="contributor-section">
+    <h3 class="contributor-section-title">
+        <i class="bi bi-diagram-3"></i>
+        {{ __('الارتباط بالشركات والإدارات') }}
+    </h3>
+    <div class="row">
+        <div class="col-md-6">
+            <div class="form-group contributor-field @error('company_id') has-error @enderror">
+                <label for="company_id">{{ __('الشركة') }}</label>
+                <select name="company_id" id="company_id" class="form-control contributor-input" data-company-select>
+                    <option value="">{{ __('-- اختر الشركة --') }}</option>
+                    @foreach($companies as $company)
+                        <option value="{{ $company->id }}" {{ (string) $selectedCompanyId === (string) $company->id ? 'selected' : '' }}>
+                            {{ $company->name }}
+                        </option>
+                    @endforeach
+                </select>
+                @error('company_id')
+                    <span class="help-block">{{ $message }}</span>
+                @enderror
+                <p class="contributor-inline-note">{{ __('اختيار الشركة يسهّل تصفية الإدارات التابعة لها.') }}</p>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="form-group contributor-field @error('department_ids') has-error @enderror">
+                <label for="department_ids">{{ __('الإدارات') }}</label>
+                <select name="department_ids[]" id="department_ids" class="form-control contributor-input" multiple data-departments-select>
+                    @foreach($departments as $department)
+                        <option value="{{ $department->id }}" data-company-id="{{ $department->parent_id }}"
+                            {{ in_array($department->id, $selectedDepartmentIds) || in_array((string) $department->id, $selectedDepartmentIds, true) ? 'selected' : '' }}>
+                            {{ $department->name }}{{ $department->parent ? ' - ' . $department->parent->name : '' }}
+                        </option>
+                    @endforeach
+                </select>
+                @error('department_ids')
+                    <span class="help-block">{{ $message }}</span>
+                @enderror
+                @error('department_ids.*')
+                    <span class="help-block">{{ $message }}</span>
+                @enderror
+                <p class="contributor-inline-note">{{ __('يمكن ربط المساهم بإدارة أو أكثر داخل نفس الشركة.') }}</p>
+            </div>
+        </div>
+
+        <div class="col-md-12">
+            <div class="form-group contributor-field @error('managed_company_ids') has-error @enderror">
+                <label for="managed_company_ids">{{ __('مدير شركة') }}</label>
+                <select name="managed_company_ids[]" id="managed_company_ids" class="form-control contributor-input" multiple>
+                    @foreach($companies as $company)
+                        <option value="{{ $company->id }}" {{ in_array((string) $company->id, $selectedManagedCompanyIds, true) ? 'selected' : '' }}>
+                            {{ $company->name }}
+                        </option>
+                    @endforeach
+                </select>
+                @error('managed_company_ids')
+                    <span class="help-block">{{ $message }}</span>
+                @enderror
+                @error('managed_company_ids.*')
+                    <span class="help-block">{{ $message }}</span>
+                @enderror
+                <p class="contributor-inline-note">{{ __('اختر شركة أو أكثر إذا كان هذا المساهم مديرا لها. هذا الاختيار مستقل عن عضويات اللجان.') }}</p>
+            </div>
         </div>
     </div>
 </div>

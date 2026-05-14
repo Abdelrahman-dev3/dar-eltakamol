@@ -119,6 +119,15 @@ class Contributor extends Model
     }
 
     /**
+     * Get the companies managed by the contributor.
+     */
+    public function managedCompanies(): BelongsToMany
+    {
+        return $this->belongsToMany(Category::class, 'company_manager_contributor')
+            ->withTimestamps();
+    }
+
+    /**
      * Get the share count attribute.
      */
     public function getShareCountAttribute(): float
@@ -186,6 +195,16 @@ class Contributor extends Model
 
         if ($this->is_board_member) {
             $memberships->prepend(self::BOARD_MEMBERSHIP_LABEL);
+        }
+
+        if ($this->relationLoaded('managedCompanies') ? $this->managedCompanies->isNotEmpty() : $this->managedCompanies()->exists()) {
+            $managedCompanies = $this->relationLoaded('managedCompanies')
+                ? $this->managedCompanies
+                : $this->managedCompanies()->get();
+
+            $memberships = $memberships->merge(
+                $managedCompanies->map(fn (Category $company) => 'مدير شركة: ' . $company->name)
+            );
         }
 
         return $memberships

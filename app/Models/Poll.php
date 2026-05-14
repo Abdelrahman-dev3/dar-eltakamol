@@ -24,6 +24,9 @@ class Poll extends Model
         'created_date',
         'created_by',
         'zoom_meeting_id',
+        'audience_scope',
+        'audience_committee',
+        'audience_category_id',
     ];
 
     protected $casts = [

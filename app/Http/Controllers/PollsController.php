@@ -99,6 +99,13 @@ class PollsController extends Controller
                 'created_date' => now(),
                 'created_by' => Auth::id(),
                 'zoom_meeting_id' => $request->zoom_meeting_id,
+                'audience_scope' => $request->input('audience_scope', ParticipantAudienceResolver::SCOPE_MANUAL),
+                'audience_committee' => $request->input('audience_scope') === ParticipantAudienceResolver::SCOPE_COMMITTEE
+                    ? $request->input('audience_committee')
+                    : null,
+                'audience_category_id' => in_array($request->input('audience_scope'), [ParticipantAudienceResolver::SCOPE_COMPANY, ParticipantAudienceResolver::SCOPE_DEPARTMENT], true)
+                    ? $request->integer('audience_category_id')
+                    : null,
             ]);
 
             $poll->referencedUsers()->sync($referencedUserIds);
@@ -198,6 +205,13 @@ class PollsController extends Controller
                 'end_date' => $request->end_date,
                 'is_active' => $request->has('is_active'),
                 'zoom_meeting_id' => $request->zoom_meeting_id,
+                'audience_scope' => $request->input('audience_scope', ParticipantAudienceResolver::SCOPE_MANUAL),
+                'audience_committee' => $request->input('audience_scope') === ParticipantAudienceResolver::SCOPE_COMMITTEE
+                    ? $request->input('audience_committee')
+                    : null,
+                'audience_category_id' => in_array($request->input('audience_scope'), [ParticipantAudienceResolver::SCOPE_COMPANY, ParticipantAudienceResolver::SCOPE_DEPARTMENT], true)
+                    ? $request->integer('audience_category_id')
+                    : null,
             ]);
 
             $poll->referencedUsers()->sync($referencedUserIds);

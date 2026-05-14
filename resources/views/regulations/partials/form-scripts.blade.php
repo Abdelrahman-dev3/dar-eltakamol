@@ -10,6 +10,7 @@
         const singleFileInput = document.querySelector('[data-reg-single-file]');
         const multiplePreview = document.getElementById('regFilesPreview');
         const singlePreview = document.getElementById('regSingleFilePreview');
+        const audienceScope = form.querySelector('[data-audience-scope]');
 
         function formatFileSize(bytes) {
             if (!bytes) {
@@ -74,6 +75,23 @@
             singleFileInput.addEventListener('change', function () {
                 renderFiles(this.files, singlePreview);
             });
+        }
+
+        if (audienceScope) {
+            const syncAudiencePanels = function () {
+                const selectedScope = audienceScope.value || 'manual';
+
+                form.querySelectorAll('[data-audience-panel]').forEach(function (panel) {
+                    const isActive = panel.dataset.audiencePanel === selectedScope;
+                    panel.style.display = isActive ? '' : 'none';
+                    panel.querySelectorAll('select, input, textarea').forEach(function (input) {
+                        input.disabled = !isActive;
+                    });
+                });
+            };
+
+            audienceScope.addEventListener('change', syncAudiencePanels);
+            syncAudiencePanels();
         }
 
         form.addEventListener('submit', function (event) {

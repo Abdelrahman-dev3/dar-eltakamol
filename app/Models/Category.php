@@ -36,6 +36,15 @@ class Category extends Model
     }
 
     /**
+     * The contributors that manage this company.
+     */
+    public function managers(): BelongsToMany
+    {
+        return $this->belongsToMany(Contributor::class, 'company_manager_contributor')
+            ->withTimestamps();
+    }
+
+    /**
      * The permissions that belong to this category.
      */
     public function permissions(): BelongsToMany

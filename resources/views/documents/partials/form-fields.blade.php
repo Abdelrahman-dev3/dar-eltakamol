@@ -2,7 +2,19 @@
     $isEdit = $isEdit ?? false;
     $document = $document ?? null;
     $meetings = $meetings ?? collect();
+    $users = $users ?? collect();
+    $audienceScopes = $audienceScopes ?? ['manual' => 'اختيار مستخدمين محددين'];
+    $committeeOptions = $committeeOptions ?? [];
+    $companies = $companies ?? collect();
+    $departments = $departments ?? collect();
     $selectedMeetingId = old('meeting_id', $document?->meeting_id);
+    $selectedRecipientUsers = collect(old(
+        'recipient_users',
+        $document ? $document->recipients->pluck('id')->all() : []
+    ))->map(fn ($id) => (string) $id)->all();
+    $selectedAudienceScope = old('audience_scope', 'manual');
+    $selectedAudienceCommittee = old('audience_committee');
+    $selectedAudienceCategory = old('audience_category_id');
 @endphp
 
 <div class="doc-section">
@@ -55,6 +67,84 @@
                 @enderror
             </div>
         </div>
+    </div>
+</div>
+
+<div class="doc-section">
+    <h3 class="doc-section-title">
+        <i class="bi bi-people"></i>
+        {{ __('الجمهور المستهدف') }}
+    </h3>
+
+    <div class="form-group doc-field @error('audience_scope') has-error @enderror">
+        <label for="doc_audience_scope">{{ __('الملف موجه لمن؟') }}</label>
+        <select name="audience_scope" id="doc_audience_scope" class="form-control doc-input" data-audience-scope>
+            @foreach($audienceScopes as $value => $label)
+                <option value="{{ $value }}" {{ $selectedAudienceScope === $value ? 'selected' : '' }}>{{ $label }}</option>
+            @endforeach
+        </select>
+        <p class="doc-inline-note">{{ __('اختر الجمهور المطلوب، وسيتم حفظ المستخدمين المطابقين مع الملف عند الحفظ.') }}</p>
+        @error('audience_scope')
+            <span class="help-block">{{ $message }}</span>
+        @enderror
+    </div>
+
+    <div class="form-group doc-field @error('audience_committee') has-error @enderror" data-audience-panel="committee">
+        <label for="doc_audience_committee">{{ __('اللجنة') }}</label>
+        <select name="audience_committee" id="doc_audience_committee" class="form-control doc-input">
+            <option value="">{{ __('اختر اللجنة') }}</option>
+            @foreach($committeeOptions as $committee)
+                <option value="{{ $committee }}" {{ $selectedAudienceCommittee === $committee ? 'selected' : '' }}>{{ $committee }}</option>
+            @endforeach
+        </select>
+        @error('audience_committee')
+            <span class="help-block">{{ $message }}</span>
+        @enderror
+    </div>
+
+    <div class="form-group doc-field @error('audience_category_id') has-error @enderror" data-audience-panel="company">
+        <label for="doc_audience_company">{{ __('الشركة أو العضوية الرئيسية') }}</label>
+        <select name="audience_category_id" id="doc_audience_company" class="form-control doc-input">
+            <option value="">{{ __('اختر الشركة أو العضوية') }}</option>
+            @foreach($companies as $company)
+                <option value="{{ $company->id }}" {{ (string) $selectedAudienceCategory === (string) $company->id ? 'selected' : '' }}>{{ $company->name }}</option>
+            @endforeach
+        </select>
+        @error('audience_category_id')
+            <span class="help-block">{{ $message }}</span>
+        @enderror
+    </div>
+
+    <div class="form-group doc-field @error('audience_category_id') has-error @enderror" data-audience-panel="department">
+        <label for="doc_audience_department">{{ __('الإدارة أو التصنيف الفرعي') }}</label>
+        <select name="audience_category_id" id="doc_audience_department" class="form-control doc-input">
+            <option value="">{{ __('اختر الإدارة أو التصنيف') }}</option>
+            @foreach($departments as $department)
+                <option value="{{ $department->id }}" {{ (string) $selectedAudienceCategory === (string) $department->id ? 'selected' : '' }}>
+                    {{ $department->full_name }}
+                </option>
+            @endforeach
+        </select>
+    </div>
+
+    <div class="form-group doc-field @error('recipient_users') has-error @enderror" data-audience-panel="manual">
+        <label for="doc_recipient_users">{{ __('المستخدمون المحددون') }}</label>
+        <select name="recipient_users[]" id="doc_recipient_users" class="form-control doc-input" multiple>
+            @forelse($users as $user)
+                <option value="{{ $user->id }}" {{ in_array((string) $user->id, $selectedRecipientUsers, true) ? 'selected' : '' }}>
+                    {{ $user->name }} ({{ $user->email }})
+                </option>
+            @empty
+                <option value="" disabled>{{ __('لا يوجد مستخدمون متاحون') }}</option>
+            @endforelse
+        </select>
+        <p class="doc-inline-note">{{ __('يستخدم هذا الحقل فقط عند اختيار "اختيار مستخدمين محددين".') }}</p>
+        @error('recipient_users')
+            <span class="help-block">{{ $message }}</span>
+        @enderror
+        @error('recipient_users.*')
+            <span class="help-block">{{ $message }}</span>
+        @enderror
     </div>
 </div>
 

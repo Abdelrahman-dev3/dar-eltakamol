@@ -268,7 +268,7 @@
     .cirs-list-head,
     .cir-row {
         display: grid;
-        grid-template-columns: minmax(250px, 1.8fr) minmax(200px, 1.2fr) minmax(180px, 1fr) minmax(180px, 1fr) minmax(240px, 1.2fr);
+        grid-template-columns: minmax(250px, 1.8fr) minmax(200px, 1.15fr) minmax(170px, 0.95fr) minmax(160px, 0.9fr) minmax(300px, 1.25fr);
         align-items: center;
         gap: 16px;
         padding: 18px 22px;
@@ -386,13 +386,19 @@
         display: flex;
         align-items: center;
         gap: 8px;
-        justify-content: flex-end;
-        flex-wrap: wrap;
+        justify-content: flex-start;
+        flex-wrap: nowrap;
+        min-width: 0;
+    }
+
+    .cir-actions form {
+        display: inline-flex;
+        margin: 0;
     }
 
     .cir-action-btn {
-        min-width: 44px;
-        height: 44px;
+        min-width: 40px;
+        height: 35px;
         padding: 0 14px;
         border: 0;
         border-radius: 14px;
@@ -404,6 +410,8 @@
         font-size: 0.95rem;
         font-weight: 800;
         transition: transform 0.25s ease, opacity 0.25s ease;
+        white-space: nowrap;
+        cursor: pointer;
     }
 
     .cir-action-btn:hover {
@@ -543,6 +551,7 @@
 
         .cir-actions {
             justify-content: flex-start;
+            flex-wrap: wrap;
         }
     }
 
@@ -657,7 +666,7 @@
                 <input
                     type="search"
                     id="circularsSearch"
-                    placeholder="{{ __('ابحث باسم التعميم أو الاسم الأصلي أو الامتداد أو الاجتماع...') }}"
+                    placeholder="{{ __('ابحث باسم التعميم أو الاسم الأصلي أو الامتداد أو الجمهور...') }}"
                     autocomplete="off"
                 >
             </div>
@@ -681,20 +690,20 @@
                     <div>{{ __('التعميم') }}</div>
                     <div>{{ __('الاسم الأصلي') }}</div>
                     <div>{{ __('الحجم والتاريخ') }}</div>
-                    <div>{{ __('الاجتماع المرتبط') }}</div>
+                    <div>{{ __('الجمهور') }}</div>
                     <div>{{ __('الإجراءات') }}</div>
                 </div>
 
                 <div class="cirs-list-body" id="circularsList">
                     @foreach($circulars as $circular)
                         @php
-                            $meetingName = optional($circular->meeting)->name ?: __('بدون اجتماع');
+                            $recipientsCount = $circular->recipients_count ?? 0;
                             $searchableText = implode(' ', [
                                 $circular->name,
                                 $circular->original_filename,
                                 $circular->file_type,
                                 $circular->file_extension,
-                                $meetingName,
+                                $recipientsCount,
                             ]);
                         @endphp
 
@@ -734,28 +743,30 @@
                             </div>
 
                             <div class="cir-field">
-                                <span class="cir-field-label">{{ __('الاجتماع المرتبط') }}</span>
-                                <span class="cir-field-value">{{ $meetingName }}</span>
-                                <span class="cir-field-value muted">
-                                    {{ optional($circular->meeting?->date)->format('Y-m-d') ?: __('بدون تاريخ') }}
-                                </span>
+                                <span class="cir-field-label">{{ __('الجمهور') }}</span>
+                                <span class="cir-field-value">{{ number_format($recipientsCount) }} {{ __('مستلم') }}</span>
+                                <span class="cir-field-value muted">{{ __('موجه حسب الاختيار عند الإضافة') }}</span>
                             </div>
 
                             <div class="cir-actions">
                                 <a href="{{ route('circulars.show', $circular) }}" class="cir-action-btn view" title="{{ __('تفاصيل') }}">
                                     <i class="bi bi-eye-fill"></i>
+{{--                                    <span>{{ __('عرض') }}</span>--}}
                                 </a>
                                 <a href="{{ route('circulars.download', $circular) }}" target="_blank" rel="noopener noreferrer" class="cir-action-btn download" title="{{ __('تحميل') }}">
                                     <i class="bi bi-download"></i>
+{{--                                    <span>{{ __('تحميل') }}</span>--}}
                                 </a>
                                 <a href="{{ route('circulars.edit', $circular) }}" class="cir-action-btn edit" title="{{ __('تعديل') }}">
                                     <i class="bi bi-pencil-square"></i>
+{{--                                    <span>{{ __('تعديل') }}</span>--}}
                                 </a>
-                                <form action="{{ route('circulars.destroy', $circular) }}" method="POST" style="display: inline-flex;" onsubmit="return confirm('{{ __('هل أنت متأكد من حذف هذا التعميم؟') }}');">
+                                <form action="{{ route('circulars.destroy', $circular) }}" method="POST" onsubmit="return confirm('{{ __('هل أنت متأكد من حذف هذا التعميم؟') }}');">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="cir-action-btn delete" title="{{ __('حذف') }}">
                                         <i class="bi bi-trash3-fill"></i>
+{{--                                        <span>{{ __('حذف') }}</span>--}}
                                     </button>
                                 </form>
                             </div>
@@ -768,7 +779,7 @@
                         <i class="bi bi-search-heart"></i>
                     </div>
                     <h3>{{ __('لا توجد نتائج مطابقة') }}</h3>
-                    <p>{{ __('جرّب البحث باسم مختلف أو جزء من الاسم الأصلي أو الامتداد أو اسم الاجتماع للوصول إلى التعميم المطلوب.') }}</p>
+                    <p>{{ __('جرّب البحث باسم مختلف أو جزء من الاسم الأصلي أو الامتداد للوصول إلى التعميم المطلوب.') }}</p>
                 </div>
 
                 <div class="cirs-pagination">

@@ -59,6 +59,11 @@
                         'isEdit' => true,
                         'document' => $document,
                         'meetings' => $meetings,
+                        'users' => $users,
+                        'audienceScopes' => $audienceScopes,
+                        'committeeOptions' => $committeeOptions,
+                        'companies' => $companies,
+                        'departments' => $departments,
                     ])
 
                     <div class="doc-form-footer">

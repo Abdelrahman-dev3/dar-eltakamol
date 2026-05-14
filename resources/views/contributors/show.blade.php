@@ -11,6 +11,7 @@
     $hasProfilePicture = !empty($contributor->profile_picture);
     $companyNames = $contributor->departments->pluck('parent.name')->filter()->unique()->values();
     $departmentNames = $contributor->departments->pluck('name')->filter()->values();
+    $managedCompanyNames = $contributor->managedCompanies->pluck('name')->filter()->values();
     $membershipLabels = collect($contributor->membership_labels);
 @endphp
 
@@ -230,6 +231,7 @@
                     <div class="contributor-detail-item"><span class="contributor-detail-label">{{ __('المنصب') }}</span><div class="contributor-detail-value">{{ $contributor->position ?: __('غير محدد') }}</div></div>
                     <div class="contributor-detail-item"><span class="contributor-detail-label">{{ __('الشركة') }}</span><div class="contributor-detail-value">{{ $companyNames->isNotEmpty() ? $companyNames->implode('، ') : __('غير محددة') }}</div></div>
                     <div class="contributor-detail-item"><span class="contributor-detail-label">{{ __('الإدارات') }}</span><div class="contributor-detail-value">{{ $departmentNames->isNotEmpty() ? $departmentNames->implode('، ') : __('غير مرتبط بإدارات بعد') }}</div></div>
+                    <div class="contributor-detail-item"><span class="contributor-detail-label">{{ __('الشركات التي يديرها') }}</span><div class="contributor-detail-value">{{ $managedCompanyNames->isNotEmpty() ? $managedCompanyNames->implode('، ') : __('لا يدير أي شركة حاليا') }}</div></div>
                     <div class="contributor-detail-item"><span class="contributor-detail-label">{{ __('العضويات الإشرافية') }}</span><div class="contributor-detail-value">{{ $membershipLabels->isNotEmpty() ? $membershipLabels->implode('، ') : __('لا توجد عضويات إشرافية') }}</div></div>
                 </div>
             </section>

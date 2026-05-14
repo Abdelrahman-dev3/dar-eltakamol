@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Facades\Storage;
 
 class Regulation extends Model
@@ -26,6 +27,15 @@ class Regulation extends Model
     public function meeting(): BelongsTo
     {
         return $this->belongsTo(Meeting::class);
+    }
+
+    /**
+     * Get the users targeted by this regulation.
+     */
+    public function recipients(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'regulation_user')
+            ->withTimestamps();
     }
 
     /**

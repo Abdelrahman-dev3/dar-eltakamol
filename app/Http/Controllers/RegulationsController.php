@@ -3,9 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\Regulation;
+use App\Models\Category;
+use App\Models\User;
+use App\Services\ParticipantAudienceResolver;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -16,7 +20,9 @@ class RegulationsController extends Controller
      */
     public function index(): View
     {
-        $regulations = Regulation::orderBy('created_at', 'desc')->paginate(15);
+        $regulations = Regulation::withCount('recipients')
+            ->orderBy('created_at', 'desc')
+            ->paginate(15);
 
         return view('regulations.index', compact('regulations'));
     }
@@ -24,50 +30,79 @@ class RegulationsController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create(): View
+    public function create(ParticipantAudienceResolver $audienceResolver): View
     {
-        return view('regulations.create');
+        $users = User::orderBy('name')->get(['id', 'name', 'email']);
+        $audienceScopes = $audienceResolver->scopeOptions();
+        $committeeOptions = $audienceResolver->committeeOptions();
+        $companies = Category::companies()->orderBy('name')->get();
+        $departments = Category::departments()->with('parent')->orderBy('name')->get();
+
+        return view('regulations.create', compact(
+            'users',
+            'audienceScopes',
+            'committeeOptions',
+            'companies',
+            'departments'
+        ));
     }
 
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request, ParticipantAudienceResolver $audienceResolver): RedirectResponse
     {
+        $this->normalizeRecipientUsersInput($request);
+
         $validated = $request->validate([
             'name' => 'nullable|string|max:255',
             'files' => 'required|array|min:1',
             'files.*' => 'required|file|max:51200', // 50MB max per file
             'meeting_id' => 'nullable|exists:meetings,id',
+            'audience_scope' => 'nullable|in:manual,all_users,all_contributors,board_members,committee,company,department',
+            'audience_committee' => 'nullable|required_if:audience_scope,committee|string|max:255',
+            'audience_category_id' => 'nullable|required_if:audience_scope,company,department|exists:categories,id',
+            'recipient_users' => 'nullable|array',
+            'recipient_users.*' => 'exists:users,id',
         ]);
+
+        $recipientUserIds = $audienceResolver->resolve(
+            $request->input('audience_scope', ParticipantAudienceResolver::SCOPE_MANUAL),
+            $request->input('recipient_users', []),
+            $request->integer('audience_category_id') ?: null,
+            $request->input('audience_committee')
+        );
 
         $uploadedCount = 0;
 
         // Handle multiple file uploads
         if ($request->hasFile('files')) {
-            foreach ($request->file('files') as $index => $file) {
-                if ($file->isValid()) {
-                    $originalName = $file->getClientOriginalName();
-                    $fileName = Str::uuid() . '.' . $file->getClientOriginalExtension();
+            DB::transaction(function () use ($request, $validated, $recipientUserIds, &$uploadedCount): void {
+                foreach ($request->file('files') as $file) {
+                    if ($file->isValid()) {
+                        $originalName = $file->getClientOriginalName();
+                        $fileName = Str::uuid() . '.' . $file->getClientOriginalExtension();
 
-                    // Store file in storage/app/public/regulations
-                    $path = $file->storeAs('regulations', $fileName, 'public');
+                        // Store file in storage/app/public/regulations
+                        $path = $file->storeAs('regulations', $fileName, 'public');
 
-                    // Use provided name or file name
-                    $regulationName = $validated['name'] ?? pathinfo($originalName, PATHINFO_FILENAME);
+                        // Use provided name or file name
+                        $regulationName = $validated['name'] ?? pathinfo($originalName, PATHINFO_FILENAME);
 
-                    Regulation::create([
-                        'name' => $regulationName,
-                        'meeting_id' => $validated['meeting_id'] ?? null,
-                        'file_path' => $path,
-                        'original_filename' => $originalName,
-                        'file_type' => $file->getClientMimeType(),
-                        'file_size' => $file->getSize(),
-                    ]);
+                        $regulation = Regulation::create([
+                            'name' => $regulationName,
+                            'meeting_id' => $validated['meeting_id'] ?? null,
+                            'file_path' => $path,
+                            'original_filename' => $originalName,
+                            'file_type' => $file->getClientMimeType(),
+                            'file_size' => $file->getSize(),
+                        ]);
 
-                    $uploadedCount++;
+                        $regulation->recipients()->sync($recipientUserIds);
+                        $uploadedCount++;
+                    }
                 }
-            }
+            });
         }
 
         return redirect()
@@ -80,26 +115,56 @@ class RegulationsController extends Controller
      */
     public function show(Regulation $regulation): View
     {
+        $regulation->load('recipients:id,name,email');
+
         return view('regulations.show', compact('regulation'));
     }
 
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Regulation $regulation): View
+    public function edit(Regulation $regulation, ParticipantAudienceResolver $audienceResolver): View
     {
-        return view('regulations.edit', compact('regulation'));
+        $regulation->load('recipients:id,name,email');
+        $users = User::orderBy('name')->get(['id', 'name', 'email']);
+        $audienceScopes = $audienceResolver->scopeOptions();
+        $committeeOptions = $audienceResolver->committeeOptions();
+        $companies = Category::companies()->orderBy('name')->get();
+        $departments = Category::departments()->with('parent')->orderBy('name')->get();
+
+        return view('regulations.edit', compact(
+            'regulation',
+            'users',
+            'audienceScopes',
+            'committeeOptions',
+            'companies',
+            'departments'
+        ));
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Regulation $regulation): RedirectResponse
+    public function update(Request $request, Regulation $regulation, ParticipantAudienceResolver $audienceResolver): RedirectResponse
     {
+        $this->normalizeRecipientUsersInput($request);
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'file' => 'nullable|file|max:51200', // 50MB max
+            'audience_scope' => 'nullable|in:manual,all_users,all_contributors,board_members,committee,company,department',
+            'audience_committee' => 'nullable|required_if:audience_scope,committee|string|max:255',
+            'audience_category_id' => 'nullable|required_if:audience_scope,company,department|exists:categories,id',
+            'recipient_users' => 'nullable|array',
+            'recipient_users.*' => 'exists:users,id',
         ]);
+
+        $recipientUserIds = $audienceResolver->resolve(
+            $request->input('audience_scope', ParticipantAudienceResolver::SCOPE_MANUAL),
+            $request->input('recipient_users', []),
+            $request->integer('audience_category_id') ?: null,
+            $request->input('audience_committee')
+        );
 
         $updateData = ['name' => $validated['name']];
 
@@ -123,7 +188,10 @@ class RegulationsController extends Controller
             $updateData['file_size'] = $file->getSize();
         }
 
-        $regulation->update($updateData);
+        DB::transaction(function () use ($regulation, $updateData, $recipientUserIds): void {
+            $regulation->update($updateData);
+            $regulation->recipients()->sync($recipientUserIds);
+        });
 
         return redirect()
             ->route('regulations.index')
@@ -162,6 +230,34 @@ class RegulationsController extends Controller
             $regulation->file_path,
             $regulation->original_filename
         );
+    }
+
+    private function normalizeRecipientUsersInput(Request $request): void
+    {
+        if (!$request->has('recipient_users')) {
+            return;
+        }
+
+        $recipientUsers = collect((array) $request->input('recipient_users'))
+            ->map(function ($userId) {
+                if (is_numeric($userId)) {
+                    return (int) $userId;
+                }
+
+                if (is_string($userId) && preg_match('/^user[_:-]?(\d+)$/i', trim($userId), $matches)) {
+                    return (int) $matches[1];
+                }
+
+                return $userId;
+            })
+            ->filter(fn ($userId) => $userId !== null && $userId !== '')
+            ->unique()
+            ->values()
+            ->all();
+
+        $request->merge([
+            'recipient_users' => $recipientUsers,
+        ]);
     }
 }
 

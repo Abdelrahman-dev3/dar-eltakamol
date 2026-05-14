@@ -2188,9 +2188,14 @@
                     </a>
                 </div>
 
+                @php
+                    $isMainContributorPortalActive = request()->routeIs('contributor.*')
+                        && !request()->routeIs('contributor.committees.*')
+                        && !request()->routeIs('contributor.board.*');
+                @endphp
                 @if(Auth::user()?->contributor && !Auth::user()?->isAdmin())
-                <div class="nav-item {{ request()->routeIs('contributor.*') ? 'has-active-child is-open' : '' }}">
-                    <a href="#" class="nav-link dropdown-toggle {{ request()->routeIs('contributor.*') ? 'active' : '' }}" data-toggle="dropdown" aria-expanded="{{ request()->routeIs('contributor.*') ? 'true' : 'false' }}">
+                <div class="nav-item {{ $isMainContributorPortalActive ? 'has-active-child is-open' : '' }}">
+                    <a href="#" class="nav-link dropdown-toggle {{ $isMainContributorPortalActive ? 'active' : '' }}" data-toggle="dropdown" aria-expanded="{{ $isMainContributorPortalActive ? 'true' : 'false' }}">
                         <i class="bi bi-person-badge-fill nav-icon"></i>
                         <span class="nav-link-label">{{ __('بوابة المساهم') }}</span>
                         <i class="bi bi-chevron-down nav-arrow" aria-hidden="true"></i>
@@ -2200,8 +2205,47 @@
                         <li><a href="{{ route('contributor.statement') }}" class="{{ request()->routeIs('contributor.statement') ? 'active' : '' }}">{{ __('كشف الحساب') }}</a></li>
                         <li><a href="{{ route('contributor.sell-offers') }}" class="{{ request()->routeIs('contributor.sell-offers*') ? 'active' : '' }}">{{ __('عروض البيع') }}</a></li>
                         <li><a href="{{ route('contributor.purchase-orders') }}" class="{{ request()->routeIs('contributor.purchase-orders*') ? 'active' : '' }}">{{ __('طلبات الشراء') }}</a></li>
+                        <li><a href="{{ route('contributor.news') }}" class="{{ request()->routeIs('contributor.news*') ? 'active' : '' }}">{{ __('الأخبار') }}</a></li>
+                        <li><a href="{{ route('contributor.files') }}" class="{{ request()->routeIs('contributor.files*') ? 'active' : '' }}">{{ __('الملفات') }}</a></li>
+                        <li><a href="{{ route('contributor.regulations') }}" class="{{ request()->routeIs('contributor.regulations*') ? 'active' : '' }}">{{ __('اللوائح') }}</a></li>
+                        <li><a href="{{ route('contributor.services') }}" class="{{ request()->routeIs('contributor.services*') ? 'active' : '' }}">{{ __('طلبات الخدمات') }}</a></li>
                         <li><a href="{{ route('contributor.polls') }}" class="{{ request()->routeIs('contributor.polls') ? 'active' : '' }}">{{ __('الاستطلاعات') }}</a></li>
                         <li><a href="{{ route('contributor.meetings') }}" class="{{ request()->routeIs('contributor.meetings') ? 'active' : '' }}">{{ __('الاجتماعات') }}</a></li>
+                    </ul>
+                </div>
+                @endif
+
+                @php
+                    $committeeMemberships = collect(Auth::user()?->contributor?->committee_memberships ?? [])->filter();
+                @endphp
+                @if($committeeMemberships->isNotEmpty() && !Auth::user()?->isAdmin())
+                <div class="nav-item {{ request()->routeIs('contributor.committees.*') ? 'has-active-child is-open' : '' }}">
+                    <a href="#" class="nav-link dropdown-toggle {{ request()->routeIs('contributor.committees.*') ? 'active' : '' }}" data-toggle="dropdown" aria-expanded="{{ request()->routeIs('contributor.committees.*') ? 'true' : 'false' }}">
+                        <i class="bi bi-diagram-3-fill nav-icon"></i>
+                        <span class="nav-link-label">{{ __('بوابة اللجان') }}</span>
+                        <i class="bi bi-chevron-down nav-arrow" aria-hidden="true"></i>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a href="{{ route('contributor.committees.dashboard') }}" class="{{ request()->routeIs('contributor.committees.dashboard') ? 'active' : '' }}">{{ __('داشبورد اللجان') }}</a></li>
+                        <li><a href="{{ route('contributor.committees.polls') }}" class="{{ request()->routeIs('contributor.committees.polls') ? 'active' : '' }}">{{ __('استطلاعات اللجان') }}</a></li>
+                        <li><a href="{{ route('contributor.committees.meetings') }}" class="{{ request()->routeIs('contributor.committees.meetings*') ? 'active' : '' }}">{{ __('اجتماعات اللجان') }}</a></li>
+                        <li><a href="{{ route('contributor.committees.members') }}" class="{{ request()->routeIs('contributor.committees.members') ? 'active' : '' }}">{{ __('أعضاء اللجان') }}</a></li>
+                    </ul>
+                </div>
+                @endif
+
+                @if(Auth::user()?->contributor?->is_board_member && !Auth::user()?->isAdmin())
+                <div class="nav-item {{ request()->routeIs('contributor.board.*') ? 'has-active-child is-open' : '' }}">
+                    <a href="#" class="nav-link dropdown-toggle {{ request()->routeIs('contributor.board.*') ? 'active' : '' }}" data-toggle="dropdown" aria-expanded="{{ request()->routeIs('contributor.board.*') ? 'true' : 'false' }}">
+                        <i class="bi bi-shield-check nav-icon"></i>
+                        <span class="nav-link-label">{{ __('بوابة مجلس الإدارة') }}</span>
+                        <i class="bi bi-chevron-down nav-arrow" aria-hidden="true"></i>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a href="{{ route('contributor.board.dashboard') }}" class="{{ request()->routeIs('contributor.board.dashboard') ? 'active' : '' }}">{{ __('داشبورد المجلس') }}</a></li>
+                        <li><a href="{{ route('contributor.board.polls') }}" class="{{ request()->routeIs('contributor.board.polls') ? 'active' : '' }}">{{ __('استطلاعات المجلس') }}</a></li>
+                        <li><a href="{{ route('contributor.board.meetings') }}" class="{{ request()->routeIs('contributor.board.meetings*') ? 'active' : '' }}">{{ __('اجتماعات المجلس') }}</a></li>
+                        <li><a href="{{ route('contributor.board.members') }}" class="{{ request()->routeIs('contributor.board.members') ? 'active' : '' }}">{{ __('أعضاء مجلس الإدارة') }}</a></li>
                     </ul>
                 </div>
                 @endif

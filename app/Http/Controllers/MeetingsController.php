@@ -75,6 +75,13 @@ class MeetingsController extends Controller
                 'name' => $validated['name'],
                 'url' => $validated['url'],
                 'date' => $validated['date'],
+                'audience_scope' => $validated['audience_scope'] ?? ParticipantAudienceResolver::SCOPE_MANUAL,
+                'audience_committee' => ($validated['audience_scope'] ?? null) === ParticipantAudienceResolver::SCOPE_COMMITTEE
+                    ? ($validated['audience_committee'] ?? null)
+                    : null,
+                'audience_category_id' => in_array($validated['audience_scope'] ?? null, [ParticipantAudienceResolver::SCOPE_COMPANY, ParticipantAudienceResolver::SCOPE_DEPARTMENT], true)
+                    ? ($validated['audience_category_id'] ?? null)
+                    : null,
             ]);
 
             $meeting->users()->sync($userIds);
@@ -149,6 +156,13 @@ class MeetingsController extends Controller
                 'name' => $validated['name'],
                 'url' => $validated['url'],
                 'date' => $validated['date'],
+                'audience_scope' => $validated['audience_scope'] ?? ParticipantAudienceResolver::SCOPE_MANUAL,
+                'audience_committee' => ($validated['audience_scope'] ?? null) === ParticipantAudienceResolver::SCOPE_COMMITTEE
+                    ? ($validated['audience_committee'] ?? null)
+                    : null,
+                'audience_category_id' => in_array($validated['audience_scope'] ?? null, [ParticipantAudienceResolver::SCOPE_COMPANY, ParticipantAudienceResolver::SCOPE_DEPARTMENT], true)
+                    ? ($validated['audience_category_id'] ?? null)
+                    : null,
             ]);
 
             $meeting->users()->sync($userIds);
