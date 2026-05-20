@@ -40,5 +40,13 @@ class Meeting extends Model
     {
         return $this->hasMany(MeetingAttachment::class);
     }
+
+    /**
+     * The polls linked to this meeting.
+     */
+    public function polls(): HasMany
+    {
+        return $this->hasMany(Poll::class);
+    }
 }
 

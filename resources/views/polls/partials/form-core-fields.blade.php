@@ -8,9 +8,11 @@
     $committeeOptions = $committeeOptions ?? [];
     $companies = $companies ?? collect();
     $departments = $departments ?? collect();
+    $meetings = $meetings ?? collect();
     $selectedAudienceScope = old('audience_scope', $pollModel?->audience_scope ?? 'manual');
     $selectedAudienceCommittee = old('audience_committee', $pollModel?->audience_committee);
     $selectedAudienceCategory = old('audience_category_id', $pollModel?->audience_category_id);
+    $selectedMeetingId = old('meeting_id', $pollModel?->meeting_id);
 @endphp
 
 <section class="poll-form-section">
@@ -109,6 +111,30 @@
             @endforelse
         </select>
         @error('zoom_meeting_id')
+            <div class="poll-error">{{ $message }}</div>
+        @enderror
+    </div>
+
+    <div class="poll-field {{ $errors->has('meeting_id') ? 'has-error' : '' }}">
+        <label for="meeting_id">{{ __('ربط الاستطلاع باجتماع') }}</label>
+        <select name="meeting_id" id="meeting_id" class="poll-select">
+            <option value="">{{ __('بدون اجتماع مرتبط') }}</option>
+            @forelse($meetings as $meeting)
+                <option
+                    value="{{ $meeting->id }}"
+                    {{ (string) $selectedMeetingId === (string) $meeting->id ? 'selected' : '' }}
+                >
+                    {{ $meeting->name }}
+                    @if($meeting->date)
+                        - {{ $meeting->date->format('Y-m-d H:i') }}
+                    @endif
+                </option>
+            @empty
+                <option value="" disabled>{{ __('لا توجد اجتماعات متاحة حالياً') }}</option>
+            @endforelse
+        </select>
+        <div class="poll-help-text">{{ __('عند الربط سيظهر ملخص نتائج هذا الاستطلاع داخل صفحة تفاصيل الاجتماع.') }}</div>
+        @error('meeting_id')
             <div class="poll-error">{{ $message }}</div>
         @enderror
     </div>

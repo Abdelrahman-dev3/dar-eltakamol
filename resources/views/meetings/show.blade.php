@@ -3,6 +3,7 @@
 @php
     $inviteesCount = $meeting->users->count();
     $attachmentsCount = $meeting->attachments->count();
+    $linkedPollsCount = $meeting->polls->count();
     $isToday = $meeting->date->isToday();
     $isUpcoming = $meeting->date->isFuture() && ! $isToday;
     $statusText = $isToday ? __('اليوم') : ($isUpcoming ? __('قادم') : __('منتهٍ'));
@@ -262,6 +263,74 @@
     }
     .meeting-attachment-actions a { background: rgba(170, 134, 63, 0.10); color: var(--primary-color); }
     .meeting-attachment-actions button { background: rgba(220, 38, 38, 0.08); color: var(--danger-color); border-color: rgba(220, 38, 38, 0.12); }
+    .meeting-polls-grid {
+        display: grid;
+        gap: 18px;
+    }
+    .meeting-poll-card {
+        padding: 18px;
+        border-radius: 22px;
+        background: rgba(248, 250, 252, 0.94);
+        border: 1px solid rgba(170, 134, 63, 0.10);
+    }
+    .meeting-poll-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 14px;
+        margin-bottom: 14px;
+        flex-wrap: wrap;
+    }
+    .meeting-poll-title {
+        margin: 0 0 6px;
+        color: var(--text-primary);
+        font-size: 1.08rem;
+        font-weight: 900;
+    }
+    .meeting-poll-meta {
+        color: var(--text-secondary);
+        font-weight: 700;
+        line-height: 1.7;
+    }
+    .meeting-poll-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    .meeting-poll-actions a {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 14px;
+        border-radius: 14px;
+        background: rgba(170, 134, 63, 0.10);
+        color: var(--primary-color);
+        text-decoration: none !important;
+        font-weight: 800;
+    }
+    .meeting-poll-progress-list {
+        display: grid;
+        gap: 12px;
+    }
+    .meeting-poll-progress-head {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 8px;
+        color: var(--text-primary);
+        font-weight: 800;
+    }
+    .meeting-poll-progress {
+        height: 10px;
+        overflow: hidden;
+        border-radius: 999px;
+        background: rgba(170, 134, 63, 0.12);
+    }
+    .meeting-poll-progress-bar {
+        height: 100%;
+        border-radius: inherit;
+        background: linear-gradient(135deg, var(--primary-color), #d4b066);
+    }
     .meeting-empty-state {
         padding: 24px;
         border-radius: 22px;
@@ -281,6 +350,7 @@
     html[data-theme="dark"] .meeting-show-stat-card,
     html[data-theme="dark"] .meeting-user-card,
     html[data-theme="dark"] .meeting-attachment-card,
+    html[data-theme="dark"] .meeting-poll-card,
     html[data-theme="dark"] .meeting-empty-state {
         background: rgba(15, 23, 42, 0.92);
         border-color: rgba(148, 163, 184, 0.14);
@@ -350,6 +420,7 @@
                                 <span class="meeting-show-chip {{ $statusClass }}"><i class="bi bi-clock"></i>{{ $statusText }}</span>
                                 <span class="meeting-show-chip"><i class="bi bi-people"></i>{{ __('المدعوون') }}: {{ $inviteesCount }}</span>
                                 <span class="meeting-show-chip"><i class="bi bi-paperclip"></i>{{ __('المرفقات') }}: {{ $attachmentsCount }}</span>
+                                <span class="meeting-show-chip"><i class="bi bi-ui-checks-grid"></i>{{ __('الاستطلاعات') }}: {{ $linkedPollsCount }}</span>
                             </div>
                         </div>
                     </div>
@@ -430,6 +501,73 @@
                         <div class="meeting-detail-value">{{ $meeting->date->diffForHumans() }}</div>
                     </div>
                 </div>
+            </section>
+
+            <section class="meeting-show-card full-width">
+                <div class="meeting-show-card-head">
+                    <h2 class="meeting-show-card-title"><i class="bi bi-ui-checks-grid"></i>{{ __('نتائج الاستطلاعات المرتبطة') }}</h2>
+                    <span class="meeting-show-card-note">{{ __('ملخص سريع لنتائج كل استطلاع مرتبط بهذا الاجتماع مع روابط التفاصيل الكاملة.') }}</span>
+                </div>
+
+                @if ($linkedPollsCount > 0)
+                    <div class="meeting-polls-grid">
+                        @foreach ($meeting->polls as $poll)
+                            @php
+                                $totalPollVotes = $poll->pollAnswers->count();
+                            @endphp
+                            <article class="meeting-poll-card">
+                                <div class="meeting-poll-head">
+                                    <div>
+                                        <h3 class="meeting-poll-title">{{ $poll->title ?: $poll->question }}</h3>
+                                        <div class="meeting-poll-meta">
+                                            {{ __('عدد الأصوات') }}: {{ number_format($totalPollVotes) }}
+                                            - {{ __('الخيارات') }}: {{ number_format($poll->pollOptions->count()) }}
+                                        </div>
+                                    </div>
+                                    <div class="meeting-poll-actions">
+                                        <a href="{{ route('polls.show', $poll) }}">
+                                            <i class="bi bi-eye-fill"></i>
+                                            {{ __('تفاصيل الاستطلاع') }}
+                                        </a>
+                                        <a href="{{ route('polls.results', $poll) }}">
+                                            <i class="bi bi-bar-chart-fill"></i>
+                                            {{ __('النتائج الكاملة') }}
+                                        </a>
+                                    </div>
+                                </div>
+
+                                @if ($poll->pollOptions->count() > 0)
+                                    <div class="meeting-poll-progress-list">
+                                        @foreach ($poll->pollOptions as $option)
+                                            @php
+                                                $optionVotes = $option->votes;
+                                                $percentage = $totalPollVotes > 0 ? ($optionVotes / $totalPollVotes) * 100 : 0;
+                                            @endphp
+                                            <div>
+                                                <div class="meeting-poll-progress-head">
+                                                    <span>{{ $option->option_text }}</span>
+                                                    <span>{{ number_format($optionVotes) }} {{ __('صوت') }} - {{ number_format($percentage, 1) }}%</span>
+                                                </div>
+                                                <div class="meeting-poll-progress">
+                                                    <div class="meeting-poll-progress-bar" style="width: {{ $percentage }}%;"></div>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                @else
+                                    <div class="meeting-empty-state">
+                                        <div>{{ __('لا توجد خيارات تصويت مرتبطة بهذا الاستطلاع حتى الآن.') }}</div>
+                                    </div>
+                                @endif
+                            </article>
+                        @endforeach
+                    </div>
+                @else
+                    <div class="meeting-empty-state">
+                        <i class="bi bi-ui-checks" style="font-size: 2rem; display: inline-block; margin-bottom: 10px; color: var(--primary-color);"></i>
+                        <div>{{ __('لا يوجد استطلاع مرتبط بهذا الاجتماع حتى الآن.') }}</div>
+                    </div>
+                @endif
             </section>
 
             <section class="meeting-show-card full-width">

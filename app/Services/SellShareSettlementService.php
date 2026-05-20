@@ -11,6 +11,69 @@ use Illuminate\Validation\ValidationException;
 
 class SellShareSettlementService
 {
+    public function settleBySeller(SellShares $offer, ?int $createdBy = null): SellShareSettlement
+    {
+        return DB::transaction(function () use ($offer, $createdBy) {
+            $offer = SellShares::query()
+                ->whereKey($offer->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            $eligibleOrders = $offer->sharesPOs()
+                ->where(function ($query): void {
+                    $query
+                        ->whereNull('po_status')
+                        ->orWhereNotIn('po_status', [
+                            SharesPO::PO_STATUS_COMPLETED,
+                            SharesPO::PO_STATUS_REJECTED,
+                        ]);
+                })
+                ->lockForUpdate()
+                ->get();
+
+            if ($eligibleOrders->isNotEmpty()) {
+                $prices = $eligibleOrders
+                    ->map(fn (SharesPO $order) => number_format((float) $order->amount_per_share, 2, '.', ''))
+                    ->unique()
+                    ->values();
+
+                if ($prices->count() === 1) {
+                    foreach ($eligibleOrders as $order) {
+                        $order->update([
+                            'accept' => true,
+                            'accepted_count' => $order->count,
+                            'po_status' => SharesPO::PO_STATUS_REVIEW,
+                        ]);
+                    }
+                } else {
+                    $highestPrice = (float) $eligibleOrders->max(fn (SharesPO $order) => (float) $order->amount_per_share);
+
+                    foreach ($eligibleOrders as $order) {
+                        if ((float) $order->amount_per_share >= $highestPrice) {
+                            $order->update([
+                                'accept' => true,
+                                'accepted_count' => (float) $order->accepted_count > 0 ? $order->accepted_count : $order->count,
+                                'po_status' => SharesPO::PO_STATUS_REVIEW,
+                            ]);
+                        }
+                    }
+
+                    $lowerPricedOrders = $eligibleOrders->filter(
+                        fn (SharesPO $order) => (float) $order->amount_per_share < $highestPrice
+                    );
+
+                    if ($lowerPricedOrders->isNotEmpty()) {
+                        throw ValidationException::withMessages([
+                            'settlement' => 'توجد طلبات شراء بسعر أقل من أعلى سعر مقدم. يمكن انتظار رفع السعر أو رفض الطلبات الأقل قبل تنفيذ التسوية.',
+                        ]);
+                    }
+                }
+            }
+
+            return $this->settle($offer->refresh(), $createdBy);
+        });
+    }
+
     public function settle(SellShares $offer, ?int $createdBy = null): SellShareSettlement
     {
         return DB::transaction(function () use ($offer, $createdBy) {
@@ -34,7 +97,14 @@ class SellShareSettlementService
 
             $orders = $offer->sharesPOs()
                 ->where('accept', true)
-                ->where('po_status', '!=', SharesPO::PO_STATUS_COMPLETED)
+                ->where(function ($query): void {
+                    $query
+                        ->whereNull('po_status')
+                        ->orWhereNotIn('po_status', [
+                            SharesPO::PO_STATUS_COMPLETED,
+                            SharesPO::PO_STATUS_REJECTED,
+                        ]);
+                })
                 ->orderBy('insert_date')
                 ->orderBy('id')
                 ->get();
@@ -102,7 +172,7 @@ class SellShareSettlementService
         $allocations = [];
 
         foreach ($orders as $order) {
-            $orderCount = (float) $order->count;
+            $orderCount = $this->acceptedOrderCount($order);
             $allocation = min($baseShare, $orderCount, $remaining);
             $allocations[$order->id] = round($allocation, 2);
             $remaining = round($remaining - $allocation, 2);
@@ -113,7 +183,7 @@ class SellShareSettlementService
 
             foreach ($orders as $order) {
                 $current = $allocations[$order->id] ?? 0;
-                $orderRemaining = round((float) $order->count - $current, 2);
+                $orderRemaining = round($this->acceptedOrderCount($order) - $current, 2);
 
                 if ($orderRemaining <= 0 || $remaining <= 0) {
                     continue;
@@ -131,5 +201,16 @@ class SellShareSettlementService
         }
 
         return $allocations;
+    }
+
+    private function acceptedOrderCount(SharesPO $order): float
+    {
+        $acceptedCount = (float) ($order->accepted_count ?? 0);
+
+        if ($acceptedCount <= 0) {
+            return (float) $order->count;
+        }
+
+        return min($acceptedCount, (float) $order->count);
     }
 }

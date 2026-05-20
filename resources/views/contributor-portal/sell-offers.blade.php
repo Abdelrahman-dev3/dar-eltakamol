@@ -27,6 +27,7 @@
                     @php
                         $canEditOffer = $currentPhase === \App\Models\TradingPeriod::PHASE_OFFER
                             && !in_array((int) $offer->ad_status, [\App\Models\SellShares::AD_STATUS_COMPLETED, \App\Models\SellShares::AD_STATUS_CANCELLED], true)
+                            && (!$offer->independent_purchase_order_id || $offer->independent_offer_status === \App\Models\SellShares::INDEPENDENT_STATUS_PENDING)
                             && (int) $offer->shares_p_os_count === 0;
                     @endphp
                     <tr>
@@ -38,7 +39,7 @@
                         <td>{{ $offer->shares_p_os_count }}</td>
                         <td>
                             <div class="cp-actions">
-                                <a class="cp-btn cp-btn-secondary" href="{{ route('sell-shares.show', $offer) }}"><i class="bi bi-eye-fill"></i></a>
+                                <a class="cp-btn cp-btn-secondary" href="{{ route('contributor.sell-offers.show', $offer) }}" title="{{ __('عرض التفاصيل') }}"><i class="bi bi-eye-fill"></i></a>
                                 @if($canEditOffer)
                                     <a class="cp-btn cp-btn-secondary" href="{{ route('contributor.sell-offers.edit', $offer) }}"><i class="bi bi-pencil-square"></i></a>
                                 @endif

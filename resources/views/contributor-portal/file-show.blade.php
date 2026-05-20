@@ -1,4 +1,8 @@
 @extends('layouts.app')
+@php
+    $fileBackRoute = $fileBackRoute ?? 'contributor.files';
+    $fileDownloadRoute = $fileDownloadRoute ?? 'contributor.files.download';
+@endphp
 @section('title', $document->name)
 @include('contributor-portal.partials.styles')
 
@@ -10,8 +14,8 @@
             <p class="cp-subtitle">{{ __('أضيف في') }} {{ $document->created_at?->format('Y-m-d H:i') }}</p>
         </div>
         <div class="cp-actions">
-            <a class="cp-btn cp-btn-primary" href="{{ route('contributor.files.download', $document) }}"><i class="bi bi-download"></i>{{ __('تحميل الملف') }}</a>
-            <a class="cp-btn cp-btn-secondary" href="{{ route('contributor.files') }}"><i class="bi bi-arrow-right"></i>{{ __('رجوع للملفات') }}</a>
+            <a class="cp-btn cp-btn-primary" href="{{ route($fileDownloadRoute, $document) }}"><i class="bi bi-download"></i>{{ __('تحميل الملف') }}</a>
+            <a class="cp-btn cp-btn-secondary" href="{{ route($fileBackRoute) }}"><i class="bi bi-arrow-right"></i>{{ __('رجوع للملفات') }}</a>
         </div>
     </section>
 
@@ -34,7 +38,7 @@
                     @endif
                 </div>
             </div>
-            <a class="cp-btn cp-btn-secondary" href="{{ route('contributor.files.download', $document) }}"><i class="bi bi-download"></i>{{ __('تحميل') }}</a>
+            <a class="cp-btn cp-btn-secondary" href="{{ route($fileDownloadRoute, $document) }}"><i class="bi bi-download"></i>{{ __('تحميل') }}</a>
         </div>
     </section>
 </div>

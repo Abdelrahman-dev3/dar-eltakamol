@@ -11,6 +11,10 @@
     $targetedUsersCount = $poll->referencedUsers->count();
     $participationBase = $targetedUsersCount > 0 ? $targetedUsersCount : \App\Models\User::count();
     $participationRate = $participationBase > 0 ? ($totalAnswers / $participationBase) * 100 : 0;
+    $answerGroupsByUser = $poll->pollAnswers->groupBy('user_id');
+    $participantUsers = $poll->referencedUsers->isNotEmpty()
+        ? $poll->referencedUsers
+        : $poll->pollAnswers->pluck('user')->filter()->unique('id')->values();
 
     if (! $poll->is_active) {
         $status = ['label' => __('متوقف'), 'class' => 'inactive', 'icon' => 'bi-pause-circle'];
@@ -241,38 +245,59 @@
                 </section>
             @endif
 
-            @if($poll->pollAnswers->count() > 0)
-                <section class="poll-card full-span">
-                    <div class="poll-card-header">
-                        <div class="poll-card-title-wrap">
-                            <span class="poll-card-icon"><i class="bi bi-people-fill"></i></span>
-                            <div>
-                                <h2 class="poll-card-title">{{ __('تفاصيل المشاركين') }}</h2>
-                                <p class="poll-card-note">{{ __('جدول منظم يوضح اسم المشارك والخيار الذي تم اختياره وتوقيت المشاركة.') }}</p>
-                            </div>
+            <section class="poll-card full-span">
+                <div class="poll-card-header">
+                    <div class="poll-card-title-wrap">
+                        <span class="poll-card-icon"><i class="bi bi-people-fill"></i></span>
+                        <div>
+                            <h2 class="poll-card-title">{{ __('تفاصيل المدعوين والتصويت') }}</h2>
+                            <p class="poll-card-note">{{ __('يعرض هذا الجدول كل حساب مدعو للاستطلاع، وما إذا صوت، والخيار أو الخيارات التي اختارها مع توقيت التصويت.') }}</p>
                         </div>
                     </div>
+                </div>
 
+                @if($participantUsers->count() > 0)
                     <table class="poll-attendees-table">
                         <thead>
                             <tr>
-                                <th>{{ __('المشارك') }}</th>
-                                <th>{{ __('الخيار المختار') }}</th>
+                                <th>{{ __('الحساب المدعو') }}</th>
+                                <th>{{ __('حالة التصويت') }}</th>
+                                <th>{{ __('ما تم اختياره') }}</th>
                                 <th>{{ __('تاريخ التصويت') }}</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach($poll->pollAnswers->sortByDesc('answer_date') as $answer)
+                            @foreach($participantUsers as $user)
+                                @php
+                                    $answers = $answerGroupsByUser->get($user->id, collect());
+                                    $latestAnswer = $answers->sortByDesc('answer_date')->first();
+                                    $selectedAnswers = $answers->map(function ($answer) {
+                                        $optionText = optional($answer->pollOption)->option_text ?? __('غير محدد');
+                                        $questionText = optional($answer->question)->question_text;
+
+                                        return $questionText ? $questionText . ': ' . $optionText : $optionText;
+                                    })->filter()->implode('، ');
+                                @endphp
                                 <tr>
-                                    <td>{{ optional($answer->user)->name ?? __('غير معروف') }}</td>
-                                    <td>{{ optional($answer->pollOption)->option_text ?? __('غير محدد') }}</td>
-                                    <td>{{ optional($answer->answer_date)->format('Y-m-d H:i') ?? __('غير متوفر') }}</td>
+                                    <td>
+                                        <strong>{{ $user->name }}</strong>
+                                        <div class="poll-card-note" style="margin: 4px 0 0;">{{ $user->email }}</div>
+                                    </td>
+                                    <td>{{ $answers->isNotEmpty() ? __('صوّت') : __('لم يصوت') }}</td>
+                                    <td>{{ $selectedAnswers ?: __('لا يوجد تصويت مسجل') }}</td>
+                                    <td>{{ optional($latestAnswer?->answer_date)->format('Y-m-d H:i') ?? __('غير متوفر') }}</td>
                                 </tr>
                             @endforeach
                         </tbody>
                     </table>
-                </section>
-            @endif
+                @else
+                    <div class="poll-empty-state">
+                        <i class="bi bi-person-lines-fill"></i>
+                        <h3>{{ __('لا توجد حسابات مدعوة') }}</h3>
+                        <p>{{ __('لم يتم العثور على مدعوين أو مصوتين مرتبطين بهذا الاستطلاع حتى الآن.') }}</p>
+                    </div>
+                @endif
+            </section>
         </div>
     </div>
 </div>

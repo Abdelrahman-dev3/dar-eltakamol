@@ -15,6 +15,9 @@ class Document extends Model
     protected $fillable = [
         'name',
         'meeting_id',
+        'audience_scope',
+        'audience_committee',
+        'audience_category_id',
         'file_path',
         'original_filename',
         'file_type',

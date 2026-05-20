@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Storage;
 
 class Circular extends Model
@@ -14,7 +15,11 @@ class Circular extends Model
 
     protected $fillable = [
         'name',
+        'description',
         'meeting_id',
+        'audience_scope',
+        'audience_committee',
+        'audience_category_id',
         'file_path',
         'original_filename',
         'file_type',
@@ -36,6 +41,11 @@ class Circular extends Model
     {
         return $this->belongsToMany(User::class, 'circular_user')
             ->withTimestamps();
+    }
+
+    public function attachments(): HasMany
+    {
+        return $this->hasMany(CircularAttachment::class)->orderBy('sort_order');
     }
 
     /**

@@ -11,6 +11,12 @@
         </div>
     </section>
 
+    @if($errors->has('trading_period'))
+        <section class="cp-card">
+            <div class="cp-error">{{ $errors->first('trading_period') }}</div>
+        </section>
+    @endif
+
     <section class="cp-card">
         <h2 class="cp-card-title"><i class="bi bi-cart-plus-fill"></i>{{ __('طلب شراء مستقل') }}</h2>
         <form class="cp-form" method="POST" action="{{ route('contributor.purchase-orders.independent.store') }}">
@@ -24,6 +30,9 @@
 
     <section class="cp-card">
         <h2 class="cp-card-title"><i class="bi bi-link-45deg"></i>{{ __('طلب شراء مرتبط بعرض بيع') }}</h2>
+        @unless($canCreateLinkedPurchaseOrder)
+            <div class="cp-error" style="margin-bottom: .85rem;">{{ __('لا يمكن تقديم طلب شراء مرتبط بعرض بيع بعد انتهاء الفترة الأولى من التداول.') }}</div>
+        @endunless
         <form class="cp-form" method="POST" action="{{ route('contributor.purchase-orders.store') }}">
             @csrf
             <div class="cp-field full">
@@ -37,8 +46,8 @@
                 </select>
                 @error('sale_number')<span class="cp-error">{{ $message }}</span>@enderror
             </div>
-            <div class="cp-field"><label class="cp-label">{{ __('عدد الأسهم') }}</label><input class="cp-input" name="count" type="number" min="0.01" step="0.01" value="{{ old('count') }}" required></div>
-            <div class="cp-field"><label class="cp-label">{{ __('سعر السهم') }}</label><input class="cp-input" name="amount_per_share" type="number" min="{{ max($stock, 0) }}" step="0.01" value="{{ old('amount_per_share', $stock) }}" required></div>
+            <div class="cp-field"><label class="cp-label">{{ __('عدد الأسهم') }}</label><input class="cp-input" name="count" type="number" min="0.01" step="0.01" value="{{ old('count') }}" required>@error('count')<span class="cp-error">{{ $message }}</span>@enderror</div>
+            <div class="cp-field"><label class="cp-label">{{ __('سعر السهم') }}</label><input class="cp-input" name="amount_per_share" type="number" min="{{ max($stock, 0) }}" step="0.01" value="{{ old('amount_per_share', $stock) }}" required>@error('amount_per_share')<span class="cp-error">{{ $message }}</span>@enderror</div>
             <div class="cp-actions"><button class="cp-btn cp-btn-secondary" type="submit"><i class="bi bi-check2-circle"></i>{{ __('تقديم طلب مرتبط') }}</button></div>
         </form>
     </section>

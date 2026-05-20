@@ -7,6 +7,7 @@
     $updatedAt = $circular->updated_at;
     $recipientsCount = $circular->recipients->count();
     $recipientNames = $circular->recipients->pluck('name')->filter()->values();
+    $attachments = $circular->attachments->isNotEmpty() ? $circular->attachments : collect([$circular]);
 @endphp
 
 @section('title', __('عرض تفاصيل التعميم'))
@@ -463,6 +464,10 @@
                         <i class="bi bi-pencil-square"></i>
                         {{ __('تعديل التعميم') }}
                     </a>
+                    <a href="{{ route('circulars.view', $circular) }}" target="_blank" rel="noopener noreferrer" class="cir-show-btn-muted">
+                        <i class="bi bi-box-arrow-up-right"></i>
+                        {{ __('عرض الملف') }}
+                    </a>
                     <a href="{{ route('circulars.download', $circular) }}" target="_blank" rel="noopener noreferrer" class="cir-show-btn-muted">
                         <i class="bi bi-download"></i>
                         {{ __('تحميل الملف') }}
@@ -485,9 +490,9 @@
 
         <section class="cir-show-stats">
             <div class="cir-show-stat-card">
-                <span class="cir-show-stat-icon"><i class="bi bi-filetype-txt"></i></span>
-                <p class="cir-show-stat-value">{{ $extension }}</p>
-                <p class="cir-show-stat-label">{{ __('امتداد الملف') }}</p>
+                <span class="cir-show-stat-icon"><i class="bi bi-files"></i></span>
+                <p class="cir-show-stat-value">{{ number_format($attachments->count()) }}</p>
+                <p class="cir-show-stat-label">{{ __('عدد المرفقات') }}</p>
             </div>
             <div class="cir-show-stat-card">
                 <span class="cir-show-stat-icon"><i class="bi bi-hdd-stack"></i></span>
@@ -521,6 +526,10 @@
                     <div class="cir-detail-item">
                         <span class="cir-detail-label">{{ __('اسم التعميم') }}</span>
                         <div class="cir-detail-value">{{ $circular->name }}</div>
+                    </div>
+                    <div class="cir-detail-item" style="grid-column: 1 / -1;">
+                        <span class="cir-detail-label">{{ __('شرح التعميم') }}</span>
+                        <div class="cir-detail-value">{{ $circular->description ?: __('لا يوجد شرح مضاف') }}</div>
                     </div>
                     <div class="cir-detail-item">
                         <span class="cir-detail-label">{{ __('الاسم الأصلي') }}</span>
@@ -575,39 +584,50 @@
 
             <section class="cir-show-card full-width">
                 <div class="cir-show-card-head">
-                    <h2 class="cir-show-card-title"><i class="bi bi-file-earmark-arrow-down"></i>{{ __('بطاقة الملف') }}</h2>
-                    <span class="cir-show-card-note">{{ __('بطاقة مركزة تعرض ملف التعميم الحالي مع أهم التفاصيل وخيارات الوصول السريع.') }}</span>
+                    <h2 class="cir-show-card-title"><i class="bi bi-file-earmark-arrow-down"></i>{{ __('مرفقات التعميم') }}</h2>
+                    <span class="cir-show-card-note">{{ __('كل الملفات المرتبطة بهذا التعميم مع خيارات العرض والتحميل السريع.') }}</span>
                 </div>
 
-                <article class="cir-file-card">
-                    <div class="cir-file-card-main">
-                        <span class="cir-file-card-icon">
-                            <i class="fa {{ $circular->file_icon }}"></i>
-                        </span>
-                        <div>
-                            <h3 class="cir-file-card-name">{{ $circular->original_filename }}</h3>
-                            <p class="cir-file-card-meta">
-                                {{ __('الاسم المعروض') }}: {{ $circular->name }}<br>
-                                {{ __('نوع الملف') }}: {{ $fileType }}<br>
-                                {{ __('الامتداد') }}: {{ $extension }}<br>
-                                {{ __('الحجم') }}: {{ $circular->file_size_human }}<br>
-                                {{ __('المستلمون') }}: {{ number_format($recipientsCount) }}
-                            </p>
-                            <p class="cir-file-card-desc">{{ __('يمكنك تنزيل الملف مباشرة أو الانتقال إلى صفحة التعديل لتحديث الاسم أو استبدال الملف أو تعديل الجمهور المستهدف.') }}</p>
+                @foreach($attachments as $attachment)
+                    @php
+                        $isExtraAttachment = $attachment instanceof \App\Models\CircularAttachment;
+                        $viewRoute = $isExtraAttachment ? route('circulars.attachments.view', $attachment) : route('circulars.view', $circular);
+                        $downloadRoute = $isExtraAttachment ? route('circulars.attachments.download', $attachment) : route('circulars.download', $circular);
+                    @endphp
+                    <article class="cir-file-card" style="margin-bottom: 12px;">
+                        <div class="cir-file-card-main">
+                            <span class="cir-file-card-icon">
+                                <i class="fa {{ $attachment->file_icon }}"></i>
+                            </span>
+                            <div>
+                                <h3 class="cir-file-card-name">{{ $attachment->original_filename }}</h3>
+                                <p class="cir-file-card-meta">
+                                    {{ __('الاسم المعروض') }}: {{ $circular->name }}<br>
+                                    {{ __('نوع الملف') }}: {{ $attachment->file_type ?: __('غير محدد') }}<br>
+                                    {{ __('الامتداد') }}: {{ strtoupper($attachment->file_extension ?: '-') }}<br>
+                                    {{ __('الحجم') }}: {{ $attachment->file_size_human }}<br>
+                                    {{ __('المستلمون') }}: {{ number_format($recipientsCount) }}
+                                </p>
+                                <p class="cir-file-card-desc">{{ $circular->description ?: __('يمكنك عرض الملف أو تنزيله مباشرة أو الانتقال إلى صفحة التعديل لتحديث الاسم أو استبدال الملف أو تعديل الجمهور المستهدف.') }}</p>
+                            </div>
                         </div>
-                    </div>
 
-                    <div class="cir-file-card-actions">
-                        <a href="{{ route('circulars.download', $circular) }}" target="_blank" rel="noopener noreferrer">
-                            <i class="bi bi-download"></i>
-                            {{ __('تنزيل الملف') }}
-                        </a>
-                        <a href="{{ route('circulars.edit', $circular) }}">
-                            <i class="bi bi-pencil-square"></i>
-                            {{ __('تعديل التعميم') }}
-                        </a>
-                    </div>
-                </article>
+                        <div class="cir-file-card-actions">
+                            <a href="{{ $viewRoute }}" target="_blank" rel="noopener noreferrer">
+                                <i class="bi bi-box-arrow-up-right"></i>
+                                {{ __('عرض الملف') }}
+                            </a>
+                            <a href="{{ $downloadRoute }}" target="_blank" rel="noopener noreferrer">
+                                <i class="bi bi-download"></i>
+                                {{ __('تنزيل الملف') }}
+                            </a>
+                            <a href="{{ route('circulars.edit', $circular) }}">
+                                <i class="bi bi-pencil-square"></i>
+                                {{ __('تعديل التعميم') }}
+                            </a>
+                        </div>
+                    </article>
+                @endforeach
             </section>
         </div>
     </div>

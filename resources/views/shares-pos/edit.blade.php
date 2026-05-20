@@ -110,6 +110,7 @@
                                     <option value="{{ \App\Models\SharesPO::PO_STATUS_PENDING }}" {{ old('po_status', $sharesPO->po_status) == \App\Models\SharesPO::PO_STATUS_PENDING ? 'selected' : '' }}>{{ __('في الانتظار') }}</option>
                                     <option value="{{ \App\Models\SharesPO::PO_STATUS_REVIEW }}" {{ old('po_status', $sharesPO->po_status) == \App\Models\SharesPO::PO_STATUS_REVIEW ? 'selected' : '' }}>{{ __('قيد المراجعة') }}</option>
                                     <option value="{{ \App\Models\SharesPO::PO_STATUS_COMPLETED }}" {{ old('po_status', $sharesPO->po_status) == \App\Models\SharesPO::PO_STATUS_COMPLETED ? 'selected' : '' }}>{{ __('مكتمل') }}</option>
+                                    <option value="{{ \App\Models\SharesPO::PO_STATUS_REJECTED }}" {{ old('po_status', $sharesPO->po_status) == \App\Models\SharesPO::PO_STATUS_REJECTED ? 'selected' : '' }}>{{ __('مرفوض') }}</option>
                                 </select>
                                 @error('po_status')
                                     <span class="st-error">{{ $message }}</span>

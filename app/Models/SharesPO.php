@@ -14,6 +14,7 @@ class SharesPO extends Model
     public const PO_STATUS_PENDING = 0;
     public const PO_STATUS_REVIEW = 1;
     public const PO_STATUS_COMPLETED = 2;
+    public const PO_STATUS_REJECTED = 3;
 
     protected $table = 'shares_poes';
 
@@ -21,21 +22,26 @@ class SharesPO extends Model
         'user_id',
         'sale_number',
         'count',
+        'accepted_count',
         'amount_per_share',
         'accept',
         'insert_date',
         'po_status',
         'transferred_count',
         'defaulted_at',
+        'price_negotiation_requested_at',
+        'price_negotiation_message',
     ];
 
     protected $casts = [
         'count' => 'decimal:2',
+        'accepted_count' => 'decimal:2',
         'amount_per_share' => 'decimal:2',
         'accept' => 'boolean',
         'insert_date' => 'datetime',
         'transferred_count' => 'decimal:2',
         'defaulted_at' => 'datetime',
+        'price_negotiation_requested_at' => 'datetime',
     ];
 
     /**
@@ -68,6 +74,7 @@ class SharesPO extends Model
             self::PO_STATUS_PENDING => 'في الانتظار',
             self::PO_STATUS_REVIEW => 'قيد المراجعة',
             self::PO_STATUS_COMPLETED => 'مكتمل',
+            self::PO_STATUS_REJECTED => 'مرفوض',
             default => 'غير محدد',
         };
     }

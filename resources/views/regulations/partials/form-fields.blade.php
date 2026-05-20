@@ -10,9 +10,9 @@
         'recipient_users',
         $regulation ? $regulation->recipients->pluck('id')->all() : []
     ))->map(fn ($id) => (string) $id)->all();
-    $selectedAudienceScope = old('audience_scope', 'manual');
-    $selectedAudienceCommittee = old('audience_committee');
-    $selectedAudienceCategory = old('audience_category_id');
+    $selectedAudienceScope = old('audience_scope', $regulation?->audience_scope ?? 'manual');
+    $selectedAudienceCommittee = old('audience_committee', $regulation?->audience_committee);
+    $selectedAudienceCategory = old('audience_category_id', $regulation?->audience_category_id);
 @endphp
 
 <div class="reg-section">

@@ -41,6 +41,8 @@
         </article>
     </section>
 
+    @include('contributor-portal.partials.meeting-polls-card', ['meeting' => $meeting])
+
     <section class="cp-card">
         <h2 class="cp-card-title"><i class="bi bi-paperclip"></i>{{ __('مرفقات الاجتماع') }}</h2>
         <div class="cp-news-list">
@@ -57,7 +59,10 @@
                             @endif
                         </div>
                     </div>
-                    <a class="cp-btn cp-btn-secondary" href="{{ route('contributor.committees.meetings.attachments.download', [$meeting, $attachment]) }}"><i class="bi bi-download"></i>{{ __('تحميل') }}</a>
+                    <div class="cp-actions">
+                        <a class="cp-btn cp-btn-primary" href="{{ route('contributor.committees.meetings.attachments.view', [$meeting, $attachment]) }}" target="_blank" rel="noopener"><i class="bi bi-eye-fill"></i>{{ __('عرض') }}</a>
+                        <a class="cp-btn cp-btn-secondary" href="{{ route('contributor.committees.meetings.attachments.download', [$meeting, $attachment]) }}"><i class="bi bi-download"></i>{{ __('تحميل') }}</a>
+                    </div>
                 </article>
             @empty
                 <div class="cp-empty">{{ __('لا توجد مرفقات لهذا الاجتماع') }}</div>

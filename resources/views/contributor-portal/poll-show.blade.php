@@ -46,6 +46,39 @@
                 <a class="cp-btn cp-btn-secondary" href="{{ route('contributor.polls') }}">{{ __('رجوع') }}</a>
             </div>
         @endif
+
+        @php
+            $totalVotes = $poll->pollOptions->sum('votes');
+        @endphp
+
+        <div style="margin-top: 1.5rem;">
+            <h2 class="cp-section-title">{{ __('نتائج الاستطلاع') }}</h2>
+
+            @if($poll->pollOptions->isNotEmpty())
+                <div class="cp-grid-2">
+                    @foreach($poll->pollOptions as $option)
+                        @php
+                            $percentage = $totalVotes > 0 ? ($option->votes / $totalVotes) * 100 : 0;
+                        @endphp
+                        <article class="cp-card" style="box-shadow:none;">
+                            <strong>{{ $option->option_text }}</strong>
+                            <div style="display:flex; justify-content:space-between; gap:1rem; margin-top:.6rem;">
+                                <span>{{ number_format($option->votes) }} {{ __('صوت') }}</span>
+                                <span>{{ number_format($percentage, 1) }}%</span>
+                            </div>
+                            <div style="height:10px; border-radius:999px; background:rgba(170,134,63,.14); overflow:hidden; margin-top:.6rem;">
+                                <div style="height:100%; width:{{ $percentage }}%; background:var(--primary-color); border-radius:inherit;"></div>
+                            </div>
+                        </article>
+                    @endforeach
+                </div>
+            @else
+                <div class="cp-empty">
+                    <i class="bi bi-bar-chart"></i>
+                    <p>{{ __('لا توجد نتائج متاحة لهذا الاستطلاع حتى الآن.') }}</p>
+                </div>
+            @endif
+        </div>
     </section>
 </div>
 @endsection

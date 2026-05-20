@@ -1,4 +1,8 @@
 @extends('layouts.app')
+@php
+    $regulationBackRoute = $regulationBackRoute ?? 'contributor.regulations';
+    $regulationDownloadRoute = $regulationDownloadRoute ?? 'contributor.regulations.download';
+@endphp
 @section('title', $regulation->name)
 @include('contributor-portal.partials.styles')
 
@@ -10,8 +14,8 @@
             <p class="cp-subtitle">{{ __('أضيفت في') }} {{ $regulation->created_at?->format('Y-m-d H:i') }}</p>
         </div>
         <div class="cp-actions">
-            <a class="cp-btn cp-btn-primary" href="{{ route('contributor.regulations.download', $regulation) }}"><i class="bi bi-download"></i>{{ __('تحميل اللائحة') }}</a>
-            <a class="cp-btn cp-btn-secondary" href="{{ route('contributor.regulations') }}"><i class="bi bi-arrow-right"></i>{{ __('رجوع للوائح') }}</a>
+            <a class="cp-btn cp-btn-primary" href="{{ route($regulationDownloadRoute, $regulation) }}"><i class="bi bi-download"></i>{{ __('تحميل اللائحة') }}</a>
+            <a class="cp-btn cp-btn-secondary" href="{{ route($regulationBackRoute) }}"><i class="bi bi-arrow-right"></i>{{ __('رجوع للوائح') }}</a>
         </div>
     </section>
 
@@ -31,7 +35,7 @@
                     <span><i class="bi bi-calendar3"></i>{{ $regulation->updated_at?->format('Y-m-d H:i') }}</span>
                 </div>
             </div>
-            <a class="cp-btn cp-btn-secondary" href="{{ route('contributor.regulations.download', $regulation) }}"><i class="bi bi-download"></i>{{ __('تحميل') }}</a>
+            <a class="cp-btn cp-btn-secondary" href="{{ route($regulationDownloadRoute, $regulation) }}"><i class="bi bi-download"></i>{{ __('تحميل') }}</a>
         </div>
     </section>
 </div>

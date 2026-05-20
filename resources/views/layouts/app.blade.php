@@ -2181,8 +2181,14 @@
             </div>
 
             <nav class="sidebar-nav">
+                @php
+                    $isContributorDashboard = request()->routeIs('contributor.dashboard');
+                    $dashboardRoute = Auth::user()?->contributor && !Auth::user()?->isAdmin()
+                        ? route('contributor.dashboard')
+                        : route('dashboard');
+                @endphp
                 <div class="nav-item">
-                    <a href="{{ route('dashboard') }}" class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
+                    <a href="{{ $dashboardRoute }}" class="nav-link {{ request()->routeIs('dashboard') || $isContributorDashboard ? 'active' : '' }}">
                         <i class="bi bi-grid-1x2-fill nav-icon"></i>
                         <span class="nav-link-label">{{ __('لوحة التحكم') }}</span>
                     </a>
@@ -2190,6 +2196,7 @@
 
                 @php
                     $isMainContributorPortalActive = request()->routeIs('contributor.*')
+                        && !request()->routeIs('contributor.dashboard')
                         && !request()->routeIs('contributor.committees.*')
                         && !request()->routeIs('contributor.board.*');
                 @endphp
@@ -2204,6 +2211,7 @@
                         <li><a href="{{ route('contributor.dashboard') }}" class="{{ request()->routeIs('contributor.dashboard') ? 'active' : '' }}">{{ __('داشبورد المساهم') }}</a></li>
                         <li><a href="{{ route('contributor.statement') }}" class="{{ request()->routeIs('contributor.statement') ? 'active' : '' }}">{{ __('كشف الحساب') }}</a></li>
                         <li><a href="{{ route('contributor.sell-offers') }}" class="{{ request()->routeIs('contributor.sell-offers*') ? 'active' : '' }}">{{ __('عروض البيع') }}</a></li>
+                        <li><a href="{{ route('contributor.buy-offers') }}" class="{{ request()->routeIs('contributor.buy-offers*') ? 'active' : '' }}">{{ __('عروض الشراء') }}</a></li>
                         <li><a href="{{ route('contributor.purchase-orders') }}" class="{{ request()->routeIs('contributor.purchase-orders*') ? 'active' : '' }}">{{ __('طلبات الشراء') }}</a></li>
                         <li><a href="{{ route('contributor.news') }}" class="{{ request()->routeIs('contributor.news*') ? 'active' : '' }}">{{ __('الأخبار') }}</a></li>
                         <li><a href="{{ route('contributor.files') }}" class="{{ request()->routeIs('contributor.files*') ? 'active' : '' }}">{{ __('الملفات') }}</a></li>
@@ -2227,6 +2235,9 @@
                     </a>
                     <ul class="dropdown-menu">
                         <li><a href="{{ route('contributor.committees.dashboard') }}" class="{{ request()->routeIs('contributor.committees.dashboard') ? 'active' : '' }}">{{ __('داشبورد اللجان') }}</a></li>
+                        <li><a href="{{ route('contributor.committees.news') }}" class="{{ request()->routeIs('contributor.committees.news*') ? 'active' : '' }}">{{ __('أخبار اللجان') }}</a></li>
+                        <li><a href="{{ route('contributor.committees.files') }}" class="{{ request()->routeIs('contributor.committees.files*') ? 'active' : '' }}">{{ __('ملفات اللجان') }}</a></li>
+                        <li><a href="{{ route('contributor.committees.regulations') }}" class="{{ request()->routeIs('contributor.committees.regulations*') ? 'active' : '' }}">{{ __('لوائح اللجان') }}</a></li>
                         <li><a href="{{ route('contributor.committees.polls') }}" class="{{ request()->routeIs('contributor.committees.polls') ? 'active' : '' }}">{{ __('استطلاعات اللجان') }}</a></li>
                         <li><a href="{{ route('contributor.committees.meetings') }}" class="{{ request()->routeIs('contributor.committees.meetings*') ? 'active' : '' }}">{{ __('اجتماعات اللجان') }}</a></li>
                         <li><a href="{{ route('contributor.committees.members') }}" class="{{ request()->routeIs('contributor.committees.members') ? 'active' : '' }}">{{ __('أعضاء اللجان') }}</a></li>
@@ -2243,6 +2254,9 @@
                     </a>
                     <ul class="dropdown-menu">
                         <li><a href="{{ route('contributor.board.dashboard') }}" class="{{ request()->routeIs('contributor.board.dashboard') ? 'active' : '' }}">{{ __('داشبورد المجلس') }}</a></li>
+                        <li><a href="{{ route('contributor.board.news') }}" class="{{ request()->routeIs('contributor.board.news*') ? 'active' : '' }}">{{ __('أخبار المجلس') }}</a></li>
+                        <li><a href="{{ route('contributor.board.files') }}" class="{{ request()->routeIs('contributor.board.files*') ? 'active' : '' }}">{{ __('ملفات المجلس') }}</a></li>
+                        <li><a href="{{ route('contributor.board.regulations') }}" class="{{ request()->routeIs('contributor.board.regulations*') ? 'active' : '' }}">{{ __('لوائح المجلس') }}</a></li>
                         <li><a href="{{ route('contributor.board.polls') }}" class="{{ request()->routeIs('contributor.board.polls') ? 'active' : '' }}">{{ __('استطلاعات المجلس') }}</a></li>
                         <li><a href="{{ route('contributor.board.meetings') }}" class="{{ request()->routeIs('contributor.board.meetings*') ? 'active' : '' }}">{{ __('اجتماعات المجلس') }}</a></li>
                         <li><a href="{{ route('contributor.board.members') }}" class="{{ request()->routeIs('contributor.board.members') ? 'active' : '' }}">{{ __('أعضاء مجلس الإدارة') }}</a></li>
@@ -2420,10 +2434,10 @@
                         <li><a href="{{ route('servies.create') }}" class="{{ request()->routeIs('servies.create') ? 'active' : '' }}">{{ __('اضافة خدمة') }}</a></li>
                         @endroutePermission
                         @routePermission('bookings.index')
-                        <li><a href="{{ route('bookings.index') }}" class="{{ request()->routeIs('bookings.index') || request()->routeIs('bookings.edit') ? 'active' : '' }}">{{ __('كل الحجوزات') }}</a></li>
+                        <li><a href="{{ route('bookings.index') }}" class="{{ request()->routeIs('bookings.index') || request()->routeIs('bookings.show') || request()->routeIs('bookings.edit') ? 'active' : '' }}">{{ __('طلبات الخدمات') }}</a></li>
                         @endroutePermission
                         @routePermission('bookings.create')
-                        <li><a href="{{ route('bookings.create') }}" class="{{ request()->routeIs('bookings.create') ? 'active' : '' }}">{{ __('اضافة حجز') }}</a></li>
+                        <li><a href="{{ route('bookings.create') }}" class="{{ request()->routeIs('bookings.create') ? 'active' : '' }}">{{ __('إضافة طلب خدمة') }}</a></li>
                         @endroutePermission
                 </ul>
                 </div>

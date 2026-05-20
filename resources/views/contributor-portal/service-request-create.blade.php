@@ -7,7 +7,7 @@
     <section class="cp-hero">
         <div>
             <h1 class="cp-title">{{ __('طلب خدمة') }}</h1>
-            <p class="cp-subtitle">{{ __('اختر الخدمة المطلوبة وحدد الموعد المناسب مع أي ملاحظات تريد إيصالها للإدارة.') }}</p>
+            <p class="cp-subtitle">{{ __('اختر الخدمة واكتب البيان التفصيلي ليتم تحويل الطلب إلى الإدارة ومتابعته من نفس النافذة.') }}</p>
         </div>
         <div class="cp-actions">
             <a class="cp-btn cp-btn-secondary" href="{{ route('contributor.services') }}"><i class="bi bi-arrow-right"></i>{{ __('رجوع للطلبات') }}</a>
@@ -29,21 +29,9 @@
                 @error('service_id')<span class="cp-error">{{ $message }}</span>@enderror
             </div>
 
-            <div class="cp-field">
-                <label class="cp-label" for="date">{{ __('التاريخ المطلوب') }} <span class="text-danger">*</span></label>
-                <input class="cp-input" type="date" name="date" id="date" value="{{ old('date', now()->format('Y-m-d')) }}" min="{{ now()->format('Y-m-d') }}" required>
-                @error('date')<span class="cp-error">{{ $message }}</span>@enderror
-            </div>
-
-            <div class="cp-field">
-                <label class="cp-label" for="time">{{ __('الوقت المناسب') }} <span class="text-danger">*</span></label>
-                <input class="cp-input" type="time" name="time" id="time" value="{{ old('time', now()->format('H:i')) }}" required>
-                @error('time')<span class="cp-error">{{ $message }}</span>@enderror
-            </div>
-
             <div class="cp-field full">
-                <label class="cp-label" for="notes">{{ __('ملاحظات') }}</label>
-                <textarea class="cp-textarea" name="notes" id="notes" maxlength="1000">{{ old('notes') }}</textarea>
+                <label class="cp-label" for="notes">{{ __('البيان') }}</label>
+                <textarea class="cp-textarea" name="notes" id="notes" maxlength="1000" placeholder="{{ __('اكتب تفاصيل الخدمة المطلوبة بوضوح') }}">{{ old('notes') }}</textarea>
                 @error('notes')<span class="cp-error">{{ $message }}</span>@enderror
             </div>
 

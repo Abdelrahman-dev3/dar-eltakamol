@@ -23,7 +23,7 @@
                 <tbody>
                     @forelse($meetings as $meeting)
                         <tr>
-                            <td>{{ $meeting->name }}</td>
+                            <td><a href="{{ route('contributor.board.meetings.show', $meeting) }}">{{ $meeting->name }}</a></td>
                             <td>{{ $meeting->date?->format('Y-m-d H:i') }}</td>
                             <td><span class="cp-badge">{{ number_format($meeting->attachments_count) }} {{ __('مرفق') }}</span></td>
                             <td>

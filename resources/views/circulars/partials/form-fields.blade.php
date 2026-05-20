@@ -10,9 +10,9 @@
         'recipient_users',
         $circular ? $circular->recipients->pluck('id')->all() : []
     ))->map(fn ($id) => (string) $id)->all();
-    $selectedAudienceScope = old('audience_scope', 'manual');
-    $selectedAudienceCommittee = old('audience_committee');
-    $selectedAudienceCategory = old('audience_category_id');
+    $selectedAudienceScope = old('audience_scope', $circular?->audience_scope ?? 'manual');
+    $selectedAudienceCommittee = old('audience_committee', $circular?->audience_committee);
+    $selectedAudienceCategory = old('audience_category_id', $circular?->audience_category_id);
 @endphp
 
 <div class="cir-section">
@@ -39,7 +39,7 @@
                     @if($isEdit)
                         {{ __('حدّث الاسم المعروض للتعميم داخل القائمة وصفحة العرض مع الاحتفاظ بوضوح الملف المرتبط.') }}
                     @else
-                        {{ __('إذا رفعت عدة ملفات وتركت الاسم فارغًا فسيتم استخدام اسم كل ملف تلقائيًا. وإذا كتبت اسمًا فسيُستخدم لكل الملفات في هذه الدفعة.') }}
+                        {{ __('إذا رفعت عدة ملفات وتركت الاسم فارغًا فسيتم استخدام اسم أول ملف عنوانًا للتعميم. وإذا كتبت اسمًا فسيُستخدم عنوانًا للتعميم بكل مرفقاته.') }}
                     @endif
                 </p>
                 @error('name')
@@ -48,6 +48,17 @@
             </div>
         </div>
 
+        <div class="col-md-12">
+            <div class="form-group cir-field @error('description') has-error @enderror">
+                <label for="description">{{ __('شرح التعميم') }}</label>
+                <textarea name="description" id="description" class="form-control cir-input" rows="4" maxlength="2000"
+                    placeholder="{{ __('اختياري: أضف شرحًا مختصرًا يظهر للمساهمين ضمن تفاصيل الخبر.') }}">{{ old('description', $circular->description ?? '') }}</textarea>
+                <p class="cir-inline-note">{{ __('هذا الحقل غير إلزامي، ويمكن استخدامه لتوضيح سياق التعميم أو أهم ما يجب الانتباه له.') }}</p>
+                @error('description')
+                    <span class="help-block">{{ $message }}</span>
+                @enderror
+            </div>
+        </div>
     </div>
 </div>
 
@@ -151,6 +162,10 @@
             </div>
 
             <div class="cir-current-file-actions">
+                <a href="{{ route('circulars.view', $circular) }}" target="_blank" rel="noopener noreferrer">
+                    <i class="bi bi-box-arrow-up-right"></i>
+                    {{ __('عرض الملف الحالي') }}
+                </a>
                 <a href="{{ route('circulars.download', $circular) }}" target="_blank" rel="noopener noreferrer">
                     <i class="bi bi-download"></i>
                     {{ __('تحميل الملف الحالي') }}
@@ -187,10 +202,10 @@
 
         <div class="cir-upload-zone">
             <div class="form-group cir-field @error('files') has-error @enderror" style="margin-bottom: 0;">
-                <label for="files">{{ __('الملفات') }} <span class="text-danger">*</span></label>
+                <label for="files">{{ __('الملفات المرفقة') }} <span class="text-danger">*</span></label>
                 <input type="file" name="files[]" id="files" class="form-control cir-input" multiple required data-cir-files
                     accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.jpg,.jpeg,.png,.gif,.zip,.rar,.7z">
-                <p class="cir-inline-note">{{ __('يمكنك اختيار أكثر من ملف دفعة واحدة. الأنواع المدعومة تشمل المستندات والصور والأرشيف.') }}</p>
+                <p class="cir-inline-note">{{ __('يمكنك اختيار أكثر من ملف مرفق دفعة واحدة من نفس النافذة. الأنواع المدعومة تشمل المستندات والصور والأرشيف.') }}</p>
                 @error('files')
                     <span class="help-block">{{ $message }}</span>
                 @enderror

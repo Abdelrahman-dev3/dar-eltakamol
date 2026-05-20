@@ -2,7 +2,11 @@
     $isEdit = $isEdit ?? false;
     $meeting = $meeting ?? null;
     $users = $users ?? collect();
+    $polls = $polls ?? collect();
     $selectedUserIds = old('user_ids', $meeting?->users?->pluck('id')->toArray() ?? []);
+    $selectedPollIds = collect(old('poll_ids', $meeting?->polls?->pluck('id')->toArray() ?? []))
+        ->map(fn ($id) => (string) $id)
+        ->all();
     $attachmentDescriptions = old('attachment_descriptions', []);
     $attachmentRowsCount = max(1, count($attachmentDescriptions));
     $existingAttachments = $meeting?->attachments ?? collect();
@@ -71,6 +75,39 @@
                 @enderror
             </div>
         </div>
+    </div>
+</div>
+
+<div class="meeting-section">
+    <h3 class="meeting-section-title">
+        <span>
+            <i class="bi bi-ui-checks-grid"></i>
+            {{ __('الاستطلاعات المرتبطة') }}
+        </span>
+        <span class="meeting-section-chip">{{ count($selectedPollIds) }}</span>
+    </h3>
+
+    <div class="form-group meeting-field @error('poll_ids') has-error @enderror">
+        <label for="poll_ids">{{ __('اختر استطلاعات منشأة مسبقاً') }}</label>
+        <select name="poll_ids[]" id="poll_ids" class="form-control meeting-input" multiple size="8">
+            @forelse ($polls as $poll)
+                <option value="{{ $poll->id }}" {{ in_array((string) $poll->id, $selectedPollIds, true) ? 'selected' : '' }}>
+                    {{ $poll->title ?: $poll->question }}
+                    @if($poll->meeting && optional($meeting)->id !== $poll->meeting_id)
+                        - {{ __('مرتبط حالياً بـ') }} {{ $poll->meeting->name }}
+                    @endif
+                </option>
+            @empty
+                <option value="" disabled>{{ __('لا توجد استطلاعات متاحة للربط حالياً') }}</option>
+            @endforelse
+        </select>
+        <p class="meeting-inline-note">{{ __('يمكن ربط استطلاع أو أكثر بهذا الاجتماع، وستظهر نتائجها المختصرة داخل صفحة تفاصيل الاجتماع مع رابط للتفاصيل الكاملة.') }}</p>
+        @error('poll_ids')
+            <span class="help-block">{{ $message }}</span>
+        @enderror
+        @error('poll_ids.*')
+            <span class="help-block">{{ $message }}</span>
+        @enderror
     </div>
 </div>
 

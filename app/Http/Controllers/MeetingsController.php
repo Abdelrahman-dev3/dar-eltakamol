@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Meeting;
+use App\Models\Poll;
 use App\Models\User;
 use App\Models\MeetingAttachment;
 use App\Models\Category;
@@ -35,12 +36,16 @@ class MeetingsController extends Controller
     public function create(ParticipantAudienceResolver $audienceResolver): View
     {
         $users = User::orderBy('name')->get();
+        $polls = Poll::with('meeting:id,name,date')
+            ->whereNull('meeting_id')
+            ->orderByDesc('created_date')
+            ->get(['id', 'title', 'question', 'meeting_id', 'created_date']);
         $audienceScopes = $audienceResolver->scopeOptions();
         $committeeOptions = $audienceResolver->committeeOptions();
         $companies = Category::companies()->orderBy('name')->get();
         $departments = Category::departments()->with('parent')->orderBy('name')->get();
         
-        return view('meetings.create', compact('users', 'audienceScopes', 'committeeOptions', 'companies', 'departments'));
+        return view('meetings.create', compact('users', 'polls', 'audienceScopes', 'committeeOptions', 'companies', 'departments'));
     }
 
     /**
@@ -59,6 +64,8 @@ class MeetingsController extends Controller
             'audience_category_id' => 'nullable|required_if:audience_scope,company,department|exists:categories,id',
             'user_ids' => 'nullable|array',
             'user_ids.*' => 'exists:users,id',
+            'poll_ids' => 'nullable|array',
+            'poll_ids.*' => 'exists:polls,id',
             'attachments.*' => 'nullable|file|max:20480', // 20MB max per file
             'attachment_descriptions' => 'nullable|array',
         ]);
@@ -85,6 +92,7 @@ class MeetingsController extends Controller
             ]);
 
             $meeting->users()->sync($userIds);
+            $this->syncLinkedPolls($meeting, $validated['poll_ids'] ?? []);
 
             return $meeting;
         });
@@ -104,7 +112,13 @@ class MeetingsController extends Controller
      */
     public function show(Meeting $meeting): View
     {
-        $meeting->load(['users', 'attachments.uploader']);
+        $meeting->load([
+            'users',
+            'attachments.uploader',
+            'polls' => fn ($query) => $query->latest('created_date'),
+            'polls.pollOptions' => fn ($query) => $query->orderBy('votes', 'desc'),
+            'polls.pollAnswers.user',
+        ]);
         
         return view('meetings.show', compact('meeting'));
     }
@@ -114,14 +128,21 @@ class MeetingsController extends Controller
      */
     public function edit(Meeting $meeting, ParticipantAudienceResolver $audienceResolver): View
     {
-        $meeting->load(['users', 'attachments.uploader']);
+        $meeting->load(['users', 'attachments.uploader', 'polls']);
         $users = User::orderBy('name')->get();
+        $polls = Poll::with('meeting:id,name,date')
+            ->where(function ($query) use ($meeting) {
+                $query->whereNull('meeting_id')
+                    ->orWhere('meeting_id', $meeting->id);
+            })
+            ->orderByDesc('created_date')
+            ->get(['id', 'title', 'question', 'meeting_id', 'created_date']);
         $audienceScopes = $audienceResolver->scopeOptions();
         $committeeOptions = $audienceResolver->committeeOptions();
         $companies = Category::companies()->orderBy('name')->get();
         $departments = Category::departments()->with('parent')->orderBy('name')->get();
         
-        return view('meetings.edit', compact('meeting', 'users', 'audienceScopes', 'committeeOptions', 'companies', 'departments'));
+        return view('meetings.edit', compact('meeting', 'users', 'polls', 'audienceScopes', 'committeeOptions', 'companies', 'departments'));
     }
 
     /**
@@ -140,6 +161,8 @@ class MeetingsController extends Controller
             'audience_category_id' => 'nullable|required_if:audience_scope,company,department|exists:categories,id',
             'user_ids' => 'nullable|array',
             'user_ids.*' => 'exists:users,id',
+            'poll_ids' => 'nullable|array',
+            'poll_ids.*' => 'exists:polls,id',
             'attachments.*' => 'nullable|file|max:20480', // 20MB max per file
             'attachment_descriptions' => 'nullable|array',
         ]);
@@ -166,6 +189,7 @@ class MeetingsController extends Controller
             ]);
 
             $meeting->users()->sync($userIds);
+            $this->syncLinkedPolls($meeting, $validated['poll_ids'] ?? []);
         });
 
         // Handle file uploads
@@ -296,6 +320,32 @@ class MeetingsController extends Controller
 
         $request->merge([
             'user_ids' => $userIds,
+        ]);
+    }
+
+    private function syncLinkedPolls(Meeting $meeting, array $pollIds): void
+    {
+        $pollIds = collect($pollIds)
+            ->map(fn ($pollId) => (int) $pollId)
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+
+        Poll::where('meeting_id', $meeting->id)
+            ->whereNotIn('id', $pollIds ?: [0])
+            ->update([
+                'meeting_id' => null,
+                'poll_type' => 'general',
+            ]);
+
+        if ($pollIds === []) {
+            return;
+        }
+
+        Poll::whereIn('id', $pollIds)->update([
+            'meeting_id' => $meeting->id,
+            'poll_type' => 'meeting',
         ]);
     }
 }

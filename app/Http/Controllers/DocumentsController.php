@@ -96,6 +96,13 @@ class DocumentsController extends Controller
                         $document = Document::create([
                             'name' => $documentName,
                             'meeting_id' => $validated['meeting_id'] ?? null,
+                            'audience_scope' => $validated['audience_scope'] ?? ParticipantAudienceResolver::SCOPE_MANUAL,
+                            'audience_committee' => ($validated['audience_scope'] ?? null) === ParticipantAudienceResolver::SCOPE_COMMITTEE
+                                ? ($validated['audience_committee'] ?? null)
+                                : null,
+                            'audience_category_id' => in_array($validated['audience_scope'] ?? null, [ParticipantAudienceResolver::SCOPE_COMPANY, ParticipantAudienceResolver::SCOPE_DEPARTMENT], true)
+                                ? ($validated['audience_category_id'] ?? null)
+                                : null,
                             'file_path' => $path,
                             'original_filename' => $originalName,
                             'file_type' => $file->getClientMimeType(),
@@ -176,6 +183,13 @@ class DocumentsController extends Controller
         $updateData = [
             'name' => $validated['name'],
             'meeting_id' => $validated['meeting_id'] ?? null,
+            'audience_scope' => $validated['audience_scope'] ?? ParticipantAudienceResolver::SCOPE_MANUAL,
+            'audience_committee' => ($validated['audience_scope'] ?? null) === ParticipantAudienceResolver::SCOPE_COMMITTEE
+                ? ($validated['audience_committee'] ?? null)
+                : null,
+            'audience_category_id' => in_array($validated['audience_scope'] ?? null, [ParticipantAudienceResolver::SCOPE_COMPANY, ParticipantAudienceResolver::SCOPE_DEPARTMENT], true)
+                ? ($validated['audience_category_id'] ?? null)
+                : null,
         ];
 
         // Handle file upload if new file is provided

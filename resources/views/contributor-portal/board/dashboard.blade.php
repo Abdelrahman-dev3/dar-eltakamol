@@ -40,7 +40,7 @@
                 <div class="cp-news-item">
                     <div class="cp-news-icon"><i class="bi bi-camera-video-fill"></i></div>
                     <div class="cp-news-body">
-                        <h3 class="cp-news-title">{{ $nextMeeting->name }}</h3>
+                        <h3 class="cp-news-title"><a href="{{ route('contributor.board.meetings.show', $nextMeeting) }}">{{ $nextMeeting->name }}</a></h3>
                         <div class="cp-news-meta"><span><i class="bi bi-clock"></i>{{ $nextMeeting->date?->format('Y-m-d H:i') }}</span></div>
                     </div>
                     <a class="cp-btn cp-btn-secondary" href="{{ route('contributor.board.meetings.show', $nextMeeting) }}">{{ __('تفاصيل') }}</a>
@@ -61,7 +61,7 @@
                 <article class="cp-news-item">
                     <div class="cp-news-icon"><i class="bi bi-camera-video-fill"></i></div>
                     <div class="cp-news-body">
-                        <h3 class="cp-news-title">{{ $meeting->name }}</h3>
+                        <h3 class="cp-news-title"><a href="{{ route('contributor.board.meetings.show', $meeting) }}">{{ $meeting->name }}</a></h3>
                         <div class="cp-news-meta">
                             <span><i class="bi bi-calendar3"></i>{{ $meeting->date?->format('Y-m-d H:i') }}</span>
                             <span><i class="bi bi-paperclip"></i>{{ number_format($meeting->attachments_count) }} {{ __('مرفق') }}</span>

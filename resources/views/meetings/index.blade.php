@@ -600,7 +600,7 @@
                                 </div>
 
                                 <div style="min-width: 0;">
-                                    <h3 class="meeting-name">{{ $meeting->name }}</h3>
+                                    <h3 class="meeting-name"><a href="{{ route('meetings.show', $meeting) }}">{{ $meeting->name }}</a></h3>
                                     <div class="meeting-meta-line">
                                         <span class="meeting-badge">
                                             <i class="bi bi-hash"></i>

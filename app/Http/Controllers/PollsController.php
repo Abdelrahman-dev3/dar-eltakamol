@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Poll;
 use App\Models\ZoomMeeting;
+use App\Models\Meeting;
 use App\Models\User;
 use App\Models\Category;
 use App\Services\ParticipantAudienceResolver;
@@ -32,6 +33,7 @@ class PollsController extends Controller
     public function create(ParticipantAudienceResolver $audienceResolver)
     {
         $zoomMeetings = ZoomMeeting::orderBy('meeting_date', 'desc')->get();
+        $meetings = Meeting::orderBy('date', 'desc')->get(['id', 'name', 'date']);
         $users = User::orderBy('name')->get();
         $audienceScopes = $audienceResolver->scopeOptions();
         $committeeOptions = $audienceResolver->committeeOptions();
@@ -40,6 +42,7 @@ class PollsController extends Controller
 
         return view('polls.create', compact(
             'zoomMeetings',
+            'meetings',
             'users',
             'audienceScopes',
             'committeeOptions',
@@ -61,6 +64,7 @@ class PollsController extends Controller
             'end_date' => 'required|date|after:start_date',
             'is_active' => 'boolean',
             'zoom_meeting_id' => 'nullable|exists:zoom_meetings,id',
+            'meeting_id' => 'nullable|exists:meetings,id',
             'audience_scope' => 'nullable|in:manual,all_users,all_contributors,board_members,committee,company,department',
             'audience_committee' => 'nullable|required_if:audience_scope,committee|string|max:255',
             'audience_category_id' => 'nullable|required_if:audience_scope,company,department|exists:categories,id',
@@ -99,6 +103,8 @@ class PollsController extends Controller
                 'created_date' => now(),
                 'created_by' => Auth::id(),
                 'zoom_meeting_id' => $request->zoom_meeting_id,
+                'meeting_id' => $request->filled('meeting_id') ? $request->integer('meeting_id') : null,
+                'poll_type' => $request->filled('meeting_id') ? 'meeting' : 'general',
                 'audience_scope' => $request->input('audience_scope', ParticipantAudienceResolver::SCOPE_MANUAL),
                 'audience_committee' => $request->input('audience_scope') === ParticipantAudienceResolver::SCOPE_COMMITTEE
                     ? $request->input('audience_committee')
@@ -153,6 +159,7 @@ class PollsController extends Controller
             'creator',
         ]);
         $zoomMeetings = ZoomMeeting::orderBy('meeting_date', 'desc')->get();
+        $meetings = Meeting::orderBy('date', 'desc')->get(['id', 'name', 'date']);
         $users = User::orderBy('name')->get();
         $audienceScopes = $audienceResolver->scopeOptions();
         $committeeOptions = $audienceResolver->committeeOptions();
@@ -162,6 +169,7 @@ class PollsController extends Controller
         return view('polls.edit', compact(
             'poll',
             'zoomMeetings',
+            'meetings',
             'users',
             'audienceScopes',
             'committeeOptions',
@@ -183,6 +191,7 @@ class PollsController extends Controller
             'end_date' => 'required|date|after:start_date',
             'is_active' => 'boolean',
             'zoom_meeting_id' => 'nullable|exists:zoom_meetings,id',
+            'meeting_id' => 'nullable|exists:meetings,id',
             'audience_scope' => 'nullable|in:manual,all_users,all_contributors,board_members,committee,company,department',
             'audience_committee' => 'nullable|required_if:audience_scope,committee|string|max:255',
             'audience_category_id' => 'nullable|required_if:audience_scope,company,department|exists:categories,id',
@@ -205,6 +214,8 @@ class PollsController extends Controller
                 'end_date' => $request->end_date,
                 'is_active' => $request->has('is_active'),
                 'zoom_meeting_id' => $request->zoom_meeting_id,
+                'meeting_id' => $request->filled('meeting_id') ? $request->integer('meeting_id') : null,
+                'poll_type' => $request->filled('meeting_id') ? 'meeting' : 'general',
                 'audience_scope' => $request->input('audience_scope', ParticipantAudienceResolver::SCOPE_MANUAL),
                 'audience_committee' => $request->input('audience_scope') === ParticipantAudienceResolver::SCOPE_COMMITTEE
                     ? $request->input('audience_committee')
@@ -251,6 +262,7 @@ class PollsController extends Controller
             },
             'pollAnswers.user',
             'pollAnswers.pollOption',
+            'pollAnswers.question',
         ]);
 
         return view('polls.results', compact('poll'));

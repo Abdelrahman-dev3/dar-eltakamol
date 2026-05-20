@@ -20,6 +20,10 @@ class SellShares extends Model
         'insert_date',
         'ad_status',
         'user_id',
+        'independent_purchase_order_id',
+        'independent_offer_status',
+        'accepted_count',
+        'responded_at',
     ];
 
     protected $casts = [
@@ -28,6 +32,8 @@ class SellShares extends Model
         'count' => 'float',
         'amount_per_share' => 'float',
         'ad_status' => 'integer',
+        'accepted_count' => 'decimal:2',
+        'responded_at' => 'datetime',
     ];
 
     // Ad Status Constants
@@ -36,12 +42,22 @@ class SellShares extends Model
     const AD_STATUS_COMPLETED = 2;
     const AD_STATUS_CANCELLED = 3;
 
+    public const INDEPENDENT_STATUS_PENDING = 'pending';
+    public const INDEPENDENT_STATUS_ACCEPTED = 'accepted';
+    public const INDEPENDENT_STATUS_PARTIAL = 'partial';
+    public const INDEPENDENT_STATUS_REJECTED = 'rejected';
+
     /**
      * Get the seller (contributor) that owns the sell share.
      */
     public function seller(): BelongsTo
     {
         return $this->belongsTo(Contributor::class, 'user_id');
+    }
+
+    public function independentPurchaseOrder(): BelongsTo
+    {
+        return $this->belongsTo(IndependentPurchaseOrder::class, 'independent_purchase_order_id');
     }
 
     /**
@@ -87,5 +103,21 @@ class SellShares extends Model
     public function getTotalAmountAttribute(): float
     {
         return $this->count * $this->amount_per_share;
+    }
+
+    public function getAcceptedTotalAmountAttribute(): float
+    {
+        return (float) $this->accepted_count * (float) $this->amount_per_share;
+    }
+
+    public function getIndependentOfferStatusText(): string
+    {
+        return match ($this->independent_offer_status) {
+            self::INDEPENDENT_STATUS_PENDING => 'قيد انتظار رد صاحب الطلب',
+            self::INDEPENDENT_STATUS_ACCEPTED => 'مقبول بالكامل',
+            self::INDEPENDENT_STATUS_PARTIAL => 'مقبول جزئياً',
+            self::INDEPENDENT_STATUS_REJECTED => 'مرفوض',
+            default => 'غير مرتبط',
+        };
     }
 }

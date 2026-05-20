@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Circular;
+use App\Models\CircularAttachment;
 use App\Models\Category;
 use App\Models\User;
 use App\Services\ParticipantAudienceResolver;
@@ -56,6 +57,7 @@ class CircularsController extends Controller
 
         $validated = $request->validate([
             'name' => 'nullable|string|max:255',
+            'description' => 'nullable|string|max:2000',
             'files' => 'required|array|min:1',
             'files.*' => 'required|file|max:51200', // 50MB max per file
             'audience_scope' => 'nullable|in:manual,all_users,all_contributors,board_members,committee,company,department',
@@ -74,39 +76,60 @@ class CircularsController extends Controller
 
         $uploadedCount = 0;
 
-        // Handle multiple file uploads
         if ($request->hasFile('files')) {
             DB::transaction(function () use ($request, $validated, $recipientUserIds, &$uploadedCount): void {
-                foreach ($request->file('files') as $file) {
-                    if ($file->isValid()) {
-                        $originalName = $file->getClientOriginalName();
-                        $fileName = Str::uuid() . '.' . $file->getClientOriginalExtension();
+                $files = collect($request->file('files'))->filter(fn ($file) => $file && $file->isValid())->values();
 
-                        // Store file in storage/app/public/circulars
-                        $path = $file->storeAs('circulars', $fileName, 'public');
-
-                        // Use provided name or file name
-                        $circularName = $validated['name'] ?? pathinfo($originalName, PATHINFO_FILENAME);
-
-                        $circular = Circular::create([
-                            'name' => $circularName,
-                            'meeting_id' => null,
-                            'file_path' => $path,
-                            'original_filename' => $originalName,
-                            'file_type' => $file->getClientMimeType(),
-                            'file_size' => $file->getSize(),
-                        ]);
-
-                        $circular->recipients()->sync($recipientUserIds);
-                        $uploadedCount++;
-                    }
+                if ($files->isEmpty()) {
+                    return;
                 }
+
+                $firstFile = $files->first();
+                $firstOriginalName = $firstFile->getClientOriginalName();
+                $firstPath = $firstFile->storeAs('circulars', Str::uuid() . '.' . $firstFile->getClientOriginalExtension(), 'public');
+                $circularName = $validated['name'] ?? pathinfo($firstOriginalName, PATHINFO_FILENAME);
+
+                $circular = Circular::create([
+                    'name' => $circularName,
+                    'description' => $validated['description'] ?? null,
+                    'meeting_id' => null,
+                    'audience_scope' => $validated['audience_scope'] ?? ParticipantAudienceResolver::SCOPE_MANUAL,
+                    'audience_committee' => ($validated['audience_scope'] ?? null) === ParticipantAudienceResolver::SCOPE_COMMITTEE
+                        ? ($validated['audience_committee'] ?? null)
+                        : null,
+                    'audience_category_id' => in_array($validated['audience_scope'] ?? null, [ParticipantAudienceResolver::SCOPE_COMPANY, ParticipantAudienceResolver::SCOPE_DEPARTMENT], true)
+                        ? ($validated['audience_category_id'] ?? null)
+                        : null,
+                    'file_path' => $firstPath,
+                    'original_filename' => $firstOriginalName,
+                    'file_type' => $firstFile->getClientMimeType(),
+                    'file_size' => $firstFile->getSize(),
+                ]);
+
+                $circular->recipients()->sync($recipientUserIds);
+
+                $files->each(function ($file, int $index) use ($circular, $firstPath, $firstOriginalName, $firstFile): void {
+                    $path = $index === 0
+                        ? $firstPath
+                        : $file->storeAs('circulars', Str::uuid() . '.' . $file->getClientOriginalExtension(), 'public');
+
+                    CircularAttachment::create([
+                        'circular_id' => $circular->id,
+                        'file_path' => $path,
+                        'original_filename' => $index === 0 ? $firstOriginalName : $file->getClientOriginalName(),
+                        'file_type' => $index === 0 ? $firstFile->getClientMimeType() : $file->getClientMimeType(),
+                        'file_size' => $index === 0 ? $firstFile->getSize() : $file->getSize(),
+                        'sort_order' => $index,
+                    ]);
+                });
+
+                $uploadedCount = $files->count();
             });
         }
 
         return redirect()
             ->route('circulars.index')
-            ->with('success', __('تم إضافة :count تعميم بنجاح', ['count' => $uploadedCount]));
+            ->with('success', __('تم إضافة التعميم بنجاح مع :count مرفق', ['count' => $uploadedCount]));
     }
 
     /**
@@ -114,7 +137,7 @@ class CircularsController extends Controller
      */
     public function show(Circular $circular): View
     {
-        $circular->load('recipients:id,name,email');
+        $circular->load('recipients:id,name,email', 'attachments');
 
         return view('circulars.show', compact('circular'));
     }
@@ -150,6 +173,7 @@ class CircularsController extends Controller
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'description' => 'nullable|string|max:2000',
             'file' => 'nullable|file|max:51200', // 50MB max
             'audience_scope' => 'nullable|in:manual,all_users,all_contributors,board_members,committee,company,department',
             'audience_committee' => 'nullable|required_if:audience_scope,committee|string|max:255',
@@ -167,15 +191,31 @@ class CircularsController extends Controller
 
         $updateData = [
             'name' => $validated['name'],
+            'description' => $validated['description'] ?? null,
             'meeting_id' => null,
+            'audience_scope' => $validated['audience_scope'] ?? ParticipantAudienceResolver::SCOPE_MANUAL,
+            'audience_committee' => ($validated['audience_scope'] ?? null) === ParticipantAudienceResolver::SCOPE_COMMITTEE
+                ? ($validated['audience_committee'] ?? null)
+                : null,
+            'audience_category_id' => in_array($validated['audience_scope'] ?? null, [ParticipantAudienceResolver::SCOPE_COMPANY, ParticipantAudienceResolver::SCOPE_DEPARTMENT], true)
+                ? ($validated['audience_category_id'] ?? null)
+                : null,
         ];
+        $replacementAttachmentData = null;
 
         // Handle file upload if new file is provided
         if ($request->hasFile('file')) {
-            // Delete old file
-            if ($circular->file_path && Storage::disk('public')->exists($circular->file_path)) {
-                Storage::disk('public')->delete($circular->file_path);
-            }
+            $oldPaths = $circular->attachments()
+                ->pluck('file_path')
+                ->push($circular->file_path)
+                ->filter()
+                ->unique();
+
+            $oldPaths->each(function (string $path): void {
+                if (Storage::disk('public')->exists($path)) {
+                    Storage::disk('public')->delete($path);
+                }
+            });
 
             $file = $request->file('file');
             $originalName = $file->getClientOriginalName();
@@ -188,10 +228,21 @@ class CircularsController extends Controller
             $updateData['original_filename'] = $originalName;
             $updateData['file_type'] = $file->getClientMimeType();
             $updateData['file_size'] = $file->getSize();
+            $replacementAttachmentData = [
+                'file_path' => $path,
+                'original_filename' => $originalName,
+                'file_type' => $file->getClientMimeType(),
+                'file_size' => $file->getSize(),
+                'sort_order' => 0,
+            ];
         }
 
-        DB::transaction(function () use ($circular, $updateData, $recipientUserIds): void {
+        DB::transaction(function () use ($circular, $updateData, $recipientUserIds, $replacementAttachmentData): void {
             $circular->update($updateData);
+            if ($replacementAttachmentData) {
+                $circular->attachments()->delete();
+                $circular->attachments()->create($replacementAttachmentData);
+            }
             $circular->recipients()->sync($recipientUserIds);
         });
 
@@ -205,10 +256,17 @@ class CircularsController extends Controller
      */
     public function destroy(Circular $circular): RedirectResponse
     {
-        // Delete file from storage
-        if ($circular->file_path && Storage::disk('public')->exists($circular->file_path)) {
-            Storage::disk('public')->delete($circular->file_path);
-        }
+        $paths = $circular->attachments()
+            ->pluck('file_path')
+            ->push($circular->file_path)
+            ->filter()
+            ->unique();
+
+        $paths->each(function (string $path): void {
+            if (Storage::disk('public')->exists($path)) {
+                Storage::disk('public')->delete($path);
+            }
+        });
 
         $circular->delete();
 
@@ -232,6 +290,61 @@ class CircularsController extends Controller
             $circular->file_path,
             $circular->original_filename
         );
+    }
+
+    public function viewFile(Circular $circular)
+    {
+        if (!$circular->file_path || !Storage::disk('public')->exists($circular->file_path)) {
+            return redirect()
+                ->route('circulars.show', $circular)
+                ->with('error', __('الملف غير موجود'));
+        }
+
+        return $this->inlineStorageResponse($circular->file_path, $circular->original_filename, $circular->file_type);
+    }
+
+    public function viewAttachment(CircularAttachment $attachment)
+    {
+        return $this->inlineStorageResponse($attachment->file_path, $attachment->original_filename, $attachment->file_type);
+    }
+
+    public function downloadAttachment(CircularAttachment $attachment)
+    {
+        if (!$attachment->file_path || !Storage::disk('public')->exists($attachment->file_path)) {
+            return redirect()
+                ->route('circulars.show', $attachment->circular_id)
+                ->with('error', __('الملف غير موجود'));
+        }
+
+        return Storage::disk('public')->download(
+            $attachment->file_path,
+            $attachment->original_filename
+        );
+    }
+
+    private function inlineStorageResponse(string $filePath, string $filename, ?string $storedMimeType = null)
+    {
+        if (!$filePath || !Storage::disk('public')->exists($filePath)) {
+            return redirect()
+                ->back()
+                ->with('error', __('الملف غير موجود'));
+        }
+
+        $extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+        $mimeType = $extension === 'pdf'
+            ? 'application/pdf'
+            : ($storedMimeType ?: Storage::disk('public')->mimeType($filePath) ?: 'application/octet-stream');
+
+        $safeFilename = Str::ascii($filename);
+        $safeFilename = $safeFilename !== '' ? $safeFilename : 'attachment.' . ($extension ?: 'bin');
+
+        return response()->stream(function () use ($filePath): void {
+            echo Storage::disk('public')->get($filePath);
+        }, 200, [
+            'Content-Type' => $mimeType,
+            'Content-Disposition' => 'inline; filename="' . addslashes($safeFilename) . '"',
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
     }
 
     private function normalizeRecipientUsersInput(Request $request): void
@@ -262,4 +375,3 @@ class CircularsController extends Controller
         ]);
     }
 }
-

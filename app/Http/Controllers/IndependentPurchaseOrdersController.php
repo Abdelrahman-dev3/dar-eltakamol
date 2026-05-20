@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\IndependentPurchaseOrder;
+use App\Models\SellShares;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class IndependentPurchaseOrdersController extends Controller
@@ -15,6 +17,7 @@ class IndependentPurchaseOrdersController extends Controller
 
         $orders = IndependentPurchaseOrder::query()
             ->with('contributor.user')
+            ->withCount('sellOffers')
             ->latest('requested_at')
             ->paginate(15)
             ->withQueryString();
@@ -28,7 +31,7 @@ class IndependentPurchaseOrdersController extends Controller
     {
         abort_unless(auth()->user()?->isAdmin(), 403);
 
-        $independent_purchase_order->load('contributor.user');
+        $independent_purchase_order->load(['contributor.user', 'sellOffers.seller']);
 
         return view('independent-purchase-orders.show', [
             'order' => $independent_purchase_order,
@@ -42,6 +45,35 @@ class IndependentPurchaseOrdersController extends Controller
         $validated = $request->validate([
             'status' => 'required|integer|in:0,1,2,3',
         ]);
+
+        $nextStatus = (int) $validated['status'];
+
+        if ($nextStatus === IndependentPurchaseOrder::STATUS_PUBLISHED) {
+            $validated['published_at'] = $independent_purchase_order->published_at ?: now();
+            $validated['closed_at'] = null;
+        }
+
+        if ($nextStatus === IndependentPurchaseOrder::STATUS_CLOSED) {
+            if (!$independent_purchase_order->canBeClosed()) {
+                throw ValidationException::withMessages([
+                    'status' => 'لا يمكن إغلاق الطلب لوجود عروض بيع قيد المعالجة أو عروض مقبولة مرتبطة به.',
+                ]);
+            }
+
+            $validated['closed_at'] = now();
+        }
+
+        if ($nextStatus === IndependentPurchaseOrder::STATUS_COMPLETED) {
+            $hasPendingOffers = $independent_purchase_order->sellOffers()
+                ->where('independent_offer_status', SellShares::INDEPENDENT_STATUS_PENDING)
+                ->exists();
+
+            if ($hasPendingOffers) {
+                throw ValidationException::withMessages([
+                    'status' => 'لا يمكن إتمام الطلب قبل الرد على كل عروض البيع المقدمة.',
+                ]);
+            }
+        }
 
         $independent_purchase_order->update($validated);
 
@@ -58,6 +90,7 @@ class IndependentPurchaseOrdersController extends Controller
         return [
             'total_count' => $orders->count(),
             'pending_count' => $orders->where('status', IndependentPurchaseOrder::STATUS_PENDING)->count(),
+            'published_count' => $orders->where('status', IndependentPurchaseOrder::STATUS_PUBLISHED)->count(),
             'completed_count' => $orders->where('status', IndependentPurchaseOrder::STATUS_COMPLETED)->count(),
             'total_shares' => (float) $orders->sum(fn ($order) => (float) $order->count),
             'total_value' => (float) $orders->sum(fn ($order) => (float) $order->count * (float) $order->amount_per_share),

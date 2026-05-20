@@ -12,10 +12,14 @@
             .cp-title { margin: 0; color: var(--text-primary); font-size: 2rem; font-weight: 900; }
             .cp-subtitle { margin: .35rem 0 0; color: var(--text-secondary); line-height: 1.7; }
             .cp-actions { display: flex; gap: .6rem; flex-wrap: wrap; align-items: center; }
+            .cp-inline-form { display: inline-flex; gap: .45rem; align-items: center; flex-wrap: wrap; margin: 0; }
+            .cp-inline-form .cp-input { width: 8.5rem; min-height: 2.45rem; padding: .5rem .65rem; }
             .cp-btn { display: inline-flex; align-items: center; justify-content: center; gap: .45rem; min-height: 2.7rem; padding: .65rem 1rem; border-radius: .85rem; border: 0; text-decoration: none !important; font-weight: 800; }
+            .cp-btn-sm { min-height: 2.35rem; padding: .45rem .75rem; border-radius: .7rem; font-size: .9rem; }
             .cp-btn-primary { background: linear-gradient(135deg, var(--primary-color), #c49b48); color: #fff; }
             .cp-btn-secondary { background: rgba(170,134,63,.08); color: var(--primary-color); border: 1px solid rgba(170,134,63,.14); }
             .cp-btn-danger { background: rgba(220,38,38,.1); color: var(--danger-color); border: 1px solid rgba(220,38,38,.14); }
+            .cp-btn-success { background: rgba(22,163,74,.1); color: #15803d; border: 1px solid rgba(22,163,74,.14); }
             .cp-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem; }
             .cp-grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
             .cp-stat { padding: 1rem; }
@@ -47,7 +51,22 @@
             .cp-news-title { margin: 0; color: var(--text-primary); font-size: 1.05rem; font-weight: 900; overflow-wrap: anywhere; }
             .cp-news-meta { display: flex; gap: .75rem; flex-wrap: wrap; margin-top: .35rem; color: var(--text-secondary); font-size: .9rem; font-weight: 700; }
             .cp-news-meta span { display: inline-flex; align-items: center; gap: .3rem; max-width: 100%; overflow-wrap: anywhere; }
+            .cp-news-excerpt { margin: .55rem 0 0; color: var(--text-secondary); line-height: 1.7; font-weight: 700; overflow-wrap: anywhere; }
             .cp-news-content { line-height: 1.9; color: var(--text-secondary); font-weight: 700; }
+            .cp-feature-row { align-items: stretch; }
+            .cp-feature-row > .cp-card { min-height: 12.5rem; display: flex; flex-direction: column; }
+            .cp-feature-row .cp-news-list { flex: 1; }
+            .cp-meeting-card { border-color: rgba(14,165,233,.16); }
+            .cp-meeting-summary { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 1rem; align-items: center; }
+            .cp-meeting-date { width: 4.8rem; min-height: 4.8rem; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 1rem; background: rgba(14,165,233,.09); color: #0369a1; flex-shrink: 0; }
+            .cp-meeting-date span { font-size: 1.8rem; font-weight: 900; line-height: 1; }
+            .cp-meeting-date strong { font-size: .88rem; margin-top: .25rem; }
+            .cp-meeting-body { min-width: 0; }
+            .cp-meeting-title { margin: 0; color: var(--text-primary); font-size: 1.25rem; font-weight: 900; overflow-wrap: anywhere; }
+            .cp-charts-grid { align-items: stretch; }
+            .cp-chart-card { min-height: 25rem; display: flex; flex-direction: column; }
+            .cp-chart-wrap { position: relative; min-height: 18rem; flex: 1; }
+            .cp-chart-wrap canvas { width: 100% !important; height: 100% !important; }
             .cp-member-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
             .cp-member-card { padding: 1rem; border: 1px solid rgba(170,134,63,.12); border-radius: 1rem; background: #fff; }
             .cp-member-head { display: flex; align-items: center; gap: .75rem; margin-bottom: .85rem; }
@@ -57,7 +76,7 @@
             .cp-member-sub { margin-top: .2rem; color: var(--text-secondary); font-weight: 700; overflow-wrap: anywhere; }
             @media (max-width: 1000px) { .cp-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .cp-grid-2 { grid-template-columns: 1fr; } }
             @media (max-width: 1000px) { .cp-member-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-            @media (max-width: 680px) { .cp-grid, .cp-form, .cp-member-grid { grid-template-columns: 1fr; } .cp-hero { align-items: stretch; } .cp-btn { width: 100%; } .cp-news-item { grid-template-columns: 1fr; } .cp-news-icon { width: 2.8rem; height: 2.8rem; } }
+            @media (max-width: 680px) { .cp-grid, .cp-form, .cp-member-grid { grid-template-columns: 1fr; } .cp-hero { align-items: stretch; } .cp-btn { width: 100%; } .cp-news-item, .cp-meeting-summary { grid-template-columns: 1fr; } .cp-news-icon { width: 2.8rem; height: 2.8rem; } .cp-meeting-date { width: 100%; min-height: 4rem; } .cp-chart-card { min-height: 23rem; } }
         </style>
     @endpush
 @endonce

@@ -92,6 +92,13 @@ class RegulationsController extends Controller
                         $regulation = Regulation::create([
                             'name' => $regulationName,
                             'meeting_id' => $validated['meeting_id'] ?? null,
+                            'audience_scope' => $validated['audience_scope'] ?? ParticipantAudienceResolver::SCOPE_MANUAL,
+                            'audience_committee' => ($validated['audience_scope'] ?? null) === ParticipantAudienceResolver::SCOPE_COMMITTEE
+                                ? ($validated['audience_committee'] ?? null)
+                                : null,
+                            'audience_category_id' => in_array($validated['audience_scope'] ?? null, [ParticipantAudienceResolver::SCOPE_COMPANY, ParticipantAudienceResolver::SCOPE_DEPARTMENT], true)
+                                ? ($validated['audience_category_id'] ?? null)
+                                : null,
                             'file_path' => $path,
                             'original_filename' => $originalName,
                             'file_type' => $file->getClientMimeType(),
@@ -166,7 +173,16 @@ class RegulationsController extends Controller
             $request->input('audience_committee')
         );
 
-        $updateData = ['name' => $validated['name']];
+        $updateData = [
+            'name' => $validated['name'],
+            'audience_scope' => $validated['audience_scope'] ?? ParticipantAudienceResolver::SCOPE_MANUAL,
+            'audience_committee' => ($validated['audience_scope'] ?? null) === ParticipantAudienceResolver::SCOPE_COMMITTEE
+                ? ($validated['audience_committee'] ?? null)
+                : null,
+            'audience_category_id' => in_array($validated['audience_scope'] ?? null, [ParticipantAudienceResolver::SCOPE_COMPANY, ParticipantAudienceResolver::SCOPE_DEPARTMENT], true)
+                ? ($validated['audience_category_id'] ?? null)
+                : null,
+        ];
 
         // Handle file upload if new file is provided
         if ($request->hasFile('file')) {

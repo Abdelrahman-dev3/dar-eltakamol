@@ -1,13 +1,19 @@
 @extends('layouts.app')
-@section('title', __('الملفات'))
+@php
+    $pageTitle = $pageTitle ?? __('الملفات');
+    $pageSubtitle = $pageSubtitle ?? __('الملفات الموجهة لحسابك من الإدارة.');
+    $fileShowRoute = $fileShowRoute ?? 'contributor.files.show';
+    $fileDownloadRoute = $fileDownloadRoute ?? 'contributor.files.download';
+@endphp
+@section('title', $pageTitle)
 @include('contributor-portal.partials.styles')
 
 @section('content')
 <div class="cp-page">
     <section class="cp-hero">
         <div>
-            <h1 class="cp-title">{{ __('الملفات') }}</h1>
-            <p class="cp-subtitle">{{ __('الملفات الموجهة لحسابك من الإدارة.') }}</p>
+            <h1 class="cp-title">{{ $pageTitle }}</h1>
+            <p class="cp-subtitle">{{ $pageSubtitle }}</p>
         </div>
     </section>
 
@@ -28,8 +34,8 @@
                         </div>
                     </div>
                     <div class="cp-actions">
-                        <a class="cp-btn cp-btn-primary" href="{{ route('contributor.files.show', $document) }}"><i class="bi bi-eye-fill"></i>{{ __('عرض الملف') }}</a>
-                        <a class="cp-btn cp-btn-secondary" href="{{ route('contributor.files.download', $document) }}"><i class="bi bi-download"></i>{{ __('تحميل') }}</a>
+                        <a class="cp-btn cp-btn-primary" href="{{ route($fileShowRoute, $document) }}"><i class="bi bi-eye-fill"></i>{{ __('عرض الملف') }}</a>
+                        <a class="cp-btn cp-btn-secondary" href="{{ route($fileDownloadRoute, $document) }}"><i class="bi bi-download"></i>{{ __('تحميل') }}</a>
                     </div>
                 </article>
             @empty

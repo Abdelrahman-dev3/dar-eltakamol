@@ -58,9 +58,9 @@
     </div>
 
     <div class="bookf-field full-width">
-        <label for="notes">{{ __('ملاحظات') }}</label>
-        <textarea name="notes" id="notes" class="bookf-textarea" rows="4" placeholder="{{ __('أضف أي ملاحظات خاصة بالحجز أو متطلبات إضافية إن وجدت.') }}">{{ $selectedNotes }}</textarea>
-        <span class="bookf-help">{{ __('هذا الحقل اختياري ويمكن استخدامه لتوضيح تفاصيل الحجز أو ملاحظات إدارية.') }}</span>
+        <label for="notes">{{ __('البيان') }}</label>
+        <textarea name="notes" id="notes" class="bookf-textarea" rows="4" placeholder="{{ __('اكتب تفاصيل الخدمة المطلوبة أو أي بيان متعلق بها.') }}">{{ $selectedNotes }}</textarea>
+        <span class="bookf-help">{{ __('هذا الحقل اختياري ويستخدم لتوضيح تفاصيل طلب الخدمة.') }}</span>
         @error('notes')
             <p class="bookf-error">{{ $message }}</p>
         @enderror

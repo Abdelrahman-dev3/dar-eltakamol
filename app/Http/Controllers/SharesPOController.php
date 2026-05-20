@@ -51,6 +51,7 @@ class SharesPOController extends Controller
         $contributors = Contributor::orderBy('name')->get();
         $sellShares = SellShares::with('seller')
             ->where('ad_status', '!=', SellShares::AD_STATUS_CANCELLED)
+            ->whereNull('independent_purchase_order_id')
             ->orderByDesc('insert_date')
             ->get();
         $stock = Setting::getValue('base_price', 0);
@@ -76,7 +77,7 @@ class SharesPOController extends Controller
             'amount_per_share' => 'required|numeric|min:0',
             'accept' => 'boolean',
             'insert_date' => 'required|date',
-            'po_status' => 'required|integer|between:0,2',
+            'po_status' => 'required|integer|between:0,3',
         ]);
         $buyer = Contributor::findOrFail($request->user_id);
         app(BuyerPenaltyService::class)->assertCanTrade($buyer);
@@ -85,6 +86,12 @@ class SharesPOController extends Controller
         if ((int) $offer->ad_status === SellShares::AD_STATUS_CANCELLED) {
             return redirect()->back()->withInput()->withErrors([
                 'sale_number' => 'عرض البيع المحدد مغلق ومؤرشف ولا يقبل طلبات شراء جديدة.',
+            ]);
+        }
+
+        if ($offer->independent_purchase_order_id) {
+            return redirect()->back()->withInput()->withErrors([
+                'sale_number' => 'هذا عرض بيع مرتبط بطلب شراء مستقل ولا يقبل طلبات شراء عامة.',
             ]);
         }
 
@@ -135,7 +142,11 @@ class SharesPOController extends Controller
         $sellShares = SellShares::with('seller')
             ->where(function ($query) use ($shares_po): void {
                 $query
-                    ->where('ad_status', '!=', SellShares::AD_STATUS_CANCELLED)
+                    ->where(function ($inner): void {
+                        $inner
+                            ->where('ad_status', '!=', SellShares::AD_STATUS_CANCELLED)
+                            ->whereNull('independent_purchase_order_id');
+                    })
                     ->orWhere('id', $shares_po->sale_number);
             })
             ->orderByDesc('insert_date')
@@ -166,7 +177,7 @@ class SharesPOController extends Controller
             'amount_per_share' => 'required|numeric|min:0',
             'accept' => 'boolean',
             'insert_date' => 'required|date',
-            'po_status' => 'required|integer|between:0,2',
+            'po_status' => 'required|integer|between:0,3',
             'line_notes' => 'required|string',
         ]);
         $buyer = Contributor::findOrFail($request->user_id);
@@ -176,6 +187,12 @@ class SharesPOController extends Controller
         if ((int) $offer->ad_status === SellShares::AD_STATUS_CANCELLED && (int) $shares_po->sale_number !== (int) $offer->id) {
             return redirect()->back()->withInput()->withErrors([
                 'sale_number' => 'عرض البيع المحدد مغلق ومؤرشف ولا يقبل طلبات شراء جديدة.',
+            ]);
+        }
+
+        if ($offer->independent_purchase_order_id && (int) $shares_po->sale_number !== (int) $offer->id) {
+            return redirect()->back()->withInput()->withErrors([
+                'sale_number' => 'هذا عرض بيع مرتبط بطلب شراء مستقل ولا يقبل طلبات شراء عامة.',
             ]);
         }
 

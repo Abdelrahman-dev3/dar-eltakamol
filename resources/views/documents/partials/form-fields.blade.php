@@ -12,9 +12,9 @@
         'recipient_users',
         $document ? $document->recipients->pluck('id')->all() : []
     ))->map(fn ($id) => (string) $id)->all();
-    $selectedAudienceScope = old('audience_scope', 'manual');
-    $selectedAudienceCommittee = old('audience_committee');
-    $selectedAudienceCategory = old('audience_category_id');
+    $selectedAudienceScope = old('audience_scope', $document?->audience_scope ?? 'manual');
+    $selectedAudienceCommittee = old('audience_committee', $document?->audience_committee);
+    $selectedAudienceCategory = old('audience_category_id', $document?->audience_category_id);
 @endphp
 
 <div class="doc-section">

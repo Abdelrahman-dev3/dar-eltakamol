@@ -33,14 +33,14 @@
                         <span class="cir-panel-icon"><i class="bi bi-cloud-arrow-up"></i></span>
                         <div>
                             <h2 class="cir-panel-title">{{ __('رفع التعميمات') }}</h2>
-                            <p class="cir-panel-subtitle">{{ __('النموذج الحالي يدعم رفع أكثر من ملف مع تعيين اسم عام وتحديد الجمهور المستهدف للتعميم.') }}</p>
+                            <p class="cir-panel-subtitle">{{ __('يمكنك إنشاء تعميم واحد وإرفاق أكثر من ملف معه مع تحديد الجمهور المستهدف للتعميم.') }}</p>
                         </div>
                     </div>
                 </div>
 
                 <form action="{{ route('circulars.store') }}" method="POST" enctype="multipart/form-data"
                     data-cir-form
-                    data-confirm-message="{{ __('هل أنت متأكد من إضافة هذه التعميمات؟') }}"
+                    data-confirm-message="{{ __('هل أنت متأكد من إضافة هذا التعميم؟') }}"
                     data-name-label="{{ __('الاسم العام') }}"
                     data-empty-files="{{ __('يرجى اختيار ملف واحد على الأقل') }}"
                     data-require-name="false">
@@ -58,13 +58,13 @@
 
                     <div class="cir-form-footer">
                         <p class="cir-form-footer-note">
-                            {{ __('سيتم إنشاء سجل مستقل لكل ملف مرفوع. إذا تركت الاسم العام فارغًا فسيُستخدم اسم الملف الأصلي تلقائيًا لكل تعميم.') }}
+                            {{ __('سيتم إنشاء تعميم واحد، وستظهر كل الملفات المختارة كمرفقات داخل الخبر. إذا تركت الاسم العام فارغًا فسيُستخدم اسم أول ملف تلقائيًا.') }}
                         </p>
 
                         <div class="cir-form-footer-actions">
                             <button type="submit" class="cir-form-btn">
                                 <i class="bi bi-check2-circle"></i>
-                                {{ __('حفظ التعميمات') }}
+                                {{ __('حفظ التعميم') }}
                             </button>
                             <a href="{{ route('circulars.index') }}" class="cir-form-btn-muted">
                                 <i class="bi bi-x-circle"></i>

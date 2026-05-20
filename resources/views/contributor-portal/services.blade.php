@@ -3,15 +3,11 @@
 @include('contributor-portal.partials.styles')
 
 @section('content')
-@php
-    $statusLabels = \App\Models\Booking::getStatuses();
-@endphp
-
 <div class="cp-page">
     <section class="cp-hero">
         <div>
             <h1 class="cp-title">{{ __('طلبات الخدمات') }}</h1>
-            <p class="cp-subtitle">{{ __('تابع طلبات الخدمات التي أرسلتها للإدارة وحالتها الحالية.') }}</p>
+            <p class="cp-subtitle">{{ __('تابع طلبات الخدمات والردود الواردة من الإدارة حتى اكتمال الطلب.') }}</p>
         </div>
         <div class="cp-actions">
             <a class="cp-btn cp-btn-primary" href="{{ route('contributor.services.request') }}"><i class="bi bi-plus-circle-fill"></i>{{ __('طلب خدمة') }}</a>
@@ -27,24 +23,26 @@
             <table class="cp-table">
                 <thead>
                     <tr>
-                        <th>{{ __('الخدمة') }}</th>
-                        <th>{{ __('التاريخ المطلوب') }}</th>
-                        <th>{{ __('الوقت') }}</th>
-                        <th>{{ __('الحالة') }}</th>
-                        <th>{{ __('ملاحظات') }}</th>
+                        <th>{{ __('اسم الخدمة') }}</th>
+                        <th>{{ __('تاريخ تقديم الطلب') }}</th>
+                        <th>{{ __('حالة الطلب') }}</th>
+                        <th>{{ __('إجراءات') }}</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($serviceRequests as $request)
                         <tr>
                             <td>{{ optional($request->service)->name ?: __('خدمة غير محددة') }}</td>
-                            <td>{{ $request->booking_date?->format('Y-m-d') }}</td>
-                            <td>{{ $request->booking_time?->format('H:i') }}</td>
-                            <td><span class="cp-badge">{{ $statusLabels[$request->status] ?? $request->status }}</span></td>
-                            <td>{{ $request->notes ?: __('لا توجد') }}</td>
+                            <td>{{ $request->created_at?->format('Y-m-d H:i') }}</td>
+                            <td><span class="cp-badge">{{ $request->status_text }}</span></td>
+                            <td>
+                                <a class="cp-btn cp-btn-secondary" href="{{ route('contributor.services.show', $request) }}">
+                                    <i class="bi bi-eye-fill"></i>{{ __('تفاصيل') }}
+                                </a>
+                            </td>
                         </tr>
                     @empty
-                        <tr><td class="cp-empty" colspan="5">{{ __('لا توجد طلبات خدمات حتى الآن') }}</td></tr>
+                        <tr><td class="cp-empty" colspan="4">{{ __('لا توجد طلبات خدمات حتى الآن') }}</td></tr>
                     @endforelse
                 </tbody>
             </table>
